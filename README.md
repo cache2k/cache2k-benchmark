@@ -1,12 +1,14 @@
-This is a benchmark package for cache2k, but also contains general useful utilities for
-benchmarking and experimenting with caches.
+# Benchmarks for cache2k
 
-Please see the [cache2k homepage}(http://cache2k.org) for a discussion of the benchmark
+This is a benchmark package for cache2k, but also contains general useful utilities for
+general benchmarking and experimenting with caches.
+
+Please see the [cache2k homepage](http://cache2k.org) for a discussion of the benchmark
 results.
 
 ## Running the benchmarks
 
-The benchmarks are run via JUnit and the Maven surefire plugin. The run the benchmarks
+The benchmarks are run via JUnit and the Maven surefire plugin. To run the benchmarks
 plese do:
 
 ```
