@@ -1,0 +1,56 @@
+This is a benchmark package for cache2k, but also contains general useful utilities for
+benchmarking and experimenting with caches.
+
+Please see the [cache2k homepage}(http://cache2k.org) for a discussion of the benchmark
+results.
+
+## Running the benchmarks
+
+The benchmarks are run via JUnit and the Maven surefire plugin. The run the benchmarks
+plese do:
+
+```
+mvn -Pbenchmark test
+```
+
+There is a shell script provided to draw nice graphics via Gnuplot:
+
+```
+bash processBenchmarkResults.sh copyData
+bash processBenchmarkResults.sh process
+```
+
+The graphics will be put in `target/benchmark-reults`.
+
+## The maven modules
+
+### util
+
+Java utility classes for cache benchmarking. Useful in general to produce, merge, read and write access
+traces or endless randomized access patterns. Also has a fast calculation implementation
+of Beladys OPT hitrate.
+
+### thirdparty
+
+Adaption of other cache products (at the moment Infinispan, Google Guava and EHCache) to the benchmark suite.
+
+### traces
+
+Traces which are used within the benchmarks to measure cache efficiency on real world access patterns.
+
+For each trace a Java class is available to read the trace into memory and to calculate
+basic metrics on it. The traces are represented as compressed file with 4-byte integers.
+
+The original source of the trace Cpp, Glimpse, Multi2 and Sprite is from the authors of these
+papers:
+
+  * J. Kim, J. Choi, J. Kim, S. Noh, S. Min, Y. Cho, and C. Kim,
+    "A Low-Overhead, High-Performance Unified Buffer Management Scheme
+    that Exploits Sequential and Looping References",
+    *4th Symposium on Operating System Design & Implementation, October 2000.*
+  *  D. Lee, J. Choi, J. Kim, S. Noh, S. Min, Y. Cho and C. Kim,
+    "On the Existence of a Spectrum of Policies that Subsumes the Least Recently Used
+     (LRU) and Least Frequently Used (LFU) Policies", *Proceeding of 1999 ACM
+     SIGMETRICS Conference, May 1999.*
+
+The traces Web07 and Web12 are application traces provided by headissue GmbH

@@ -1,0 +1,106 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>cache2k-benchmark-parent</artifactId>
+  <groupId>org.cache2k</groupId>
+  <version>0.18</version>
+  <name>cache2k-benchmark-parent</name>
+  <description>Benchmarking stuff for caches, not only useful for cache2k</description>
+  <packaging>pom</packaging>
+  <inceptionYear>2013</inceptionYear>
+  <organization>
+    <name>headissue GmbH, Munich</name>
+    <url>http://headissue.com</url>
+  </organization>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <cache2k-version>0.18</cache2k-version>
+  </properties>
+
+  <modules>
+    <module>zoo</module>
+    <module>util</module>
+    <module>traces</module>
+    <module>thirdparty</module>
+  </modules>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-library</artifactId>
+      <version>1.2.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <repositories>
+    <repository>
+      <id>headissue.public</id>
+      <name>headissue public maven repository</name>
+      <url>https://www.headissue.com/maven</url>
+      <layout>default</layout>
+    </repository>
+  </repositories>
+
+  <profiles>
+    <profile>
+      <id>benchmark</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <includes>
+                <include>**/*Benchmark.java</include>
+              </includes>
+              <enableAssertions>false</enableAssertions>
+              <systemProperties>
+                <jub.consumers>CONSOLE,XML</jub.consumers>
+                <jub.xml.file>${project.build.directory}/junit-benchmark.xml</jub.xml.file>
+                <cache2k.benchmark.result.sql>${project.build.directory}/cache2k-benchmark-result.sql
+                </cache2k.benchmark.result.sql>
+                <cache2k.benchmark.result.csv>${project.build.directory}/cache2k-benchmark-result.csv
+                </cache2k.benchmark.result.csv>
+              </systemProperties>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+
+
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <source>1.7</source>
+            <target>1.7</target>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <version>1.5</version>
+          <configuration>
+            <licenseName>gpl_v3</licenseName>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+</project>
