@@ -6,12 +6,32 @@ general benchmarking and experimenting with caches.
 Please see the [cache2k homepage](http://cache2k.org) for a discussion of the benchmark
 results.
 
-## Running the benchmarks
+## Check out the benchmark suite
 
-The benchmarks are run via JUnit and the Maven surefire plugin. To run the benchmarks
-plese do:
+To run the benchmarks for the latest release:
 
 ```
+version=0.18;
+git clone -b $version https://github.com/headissue/cache2k-benchmark.git
+```
+
+Please replace the version, if needed.
+
+You can also checkout an run the benchmarks against the latest cache2k version.
+Please checkout and install the snapshot version of cache2k first, by:
+
+```
+git clone https://github.com/headissue/cache2k.git
+cd cache2k
+mvn install
+```
+
+## Running the benchmarks
+
+The benchmarks are run via JUnit and the Maven surefire plugin.
+
+```
+cd cache2k-benchmark
 mvn -Pbenchmark test
 ```
 
