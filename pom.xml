@@ -4,7 +4,7 @@
 
   <artifactId>cache2k-benchmark-parent</artifactId>
   <groupId>org.cache2k</groupId>
-  <version>0.18</version>
+  <version>0.19-SNAPSHOT</version>
   <name>cache2k-benchmark-parent</name>
   <description>Benchmarking stuff for caches, not only useful for cache2k</description>
   <packaging>pom</packaging>

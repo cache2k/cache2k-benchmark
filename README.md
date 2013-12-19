@@ -6,7 +6,7 @@ general benchmarking and experimenting with caches.
 Please see the [cache2k homepage](http://cache2k.org) for a discussion of the benchmark
 results.
 
-## Check out the benchmark suite
+## Checkout the benchmark suite
 
 To run the benchmarks for the latest release:
 
