@@ -56,6 +56,10 @@ public class Patterns {
     return new Concat(p);
   }
 
+  public static AccessPattern strip(AccessPattern p, int _stripCount) {
+    return new Strip(p, _stripCount);
+  }
+
   public static class Sequence extends AccessPattern {
 
     int pos = 0;
@@ -454,6 +458,17 @@ public class Patterns {
       return pattern[pos].next();
     }
 
+    public void close() throws Exception {
+      if (pattern != null) {
+        for (AccessPattern p : pattern) {
+          if (p != null) {
+            p.close();
+          }
+        }
+        pattern = null;
+      }
+    }
+
   }
 
   static class Strip extends AccessPattern {
@@ -471,12 +486,26 @@ public class Patterns {
     }
 
     public boolean hasNext() throws Exception {
-      count--;
-      return count >= 0 && pattern.hasNext();
+      if (count > 0) {
+        count--;
+        return pattern.hasNext();
+      }
+      if (pattern != null) {
+        pattern.close();
+        pattern = null;
+      }
+      return false;
     }
 
     public int next() throws Exception {
       return pattern.next();
+    }
+
+    public void close() throws Exception {
+      if (pattern != null) {
+        pattern.close();
+        pattern = null;
+      }
     }
 
   }
