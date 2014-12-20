@@ -113,11 +113,53 @@ public class BenchmarkCollection extends BenchmarkingBase {
   }
 
   static final AccessTrace allMissTrace =
-    new AccessTrace(Patterns.sequence(TRACE_LENGTH)).setOptHitCount(500, 0);
+    new AccessTrace(Patterns.sequence(TRACE_LENGTH))
+      .setOptHitCount(500, 0)
+      .setRandomHitCount(500, 0)
+      .setOptHitCount(50000, 0)
+      .setRandomHitCount(50000, 0)
+      .setOptHitCount(500000, 0)
+      .setRandomHitCount(500000, 0)
+      .setOptHitCount(5000000, 0)
+      .setRandomHitCount(5000000, 0)
+      .setOptHitCount(5000, 0)
+      .setRandomHitCount(5000, 0);
 
   @Test
   public void benchmarkMiss() {
     BenchmarkCache<Integer, Integer> c = freshCache(500);
+    runBenchmark(c, allMissTrace);
+    logHitRate(c, allMissTrace, c.getMissCount());
+    c.destroy();
+  }
+
+  @Test
+  public void benchmarkMiss_5000() {
+    BenchmarkCache<Integer, Integer> c = freshCache(5000);
+    runBenchmark(c, allMissTrace);
+    logHitRate(c, allMissTrace, c.getMissCount());
+    c.destroy();
+  }
+
+  @Test
+  public void benchmarkMiss_50000() {
+    BenchmarkCache<Integer, Integer> c = freshCache(50000);
+    runBenchmark(c, allMissTrace);
+    logHitRate(c, allMissTrace, c.getMissCount());
+    c.destroy();
+  }
+
+  @Test
+  public void benchmarkMiss_500000() {
+    BenchmarkCache<Integer, Integer> c = freshCache(500000);
+    runBenchmark(c, allMissTrace);
+    logHitRate(c, allMissTrace, c.getMissCount());
+    c.destroy();
+  }
+
+  @Test
+  public void benchmarkMiss_5000000() {
+    BenchmarkCache<Integer, Integer> c = freshCache(5000000);
     runBenchmark(c, allMissTrace);
     logHitRate(c, allMissTrace, c.getMissCount());
     c.destroy();
@@ -130,6 +172,7 @@ public class BenchmarkCollection extends BenchmarkingBase {
   public void benchmarkRandom()  throws Exception {
     runBenchmark(randomTrace, 500);
   }
+
   static final AccessTrace effective90Trace =
     new AccessTrace(new DistAccessPattern(1000), TRACE_LENGTH);
 
