@@ -57,10 +57,14 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.16</version>
             <configuration>
               <includes>
                 <include>**/*Benchmark.java</include>
               </includes>
+              <!-- don't reuse a spawned JVM, so different
+                   implementation do not influence each other -->
+              <reuseForks>false</reuseForks>
               <enableAssertions>false</enableAssertions>
               <systemProperties>
                 <jub.consumers>CONSOLE,XML</jub.consumers>
