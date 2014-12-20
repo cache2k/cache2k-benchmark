@@ -89,7 +89,24 @@ public class BenchmarkingBase extends AbstractBenchmark {
       return;
     }
     onlyOneResult.add(_testName);
-    saveHitRate(_testName, c.getCacheSize(), _trace, _optHitRate, _missCount);
+    try {
+      Runtime.getRuntime().gc();
+      Thread.sleep(5);
+      Runtime.getRuntime().gc();
+      Thread.sleep(17);
+    } catch (Exception ex) { }
+    Runtime.getRuntime().gc();
+    long _usedMem = 0;
+    long _total;
+    long _total2;
+    do {
+      Runtime.getRuntime().gc();
+      _total = Runtime.getRuntime().totalMemory();
+      long _free = Runtime.getRuntime().freeMemory();
+      _total2 = Runtime.getRuntime().totalMemory();
+      _usedMem = _total - _free;
+    } while (_total != _total2);
+    saveHitRate(_testName, c.getCacheSize(), _trace, _optHitRate, _missCount, _usedMem);
     if (c != null) {
       c.checkIntegrity();
       String _cacheStatistics = c.getStatistics();
@@ -98,7 +115,7 @@ public class BenchmarkingBase extends AbstractBenchmark {
     System.out.flush();
   }
 
-  void saveHitRate(String _testName, int _cacheSize, AccessTrace _trace, int _optHitRate, long _missCount) {
+  void saveHitRate(String _testName, int _cacheSize, AccessTrace _trace, int _optHitRate, long _missCount, long _usedMem) {
     double _hitRateTimes100 =
       (_trace.getTraceLength() - _missCount) * 100D / _trace.getTraceLength();
     String _hitRate = String.format("%.2f", _hitRateTimes100);
@@ -125,7 +142,8 @@ public class BenchmarkingBase extends AbstractBenchmark {
       _trace.getTraceLength() + "|" + // 5
       _trace.getValueCount() + "|" + // 6
       String.format("%.2f", _optHitRate * 1D / 100) + "|" + // 7
-      String.format("%.2f", _trace.getRandomHitRate(_cacheSize).getFactor() * 100); // 8
+      String.format("%.2f", _trace.getRandomHitRate(_cacheSize).getFactor() * 100) + "|" +  // 8
+      _usedMem; // 9
     benchmarkName2csv.put(_testName, _csvLine);
     writeCsv();
   }
