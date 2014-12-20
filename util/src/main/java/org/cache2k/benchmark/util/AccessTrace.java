@@ -24,7 +24,6 @@ package org.cache2k.benchmark.util;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -45,7 +44,8 @@ import java.util.Set;
  */
 public class AccessTrace implements Iterable<Integer> {
 
-  int[] trace;
+  AccessPattern pattern;
+  private int[] trace = null;
   int valueCount = -1;
   int lowValue = -Integer.MAX_VALUE;
   int highValue = Integer.MIN_VALUE;
@@ -61,7 +61,7 @@ public class AccessTrace implements Iterable<Integer> {
     ByteBuffer buf = in.map(FileChannel.MapMode.READ_ONLY, 0, in.size());
     trace = new int[(int) (in.size() / 4)];
     buf.order(ByteOrder.BIG_ENDIAN);
-    buf.asIntBuffer().get(trace);
+    buf.asIntBuffer().get(getTrace());
     in.close();
   }
 
@@ -74,7 +74,7 @@ public class AccessTrace implements Iterable<Integer> {
     ByteBuffer buf = ByteBuffer.wrap(ba);
     trace = new int[(int) (ba.length / 4)];
     buf.order(ByteOrder.BIG_ENDIAN);
-    buf.asIntBuffer().get(trace);
+    buf.asIntBuffer().get(getTrace());
     in.close();
   }
 
@@ -105,14 +105,10 @@ public class AccessTrace implements Iterable<Integer> {
    */
   public AccessTrace(AccessPattern... ps) {
     AccessPattern p = Patterns.concat(ps);
-    try {
-      if (p.isEternal()) {
-        throw new IllegalArgumentException("Pattern is expected not to be eternal");
-      }
-      trace = prepareTrace(p);
-    } catch (Exception e) {
-      throw new IllegalArgumentException("Error creating trace", e);
+    if (p.isEternal()) {
+      throw new IllegalArgumentException("Pattern is expected not to be eternal");
     }
+    pattern = p;
   }
 
   /**
@@ -120,11 +116,7 @@ public class AccessTrace implements Iterable<Integer> {
    */
   public AccessTrace(int _maxSize, AccessPattern... ps) {
     AccessPattern p = Patterns.concat(ps);
-    try {
-      trace = prepareTrace(p, _maxSize);
-    } catch (Exception e) {
-      throw new IllegalArgumentException("Error creating trace", e);
-    }
+    pattern = Patterns.strip(p, _maxSize);
   }
 
   /**
@@ -132,11 +124,19 @@ public class AccessTrace implements Iterable<Integer> {
    * the maximum size.
    */
   public AccessTrace(AccessPattern p, int _maxSize) {
+    pattern = Patterns.strip(p, _maxSize);
+  }
+
+  public int[] getTrace() {
+    if (trace != null) {
+      return trace;
+    }
     try {
-      trace = prepareTrace(p, _maxSize);
+      trace = prepareTrace(pattern);
     } catch (Exception e) {
       throw new IllegalArgumentException("Error creating trace", e);
     }
+    return trace;
   }
 
   /**
@@ -148,11 +148,16 @@ public class AccessTrace implements Iterable<Integer> {
     return this;
   }
 
+  public AccessTrace setRandomHitCount(int _size, int _count) {
+    size2random.put(_size, _count);
+    return this;
+  }
+
   public void write(File f) throws IOException {
     FileChannel out = new RandomAccessFile(f, "rw").getChannel();
-    ByteBuffer buf = out.map(FileChannel.MapMode.READ_WRITE, 0, trace.length * 4);
+    ByteBuffer buf = out.map(FileChannel.MapMode.READ_WRITE, 0, getTrace().length * 4);
     buf.order(ByteOrder.BIG_ENDIAN);
-    buf.asIntBuffer().put(trace);
+    buf.asIntBuffer().put(getTrace());
     out.close();
   }
 
@@ -160,7 +165,7 @@ public class AccessTrace implements Iterable<Integer> {
    * Return an access pattern which starts at the beginning of the trace.
    */
   public AccessPattern newPattern() {
-    final int[] ia = trace;
+    final int[] ia = getTrace();
     return new AccessPattern() {
       int idx = 0;
 
@@ -187,7 +192,7 @@ public class AccessTrace implements Iterable<Integer> {
    * don't want to have to array copy in the timing.
    */
   public int[] getArray() {
-    return trace;
+    return getTrace();
   }
 
   /**
@@ -202,7 +207,7 @@ public class AccessTrace implements Iterable<Integer> {
     if (v != null) {
       return v;
     }
-    OptimumReplacementCalculation c = new OptimumReplacementCalculation(_size, trace);
+    OptimumReplacementCalculation c = new OptimumReplacementCalculation(_size, getTrace());
     size2opt.put(_size, c.getHitCount());
     return c.getHitCount();
   }
@@ -227,7 +232,7 @@ public class AccessTrace implements Iterable<Integer> {
     HashSet<Integer> _cache = new HashSet<>();
     Random _random = new Random(_seed);
     int _hitCnt = 0;
-    for (int v : trace) {
+    for (int v : getTrace()) {
       if(_cache.contains(v)) {
         _hitCnt++;
       } else {
@@ -248,8 +253,8 @@ public class AccessTrace implements Iterable<Integer> {
     return
       (calcRandomHits(_size, 1802) +
       calcRandomHits(_size, 4711) +
-      calcRandomHits(_size, trace.length) +
-      calcRandomHits(_size, trace[trace.length - 1])) / 4;
+      calcRandomHits(_size, getTrace().length) +
+      calcRandomHits(_size, getTrace()[getTrace().length - 1])) / 4;
   }
 
   /**
@@ -277,12 +282,12 @@ public class AccessTrace implements Iterable<Integer> {
   }
 
   public int getTraceLength() {
-    return trace.length;
+    return getTrace().length;
   }
 
   private void initStatistics() {
     Set<Integer> _values = new HashSet<>();
-    for (int v : trace) {
+    for (int v : getTrace()) {
       _values.add(v);
       if (v < lowValue) {
         lowValue = v;
@@ -295,7 +300,7 @@ public class AccessTrace implements Iterable<Integer> {
   }
 
   public String toString() {
-    return Arrays.toString(trace);
+    return Arrays.toString(getTrace());
   }
 
   private static int[] prepareTrace(AccessPattern p, int _maxSize) throws Exception {
@@ -368,12 +373,12 @@ public class AccessTrace implements Iterable<Integer> {
 
       @Override
       public boolean hasNext() {
-        return idx < trace.length;
+        return idx < getTrace().length;
       }
 
       @Override
       public Integer next() {
-        return trace[idx++];
+        return getTrace()[idx++];
       }
 
       @Override
