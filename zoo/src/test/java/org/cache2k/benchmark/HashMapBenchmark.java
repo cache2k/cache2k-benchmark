@@ -23,6 +23,7 @@ package org.cache2k.benchmark;
  */
 
 import org.cache2k.benchmark.zoo.HashMapBenchmarkFactory;
+import org.junit.Ignore;
 
 /**
  * @author Jens Wilke; created: 2013-06-13
@@ -32,5 +33,14 @@ public class HashMapBenchmark extends BenchmarkCollection {
   {
     factory = new HashMapBenchmarkFactory();
   }
+
+  @Ignore @Override
+  public void benchmarkMiss_5000000() {}
+
+  @Ignore @Override
+  public void benchmarkMiss_500000() {}
+
+  @Ignore @Override
+  public void benchmarkMiss_50000() {}
 
 }
