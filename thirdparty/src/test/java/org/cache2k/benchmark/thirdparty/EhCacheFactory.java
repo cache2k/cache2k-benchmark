@@ -72,8 +72,6 @@ public class EhCacheFactory extends BenchmarkCacheFactory {
     return this;
   }
 
-
-
   static class MyCacheEntryFactory implements CacheEntryFactory {
 
     int missCount;
@@ -119,7 +117,6 @@ public class EhCacheFactory extends BenchmarkCacheFactory {
       return entryFactory.missCount;
     }
   }
-
 
   public enum Algorithm { DEFAULT, CLOCK }
 

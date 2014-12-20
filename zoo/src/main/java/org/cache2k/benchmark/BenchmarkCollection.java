@@ -167,7 +167,6 @@ public class BenchmarkCollection extends BenchmarkingBase {
     runBenchmark(CacheAccessTraceWeb12.getInstance(), 3000);
   }
 
-
   @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
   public void benchmarkWeb07_75()  throws Exception {
     runBenchmark(CacheAccessTraceWeb07.getInstance(), 75);
@@ -187,7 +186,6 @@ public class BenchmarkCollection extends BenchmarkingBase {
   public void benchmarkWeb07_3000()  throws Exception {
     runBenchmark(CacheAccessTraceWeb07.getInstance(), 3000);
   }
-
 
   @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
   public void benchmarkSprite_100() {
@@ -299,6 +297,5 @@ public class BenchmarkCollection extends BenchmarkingBase {
   public void benchmarkMulti2_3000() {
     runBenchmark(CacheAccessTraceMulti2.getInstance(), 3000);
   }
-
 
 }

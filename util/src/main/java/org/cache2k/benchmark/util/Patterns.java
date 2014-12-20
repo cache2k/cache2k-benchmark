@@ -424,7 +424,6 @@ public class Patterns {
 
   }
 
-
   static class Concat extends AccessPattern {
 
     int pos = 0;
@@ -505,6 +504,5 @@ public class Patterns {
       return pattern.next();
     }
   }
-
 
 }

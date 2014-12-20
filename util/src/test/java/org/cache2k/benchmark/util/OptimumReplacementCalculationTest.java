@@ -177,5 +177,4 @@ public class OptimumReplacementCalculationTest {
     return Integer.MAX_VALUE;
   }
 
-
 }

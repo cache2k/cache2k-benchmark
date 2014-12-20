@@ -28,7 +28,6 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.nio.charset.Charset;
 
-
 /**
  * Read in an access log trace from an event guide web application.
  * Each line is the request of an event detail information.
