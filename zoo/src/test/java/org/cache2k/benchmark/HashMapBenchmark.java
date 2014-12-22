@@ -35,9 +35,6 @@ public class HashMapBenchmark extends BenchmarkCollection {
   }
 
   @Ignore @Override
-  public void benchmarkMiss_5000000() {}
-
-  @Ignore @Override
   public void benchmarkMiss_500000() {}
 
   @Ignore @Override
