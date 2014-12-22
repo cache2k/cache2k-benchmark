@@ -157,7 +157,6 @@ public class BenchmarkCollection extends BenchmarkingBase {
     c.destroy();
   }
 
-  @Test
   public void benchmarkMiss_5000000() {
     BenchmarkCache<Integer, Integer> c = freshCache(5000000);
     runBenchmark(c, allMissTrace);
