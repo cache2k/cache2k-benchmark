@@ -89,19 +89,21 @@ public class BenchmarkingBase extends AbstractBenchmark {
       return;
     }
     onlyOneResult.add(_testName);
+    System.out.println("Requesting GC...");
     try {
       Runtime.getRuntime().gc();
-      Thread.sleep(5);
+      Thread.sleep(55);
       Runtime.getRuntime().gc();
-      Thread.sleep(17);
+      Thread.sleep(55);
     } catch (Exception ex) { }
-    Runtime.getRuntime().gc();
     long _usedMem = 0;
     long _total;
     long _total2;
     do {
-      Runtime.getRuntime().gc();
       _total = Runtime.getRuntime().totalMemory();
+      try {
+        Thread.sleep(255);
+      } catch (Exception ex) { }
       long _free = Runtime.getRuntime().freeMemory();
       _total2 = Runtime.getRuntime().totalMemory();
       _usedMem = _total - _free;
@@ -130,6 +132,7 @@ public class BenchmarkingBase extends AbstractBenchmark {
     }
     s += ", randomHitRatePercent=" + String.format("%.2f", _trace.getRandomHitRate(_cacheSize).getFactor() * 100);
     s += ", uniqueValues=" + _trace.getValueCount();
+    s += ", usedMem=" + _usedMem;
     System.out.println(_testName + ": " + s);
     int idx = _testName.lastIndexOf('.');
     String _cacheImplementation = _testName.substring(0, idx);
