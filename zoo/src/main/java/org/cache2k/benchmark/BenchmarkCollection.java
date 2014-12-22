@@ -157,13 +157,6 @@ public class BenchmarkCollection extends BenchmarkingBase {
     c.destroy();
   }
 
-  public void benchmarkMiss_5000000() {
-    BenchmarkCache<Integer, Integer> c = freshCache(5000000);
-    runBenchmark(c, allMissTrace);
-    logHitRate(c, allMissTrace, c.getMissCount());
-    c.destroy();
-  }
-
   static final AccessTrace randomTrace =
     new AccessTrace(new RandomAccessPattern(1000), TRACE_LENGTH);
 
