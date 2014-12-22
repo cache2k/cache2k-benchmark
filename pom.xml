@@ -4,7 +4,7 @@
 
   <artifactId>cache2k-benchmark-parent</artifactId>
   <groupId>org.cache2k</groupId>
-  <version>0.19-SNAPSHOT</version>
+  <version>0.20-SNAPSHOT</version>
   <name>cache2k-benchmark-parent</name>
   <description>Benchmarking stuff for caches, not only useful for cache2k</description>
   <packaging>pom</packaging>
@@ -16,7 +16,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cache2k-version>0.18</cache2k-version>
+    <cache2k-version>0.20-SNAPSHOT</cache2k-version>
   </properties>
 
   <modules>
@@ -66,6 +66,7 @@
                    implementation do not influence each other -->
               <reuseForks>false</reuseForks>
               <enableAssertions>false</enableAssertions>
+              <argLine>-verbose:gc -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+UseSerialGC</argLine>
               <systemProperties>
                 <jub.consumers>CONSOLE,XML</jub.consumers>
                 <jub.xml.file>${project.build.directory}/junit-benchmark.xml</jub.xml.file>
