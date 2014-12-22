@@ -22,8 +22,6 @@ package org.cache2k.benchmark.thirdparty;
  * #L%
  */
 
-import net.sf.ehcache.config.CacheConfiguration;
-
 /**
  * @author Jens Wilke; created: 2013-12-01
  */
