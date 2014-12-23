@@ -38,7 +38,7 @@ import java.util.Hashtable;
  * @author Jens Wilke
  */
 @SuppressWarnings("all")
-public class SimpleCache<K, T> implements Cache<K, T> {
+public class SimpleCache<K, T> extends AbstractCache<K, T> {
 
   /** Maximum amount of elements in cache */
   int maxElements;
