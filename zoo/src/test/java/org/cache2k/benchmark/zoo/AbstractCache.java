@@ -23,6 +23,8 @@ package org.cache2k.benchmark.zoo;
  */
 
 import org.cache2k.Cache;
+import org.cache2k.CacheEntry;
+import org.cache2k.ClosableIterator;
 
 import java.util.List;
 import java.util.Map;
@@ -53,6 +55,16 @@ public abstract class AbstractCache<K, T> implements Cache<K, T> {
 
   @Override
   public void prefetch(List<K> keys, int _startIndex, int _afterEndIndex) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public ClosableIterator<CacheEntry<K, T>> iterator() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public int getTotalEntryCount() {
     throw new UnsupportedOperationException();
   }
 }
