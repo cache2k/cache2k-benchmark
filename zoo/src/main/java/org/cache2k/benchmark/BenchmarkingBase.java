@@ -23,9 +23,8 @@ package org.cache2k.benchmark;
  */
 
 import org.junit.After;
+import static org.junit.Assert.*;
 import com.carrotsearch.junitbenchmarks.AbstractBenchmark;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.cache2k.benchmark.util.AccessTrace;
 
 import java.io.FileWriter;
@@ -43,6 +42,7 @@ public class BenchmarkingBase extends AbstractBenchmark {
   static Map<String,String> benchmarkName2csv = new TreeMap<>();
   static HashSet<String> onlyOneResult = new HashSet<>();
 
+  protected boolean skipMultithreaded = false;
   protected BenchmarkCacheFactory factory = new Cache2kFactory();
 
   BenchmarkCache<Integer, Integer> cache = null;
@@ -127,31 +127,32 @@ public class BenchmarkingBase extends AbstractBenchmark {
       return;
     }
     onlyOneResult.add(_testName);
-    System.out.println("Requesting GC...");
+    System.out.println("cache2k benchmark is requesting GC (record used memory)...");
     try {
       Runtime.getRuntime().gc();
       Thread.sleep(55);
       Runtime.getRuntime().gc();
       Thread.sleep(55);
-    } catch (Exception ex) { }
-    long _usedMem = 0;
+    } catch (Exception ignore) { }
+    long _usedMem;
     long _total;
     long _total2;
+    long _count = -1;
     do {
+      _count++;
       _total = Runtime.getRuntime().totalMemory();
       try {
         Thread.sleep(255);
-      } catch (Exception ex) { }
+      } catch (Exception ignore) { }
       long _free = Runtime.getRuntime().freeMemory();
       _total2 = Runtime.getRuntime().totalMemory();
       _usedMem = _total - _free;
     } while (_total != _total2);
+    System.out.println("looped for stable total memory, count=" + _count + ", total=" + _total + ", used=" + _usedMem);
     saveHitRate(_testName, c.getCacheSize(), _trace, _optHitRate, _missCount, _usedMem);
-    if (c != null) {
-      c.checkIntegrity();
-      String _cacheStatistics = c.getStatistics();
-      System.out.println(_cacheStatistics);
-    }
+    c.checkIntegrity();
+    String _cacheStatistics = c.getStatistics();
+    System.out.println(_cacheStatistics);
     System.out.flush();
   }
 

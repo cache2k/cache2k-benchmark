@@ -31,6 +31,7 @@ import org.junit.Ignore;
 public class HashMapBenchmark extends BenchmarkCollection {
 
   {
+    skipMultithreaded = true;
     factory = new HashMapBenchmarkFactory();
   }
 
@@ -40,4 +41,35 @@ public class HashMapBenchmark extends BenchmarkCollection {
   @Ignore @Override
   public void benchmarkMiss_50000() {}
 
+  @Ignore @Override
+  public void benchmarkRandmonThreads2() throws Exception {
+  }
+
+  @Ignore @Override
+  public void benchmarkRandmonThreads4() throws Exception {
+  }
+
+  @Ignore @Override
+  public void benchmarkRandmonThreads6() throws Exception {
+  }
+
+  @Ignore @Override
+  public void benchmarkRandmonThreads8() throws Exception {
+  }
+
+  @Ignore @Override
+  public void benchmarkEff90Threads2() throws Exception {
+  }
+
+  @Ignore @Override
+  public void benchmarkEff90Threads4() throws Exception {
+  }
+
+  @Ignore @Override
+  public void benchmarkEff90Threads6() throws Exception {
+  }
+
+  @Ignore @Override
+  public void benchmarkEff90Threads8() throws Exception {
+  }
 }
