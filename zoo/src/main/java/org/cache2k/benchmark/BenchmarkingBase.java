@@ -66,6 +66,35 @@ public class BenchmarkingBase extends AbstractBenchmark {
     destroyCache();
   }
 
+  public final void runMultiThreadBenchmark(
+    final BenchmarkCache<Integer, Integer> c,
+    int _threadCount,
+    int _startOffset,
+    AccessTrace... _traces) throws Exception {
+    Thread[] _threads = new Thread[_threadCount];
+    for (int i = 0; i < _threadCount; i++) {
+      final int[] _trace = _traces[i % _traces.length].getArray();
+      final int _startIdx = (_startOffset * i) % _trace.length;
+      Runnable r = new Runnable() {
+        @Override
+        public void run() {
+          int idx = _startIdx;
+          do {
+            c.get(_trace[idx]);
+            idx = (idx + 1) % _trace.length;
+          } while (idx != _startIdx);
+        }
+      };
+      Thread t = new Thread(r);
+      t.start();
+      _threads[i] = t;
+    }
+    for (int i = 0; i < _threadCount; i++) {
+      _threads[i].join();
+    }
+
+  }
+
   public final void runBenchmark(BenchmarkCache<Integer, Integer> c, AccessTrace t) {
     int[] _trace = t.getArray();
     for (int v : _trace) {
@@ -76,6 +105,15 @@ public class BenchmarkingBase extends AbstractBenchmark {
   public final int runBenchmark(AccessTrace t, int _cacheSize) {
     BenchmarkCache<Integer, Integer> c = freshCache(_cacheSize);
     runBenchmark(c, t);
+    logHitRate(c, t, c.getMissCount());
+    c.destroy();
+    return
+      ((t.getTraceLength() - c.getMissCount()) * 10000 + t.getTraceLength() / 2) / t.getTraceLength();
+  }
+
+  public final int runMultiThreadBenchmark(int _threadCount, AccessTrace t, int _cacheSize) throws Exception {
+    BenchmarkCache<Integer, Integer> c = freshCache(_cacheSize);
+    runMultiThreadBenchmark(c, _threadCount, t.getTraceLength() / _threadCount, t);
     logHitRate(c, t, c.getMissCount());
     c.destroy();
     return

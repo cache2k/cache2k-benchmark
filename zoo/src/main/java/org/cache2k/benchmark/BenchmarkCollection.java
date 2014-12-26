@@ -165,12 +165,52 @@ public class BenchmarkCollection extends BenchmarkingBase {
     runBenchmark(randomTrace, 500);
   }
 
+  @Test
+  public void benchmarkRandmonThreads2() throws Exception {
+    runMultiThreadBenchmark(2, randomTrace, 500);
+  }
+
+  @Test
+  public void benchmarkRandmonThreads4() throws Exception {
+    runMultiThreadBenchmark(4, randomTrace, 500);
+  }
+
+  @Test
+  public void benchmarkRandmonThreads6() throws Exception {
+    runMultiThreadBenchmark(6, randomTrace, 500);
+  }
+
+  @Test
+  public void benchmarkRandmonThreads8() throws Exception {
+    runMultiThreadBenchmark(8, randomTrace, 500);
+  }
+
   static final AccessTrace effective90Trace =
     new AccessTrace(new DistAccessPattern(1000), TRACE_LENGTH);
 
   @Test
   public void benchmarkEff90() throws Exception {
     runBenchmark(effective90Trace, 500);
+  }
+
+  @Test
+  public void benchmarkEff90Threads2() throws Exception {
+    runMultiThreadBenchmark(2, effective90Trace, 500);
+  }
+
+  @Test
+  public void benchmarkEff90Threads4() throws Exception {
+    runMultiThreadBenchmark(4, effective90Trace, 500);
+  }
+
+  @Test
+  public void benchmarkEff90Threads6() throws Exception {
+    runMultiThreadBenchmark(6, effective90Trace, 500);
+  }
+
+  @Test
+  public void benchmarkEff90Threads8() throws Exception {
+    runMultiThreadBenchmark(8, effective90Trace, 500);
   }
 
   static final AccessTrace effective95Trace =
