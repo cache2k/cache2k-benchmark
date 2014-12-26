@@ -72,13 +72,19 @@ public class BenchmarkCollection extends BenchmarkingBase {
   /**
    * Check whether the cache does a correct replacement and holds at most the
    * given elements. This is a test not a benchmark, just for sanity checking.
-   * Every cache will behave the same for size 1.
+   *
+   * <p/>Theory: Every cache will behave the same for size 1. That is not totally
+   * true and depends whether eviction is done before or after a new entry is
+   * put in the cache.
    */
   @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
   public void testReplacement1() throws Exception {
     AccessTrace t = traceRandomForSize1Replacement;
     BenchmarkCache<Integer, Integer> c = freshCache(1);
     runBenchmark(c, t);
+    if (c.getMissCount() == 908) {
+    } else {
+    }
     logHitRate(c, t, c.getMissCount());
     c.destroy();
   }
