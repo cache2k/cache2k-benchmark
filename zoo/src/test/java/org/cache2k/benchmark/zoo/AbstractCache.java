@@ -67,4 +67,11 @@ public abstract class AbstractCache<K, T> implements Cache<K, T> {
   public int getTotalEntryCount() {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public void purge() { }
+
+  @Override
+  public void flush() { }
+
 }
