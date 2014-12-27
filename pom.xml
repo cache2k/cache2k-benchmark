@@ -81,11 +81,11 @@
       </build>
     </profile>
     <!--
-          testBenchmarks profile
-          Runs the tests only as unit tests. This is used for CI testing with the benchmarks.
+          onlyTest profile
+          Runs the benchmarks only as unit tests. This is used for CI testing with the benchmarks.
     -->
     <profile>
-      <id>testBenchmarks</id>
+      <id>onlyTest</id>
       <build>
         <plugins>
           <plugin>
@@ -95,6 +95,7 @@
             <configuration>
               <includes>
                 <include>**/*Benchmark.java</include>
+                <include>**/*Test.java</include>
               </includes>
               <!-- don't reuse a spawned JVM, so different
                    implementation do not influence each other -->
