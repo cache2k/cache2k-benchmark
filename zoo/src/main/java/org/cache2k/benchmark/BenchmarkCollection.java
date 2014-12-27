@@ -83,6 +83,7 @@ public class BenchmarkCollection extends BenchmarkingBase {
     BenchmarkCache<Integer, Integer> c = freshCache(1);
     runBenchmark(c, t);
     if (c.getMissCount() == 908) {
+    } else if (c.getMissCount() == 913) {
     } else {
     }
     logHitRate(c, t, c.getMissCount());
