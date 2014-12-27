@@ -74,4 +74,13 @@ public abstract class AbstractCache<K, T> implements Cache<K, T> {
   @Override
   public void flush() { }
 
+  @Override
+  public boolean putIfAbsent(K key, T value) {
+    return false;
+  }
+
+  @Override
+  public CacheEntry<K, T> peekEntry(K key) {
+    return null;
+  }
 }
