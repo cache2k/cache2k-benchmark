@@ -82,7 +82,8 @@ public class BenchmarkCollection extends BenchmarkingBase {
     AccessTrace t = traceRandomForSize1Replacement;
     BenchmarkCache<Integer, Integer> c = freshCache(1);
     runBenchmark(c, t);
-    if (c.getMissCount() == 908) {
+    if (c.getMissCount() == 810) {
+    } else if (c.getMissCount() == 908) {
     } else if (c.getMissCount() == 913) {
     } else {
     }
