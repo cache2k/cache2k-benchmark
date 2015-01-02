@@ -269,7 +269,6 @@ done
 
 if test -z "$1"; then
   echo "Run with: processBenchmarkResults.sh copyData | process | copyToSite";
-  exit 1;
+else
+ "$@";
 fi
-
-"$@";

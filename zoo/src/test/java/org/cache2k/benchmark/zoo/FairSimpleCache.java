@@ -4,7 +4,7 @@ package org.cache2k.benchmark.zoo;
  * #%L
  * cache2k-benchmark-zoo
  * %%
- * Copyright (C) 2013 - 2014 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2015 headissue GmbH, Munich
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as

@@ -4,7 +4,7 @@ package org.cache2k.benchmark;
  * #%L
  * cache2k-benchmark-zoo
  * %%
- * Copyright (C) 2013 - 2014 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2015 headissue GmbH, Munich
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -173,25 +173,6 @@ public class BenchmarkCollection extends BenchmarkingBase {
     runBenchmark(randomTrace, 500);
   }
 
-  @Test
-  public void benchmarkRandmonThreads2() throws Exception {
-    runMultiThreadBenchmark(2, randomTrace, 500);
-  }
-
-  @Test
-  public void benchmarkRandmonThreads4() throws Exception {
-    runMultiThreadBenchmark(4, randomTrace, 500);
-  }
-
-  @Test
-  public void benchmarkRandmonThreads6() throws Exception {
-    runMultiThreadBenchmark(6, randomTrace, 500);
-  }
-
-  @Test
-  public void benchmarkRandmonThreads8() throws Exception {
-    runMultiThreadBenchmark(8, randomTrace, 500);
-  }
 
   static final AccessTrace effective90Trace =
     new AccessTrace(new DistAccessPattern(1000), TRACE_LENGTH);

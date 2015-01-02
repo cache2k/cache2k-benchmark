@@ -4,7 +4,7 @@ package org.cache2k.benchmark;
  * #%L
  * cache2k-benchmark-zoo
  * %%
- * Copyright (C) 2013 - 2014 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2015 headissue GmbH, Munich
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -41,21 +41,6 @@ public class HashMapBenchmark extends BenchmarkCollection {
   @Ignore @Override
   public void benchmarkMiss_50000() {}
 
-  @Ignore @Override
-  public void benchmarkRandmonThreads2() throws Exception {
-  }
-
-  @Ignore @Override
-  public void benchmarkRandmonThreads4() throws Exception {
-  }
-
-  @Ignore @Override
-  public void benchmarkRandmonThreads6() throws Exception {
-  }
-
-  @Ignore @Override
-  public void benchmarkRandmonThreads8() throws Exception {
-  }
 
   @Ignore @Override
   public void benchmarkEff90Threads2() throws Exception {
