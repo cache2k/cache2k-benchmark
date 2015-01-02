@@ -70,8 +70,6 @@
               <systemProperties>
                 <jub.consumers>CONSOLE,XML</jub.consumers>
                 <jub.xml.file>${project.build.directory}/junit-benchmark.xml</jub.xml.file>
-                <cache2k.benchmark.result.sql>${project.build.directory}/cache2k-benchmark-result.sql
-                </cache2k.benchmark.result.sql>
                 <cache2k.benchmark.result.csv>${project.build.directory}/cache2k-benchmark-result.csv
                 </cache2k.benchmark.result.csv>
               </systemProperties>
@@ -107,8 +105,6 @@
                 <jub.ignore.annotations>true</jub.ignore.annotations>
                 <jub.consumers>CONSOLE,XML</jub.consumers>
                 <jub.xml.file>${project.build.directory}/junit-benchmark.xml</jub.xml.file>
-                <cache2k.benchmark.result.sql>${project.build.directory}/cache2k-benchmark-result.sql
-                </cache2k.benchmark.result.sql>
                 <cache2k.benchmark.result.csv>${project.build.directory}/cache2k-benchmark-result.csv
                 </cache2k.benchmark.result.csv>
               </systemProperties>
