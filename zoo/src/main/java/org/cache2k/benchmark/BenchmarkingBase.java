@@ -186,20 +186,20 @@ public class BenchmarkingBase extends AbstractBenchmark {
       String.format("%.2f", _optHitRate * 1D / 100) + "|" + // 7
       String.format("%.2f", _trace.getRandomHitRate(_cacheSize).getFactor() * 100) + "|" +  // 8
       _usedMem; // 9
-    benchmarkName2csv.put(_testName, _csvLine);
-    writeCsv();
+    if (!benchmarkName2csv.containsKey(_testName)) {
+      benchmarkName2csv.put(_testName, _csvLine);
+      writeCsv(_csvLine);
+    }
   }
 
-  void writeCsv() {
+  void writeCsv(String _csvLine) {
     String s = System.getProperty("cache2k.benchmark.result.csv");
     if (s == null) {
       return;
     }
     try {
-      PrintWriter w = new PrintWriter(new FileWriter(s));
-      for (String k : benchmarkName2csv.keySet()) {
-        w.println(benchmarkName2csv.get(k));
-      }
+      PrintWriter w = new PrintWriter(new FileWriter(s, true));
+      w.println(_csvLine);
       w.close();
     } catch (IOException e) {
       throw new RuntimeException(e);
