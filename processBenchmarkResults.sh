@@ -75,6 +75,7 @@ cleanName() {
 
 copyData() {
 test -d $RESULT || mkdir -p $RESULT;
+cp benchmark.log $RESULT/;
 cp thirdparty/target/junit-benchmark.xml $RESULT/thirdparty-junit-benchmark.xml;
 cp zoo/target/junit-benchmark.xml $RESULT/zoo-junit-benchmark.xml;
 cp thirdparty/target/cache2k-benchmark-result.csv $RESULT/thirdparty-cache2k-benchmark-result.csv;
@@ -86,10 +87,38 @@ test -d "$SITE" || mkdir -p "$SITE";
 cp "$RESULT"/* "$SITE"/;
 }
 
-printJubCsv() {
+# print a csv with the junit benchmark results. old version.
+# the xml contains only the data from the last JVM fork.
+printJubCsvOld() {
 for I in $RESULT/*-junit-benchmark.xml; do
   xml2 < $I | 2csv -d"|" testname @name @classname @round-avg @round-stddev @benchmark-rounds
 done
+}
+
+extract_jub_csv_from_log_awk=`cat <<"EOF"
+/^Running / { class=$2; }
+/measured [0-9]* out of/ { rounds=$3; split($1, A, ":"); name=A[1]; }
+/ round: / {
+  n=split(name, A, ".");
+  method=A[n];
+  roundavg=$2;
+  split($4, A, "]");
+  stddev=A[1];
+  print method"|"class"|"roundavg"|"stddev"|"rounds;
+}
+EOF
+`
+
+# Extract junit benchmarks result by parsing the log.
+# We use the workaround, since in the result XML file there is only the
+# result of the last JVM fork. However, there is one decimal precision less.
+# Format example:
+# benchmarkRandmonThreads2|org.cache2k.benchmark.ArcCacheBenchmark|13.12|0.56|3
+# benchmarkRandmonThreads4|org.cache2k.benchmark.ArcCacheBenchmark|40.21|0.34|3
+# benchmarkRandmonThreads6|org.cache2k.benchmark.ArcCacheBenchmark|67.25|1.16|3
+#
+printJubCsv() {
+cat $RESULT/benchmark.log | awk "$extract_jub_csv_from_log_awk"
 }
 
 printCacheCsv() {
