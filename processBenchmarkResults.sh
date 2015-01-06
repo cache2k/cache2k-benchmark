@@ -45,7 +45,7 @@ awk -v cols="$cols" "$pivot_awk";
 
 pivot_awk=`cat <<"EOF"
 BEGIN { FS="|";
-  split(cols, colKeys, ",");
+  keysCnt = split(cols, colKeys, ",");
 }
   
   row!=$1 { flushRow(); row=$1; for (i in data) delete data[i]; }
@@ -56,7 +56,7 @@ END { flushRow(); }
 function flushRow() {
  if (row == "") return;
  printf ("%s ", row);
- for (k in colKeys) {
+ for (k = 1; k <= keysCnt; k++) {
    key=colKeys[k];
    printf ("%s ", data[key]);
  }
