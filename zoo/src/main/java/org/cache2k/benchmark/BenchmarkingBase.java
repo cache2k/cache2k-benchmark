@@ -133,6 +133,10 @@ public class BenchmarkingBase extends AbstractBenchmark {
       Thread.sleep(55);
       Runtime.getRuntime().gc();
       Thread.sleep(55);
+      Runtime.getRuntime().gc();
+      Thread.sleep(55);
+      Runtime.getRuntime().gc();
+      Thread.sleep(55);
     } catch (Exception ignore) { }
     long _usedMem;
     long _total;
@@ -142,7 +146,7 @@ public class BenchmarkingBase extends AbstractBenchmark {
       _count++;
       _total = Runtime.getRuntime().totalMemory();
       try {
-        Thread.sleep(255);
+        Thread.sleep(25);
       } catch (Exception ignore) { }
       long _free = Runtime.getRuntime().freeMemory();
       _total2 = Runtime.getRuntime().totalMemory();
