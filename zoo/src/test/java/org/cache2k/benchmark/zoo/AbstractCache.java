@@ -39,6 +39,11 @@ import java.util.Set;
 public abstract class AbstractCache<K, T> implements Cache<K, T> {
 
   @Override
+  public boolean contains(K key) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public Map<K, T> getAll(Set<? extends K> keys) {
     throw new UnsupportedOperationException();
   }
@@ -81,6 +86,15 @@ public abstract class AbstractCache<K, T> implements Cache<K, T> {
 
   @Override
   public CacheEntry<K, T> peekEntry(K key) {
-    return null;
+    throw new UnsupportedOperationException();
   }
+
+  @Override
+  public CacheEntry<K, T> getEntry(K key) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void close() { destroy(); }
+
 }
