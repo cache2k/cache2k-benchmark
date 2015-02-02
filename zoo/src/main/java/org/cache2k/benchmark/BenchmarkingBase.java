@@ -127,6 +127,19 @@ public class BenchmarkingBase extends AbstractBenchmark {
       return;
     }
     onlyOneResult.add(_testName);
+    long _usedMem = -1;
+    if (c.getCacheSize() > 3000) {
+      _usedMem = calculateUsedMemory();
+    }
+    saveHitRate(_testName, c.getCacheSize(), _trace, _optHitRate, _missCount, _usedMem);
+    c.checkIntegrity();
+    String _cacheStatistics = c.getStatistics();
+    System.out.println(_cacheStatistics);
+    System.out.flush();
+  }
+
+  private long calculateUsedMemory() {
+    long _usedMem;
     System.out.println("cache2k benchmark is requesting GC (record used memory)...");
     try {
       Runtime.getRuntime().gc();
@@ -138,7 +151,6 @@ public class BenchmarkingBase extends AbstractBenchmark {
       Runtime.getRuntime().gc();
       Thread.sleep(55);
     } catch (Exception ignore) { }
-    long _usedMem;
     long _total;
     long _total2;
     long _count = -1;
@@ -153,11 +165,7 @@ public class BenchmarkingBase extends AbstractBenchmark {
       _usedMem = _total - _free;
     } while (_total != _total2);
     System.out.println("looped for stable total memory, count=" + _count + ", total=" + _total + ", used=" + _usedMem);
-    saveHitRate(_testName, c.getCacheSize(), _trace, _optHitRate, _missCount, _usedMem);
-    c.checkIntegrity();
-    String _cacheStatistics = c.getStatistics();
-    System.out.println(_cacheStatistics);
-    System.out.flush();
+    return _usedMem;
   }
 
   void saveHitRate(String _testName, int _cacheSize, AccessTrace _trace, int _optHitRate, long _missCount, long _usedMem) {
