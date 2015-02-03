@@ -30,10 +30,12 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -230,6 +232,7 @@ public class AccessTrace implements Iterable<Integer> {
 
   int calcRandomHits(int _size, int _seed) {
     HashSet<Integer> _cache = new HashSet<>();
+    List<Integer> _list = new ArrayList<>();
     Random _random = new Random(_seed);
     int _hitCnt = 0;
     for (int v : getTrace()) {
@@ -239,11 +242,11 @@ public class AccessTrace implements Iterable<Integer> {
         if (_cache.size() == _size) {
           Iterator<Integer> it = _cache.iterator();
           int cnt = _random.nextInt(_cache.size());
-          while (cnt-- > 0) { it.hasNext(); it.next(); }
-          it.hasNext();
-          _cache.remove(it.next());
+          _cache.remove(_list.get(cnt));
+          _list.remove(cnt);
         }
         _cache.add(v);
+        _list.add(v);
       }
     }
     return _hitCnt;
