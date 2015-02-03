@@ -76,3 +76,10 @@ papers:
      SIGMETRICS Conference, May 1999.*
 
 The traces Web07 and Web12 are application traces provided by headissue GmbH
+
+The OLTP trace was used within the ARC paper:
+
+  * Nimrod Megiddo and Dharmendra S. Modha, "ARC: A Self-Tuning, Low Overhead 
+    Replacement Cache," USENIX Conference on File and Storage Technologies (FAST 03), 
+    San Francisco, CA, pp. 115-130, March 31-April 2, 2003. 
+
