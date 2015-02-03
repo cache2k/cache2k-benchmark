@@ -43,7 +43,12 @@ public class EhCacheFactory extends BenchmarkCacheFactory {
 
   @Override
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
-    return new MyBenchmarkCache(createCacheConfiguration(_maxElements));
+    return this.create(null, _maxElements);
+  }
+
+  @Override
+  public BenchmarkCache<Integer, Integer> create(Source _source, int _maxElements) {
+    return new MyBenchmarkCache(_source, createCacheConfiguration(_maxElements));
   }
 
   protected CacheManager getManager() {
@@ -84,17 +89,38 @@ public class EhCacheFactory extends BenchmarkCacheFactory {
 
   }
 
+  static class DelegatingEntryFactory extends MyCacheEntryFactory {
+
+    Source source;
+
+    DelegatingEntryFactory(Source source) {
+      this.source = source;
+    }
+
+    @Override
+    public Object createEntry(Object key) throws Exception {
+      missCount++;
+      return source.get((Integer) key);
+    }
+
+  }
+
   class MyBenchmarkCache extends BenchmarkCache<Integer, Integer> {
 
     CacheConfiguration config;
     MyCacheEntryFactory entryFactory;
     SelfPopulatingCache cache;
 
-    MyBenchmarkCache(CacheConfiguration v) {
+    MyBenchmarkCache(Source _source, CacheConfiguration v) {
       this.config = v;
       Cache _testCache = new net.sf.ehcache.Cache(v);
       getManager().addCache(_testCache);
-      cache = new SelfPopulatingCache(_testCache, entryFactory = new MyCacheEntryFactory());
+      if (_source != null) {
+        entryFactory = new DelegatingEntryFactory(_source);
+      } else {
+        entryFactory = new MyCacheEntryFactory();
+      }
+      cache = new SelfPopulatingCache(_testCache, entryFactory);
     }
 
     @Override

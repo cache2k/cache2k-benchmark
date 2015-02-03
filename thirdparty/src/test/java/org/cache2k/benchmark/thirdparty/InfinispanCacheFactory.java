@@ -56,6 +56,11 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
 
   @Override
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
+    return create(null, _maxElements);
+  }
+
+  @Override
+  public BenchmarkCache<Integer, Integer> create(Source _source, int _maxElements) {
     EmbeddedCacheManager m = getCacheMangaer();
     ConfigurationBuilder cb = new ConfigurationBuilder();
 
@@ -73,7 +78,7 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
     }
     m.defineConfiguration(CACHE_NAME, cb.build());
     Cache<Integer, Integer> _cache = m.getCache(CACHE_NAME);
-    return new MyBenchmarkCache(_cache);
+    return _source != null ? new MyBenchmarkCache(_source, _cache) : new MyBenchmarkCache(_cache);
   }
 
   public enum Algorithm { DEFAULT, LRU, LIRS, UNORDERED }
@@ -89,6 +94,21 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
 
   }
 
+  static class DelegatingSimpleCacheSource extends MySimpleCacheSource {
+
+    Source source;
+
+    DelegatingSimpleCacheSource(Source source) {
+      this.source = source;
+    }
+
+    public Integer get(Integer key) {
+      missCnt++;
+      return source.get(key);
+    }
+
+  }
+
   static class MyBenchmarkCache extends BenchmarkCache<Integer, Integer> {
 
     Cache<Integer, Integer> cache;
@@ -96,6 +116,11 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
 
     MyBenchmarkCache(Cache<Integer, Integer> cache) {
       this.cache = cache;
+    }
+
+    MyBenchmarkCache(Source s, Cache<Integer, Integer> cache) {
+      this.cache = cache;
+      source = new DelegatingSimpleCacheSource(s);
     }
 
     /**

@@ -31,8 +31,17 @@ public abstract class BenchmarkCacheFactory {
 
   public abstract BenchmarkCache<Integer, Integer> create(int _maxElements);
 
+  public abstract BenchmarkCache<Integer, Integer> create(Source s, int _maxElements);
+
   public BenchmarkCacheFactory withExpiry(boolean v) {
     withExpiry = v;
     return this;
   }
+
+  public static abstract class Source {
+
+    public abstract int get(int v);
+
+  }
+
 }

@@ -37,8 +37,19 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
   Class<?> implementation;
 
   @Override
-  public BenchmarkCache<Integer, Integer> create(final int _maxElements) {
-    final CountingDataSource<Integer, Integer> _source = new CountingDataSource<>();
+  public BenchmarkCache<Integer, Integer> create(int _maxElements) {
+    return this.create(null, _maxElements);
+  }
+
+  @Override
+  public BenchmarkCache<Integer, Integer> create(Source s, final int _maxElements) {
+    CountingDataSource<Integer, Integer> _usedSource;
+    if (s == null) {
+      _usedSource = new CountingDataSource<>();
+    } else {
+      _usedSource = new DelegatingSource(s);
+    }
+    final CountingDataSource<Integer, Integer> _source = _usedSource;
     final Cache<Integer, Integer> c =
       CacheBuilder.newCache(Integer.class, Integer.class)
       .name("testCache")
@@ -99,21 +110,37 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
    */
   public static class CountingDataSource<K, T> implements CacheSource<K, T> {
 
-      private AtomicInteger missCnt = new AtomicInteger();
+    private int missCnt;
 
-      protected final void incrementMissCount() {
-        missCnt.incrementAndGet();
-      }
+    protected final void incrementMissCount() {
+      missCnt++;
+    }
 
-      public final int getMissCount() {
-        return missCnt.intValue();
-      }
+    public final int getMissCount() {
+      return missCnt;
+    }
 
-      @Override
-      public T get(K o) {
-        incrementMissCount();
-        return (T) o;
-      }
+    @Override
+    public T get(K o) {
+      incrementMissCount();
+      return (T) o;
+    }
 
   }
+
+  public static class DelegatingSource extends CountingDataSource<Integer, Integer> {
+
+    Source source;
+
+    public DelegatingSource(Source source) {
+      this.source = source;
+    }
+
+    public Integer get(Integer v) {
+      incrementMissCount();
+      return source.get(v);
+    }
+
+  }
+
 }

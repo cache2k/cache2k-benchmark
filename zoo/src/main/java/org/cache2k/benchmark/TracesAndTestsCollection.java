@@ -72,6 +72,7 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
     if (c.getMissCount() == 810) {
     } else if (c.getMissCount() == 908) {
     } else if (c.getMissCount() == 913) {
+    } else if (c.getMissCount() == 898) {
     } else {
     }
     logHitRate(c, t, c.getMissCount());

@@ -43,18 +43,22 @@ public class HashMapBenchmark extends BenchmarkCollection {
 
 
   @Ignore @Override
-  public void benchmarkEff90Threads2() throws Exception {
+  public void benchmarkEff95Threads1() throws Exception {
   }
 
   @Ignore @Override
-  public void benchmarkEff90Threads4() throws Exception {
+  public void benchmarkEff95Threads2() throws Exception {
   }
 
   @Ignore @Override
-  public void benchmarkEff90Threads6() throws Exception {
+  public void benchmarkEff95Threads4() throws Exception {
   }
 
   @Ignore @Override
-  public void benchmarkEff90Threads8() throws Exception {
+  public void benchmarkEff95Threads6() throws Exception {
+  }
+
+  @Ignore @Override
+  public void benchmarkEff95Threads8() throws Exception {
   }
 }

@@ -54,6 +54,13 @@ public class BenchmarkingBase extends AbstractBenchmark {
     return cache = factory.create(_maxElements);
   }
 
+  public BenchmarkCache<Integer, Integer> freshCache(BenchmarkCacheFactory.Source s, int _maxElements) {
+    if (cache != null) {
+      throw new IllegalStateException("Two caches in one test? Please call destroyCache() first");
+    }
+    return cache = factory.create(s, _maxElements);
+  }
+
   public void destroyCache() {
     if (cache != null) {
       cache.destroy();
@@ -103,7 +110,16 @@ public class BenchmarkingBase extends AbstractBenchmark {
   }
 
   public final int runBenchmark(AccessTrace t, int _cacheSize) {
-    BenchmarkCache<Integer, Integer> c = freshCache(_cacheSize);
+    return runBenchmark(null, t, _cacheSize);
+  }
+
+  public final int runBenchmark(BenchmarkCacheFactory.Source s, AccessTrace t, int _cacheSize) {
+    BenchmarkCache<Integer, Integer> c;
+    if (s == null) {
+      c = freshCache(_cacheSize);
+    } else {
+      c = freshCache(s, _cacheSize);
+    }
     runBenchmark(c, t);
     logHitRate(c, t, c.getMissCount());
     c.destroy();
@@ -111,8 +127,8 @@ public class BenchmarkingBase extends AbstractBenchmark {
       ((t.getTraceLength() - c.getMissCount()) * 10000 + t.getTraceLength() / 2) / t.getTraceLength();
   }
 
-  public final int runMultiThreadBenchmark(int _threadCount, AccessTrace t, int _cacheSize) throws Exception {
-    BenchmarkCache<Integer, Integer> c = freshCache(_cacheSize);
+  public final int runMultiThreadBenchmark(BenchmarkCacheFactory.Source s, int _threadCount, AccessTrace t, int _cacheSize) throws Exception {
+    BenchmarkCache<Integer, Integer> c = freshCache(s, _cacheSize);
     runMultiThreadBenchmark(c, _threadCount, t.getTraceLength() / _threadCount, t);
     logHitRate(c, t, c.getMissCount());
     c.destroy();

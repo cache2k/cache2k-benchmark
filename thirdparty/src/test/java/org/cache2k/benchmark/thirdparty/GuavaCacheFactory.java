@@ -30,6 +30,7 @@ import org.cache2k.benchmark.BenchmarkCacheFactory;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Jens Wilke; created: 2013-12-08
@@ -51,13 +52,44 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
     return c;
   }
 
+  @Override
+  public BenchmarkCache<Integer, Integer> create(Source s, int _maxElements) {
+    MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
+    c.loader = new MyCacheLoaderWithSource(s);
+    c.size = _maxElements;
+    CacheBuilder cb =
+      CacheBuilder.newBuilder()
+        .maximumSize(_maxElements);
+    if (withExpiry) {
+      cb.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
+    }
+    c.cache = cb.build(c.loader);
+    return c;
+  }
+
   static class MyCacheLoader extends CacheLoader<Integer,Integer> {
-    int missCount;
+
+    int missCnt;
 
     @Override
     public Integer load(Integer key) throws Exception {
-      missCount++;
+      missCnt++;
       return key;
+    }
+  }
+
+  static class MyCacheLoaderWithSource extends  MyCacheLoader {
+
+    Source source;
+
+    MyCacheLoaderWithSource(Source source) {
+      this.source = source;
+    }
+
+    @Override
+    public Integer load(Integer key) throws Exception {
+      missCnt++;
+      return source.get(key);
     }
   }
 
@@ -88,7 +120,7 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
 
     @Override
     public int getMissCount() {
-      return loader.missCount;
+      return loader.missCnt;
     }
 
   }

@@ -45,4 +45,9 @@ public class HashMapBenchmarkFactory extends BenchmarkCacheFactory {
     return _cache;
   }
 
+  @Override
+  public BenchmarkCache<Integer, Integer> create(Source s, int _maxElements) {
+    throw new UnsupportedOperationException();
+  }
+
 }

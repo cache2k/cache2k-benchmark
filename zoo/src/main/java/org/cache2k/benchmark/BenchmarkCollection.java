@@ -32,6 +32,9 @@ import org.cache2k.benchmark.util.Patterns;
 import org.cache2k.benchmark.util.RandomAccessPattern;
 import org.junit.Test;
 
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
+
 /**
  * All cache benchmarks in one class. There are three different types
  * of methods: The test* methods check for some basic cache behaviour
@@ -118,29 +121,47 @@ public class BenchmarkCollection extends TracesAndTestsCollection {
   static final AccessTrace effective90Trace =
     new AccessTrace(new DistAccessPattern(1000), TRACE_LENGTH);
 
+  class MultiThreadSource extends BenchmarkCacheFactory.Source {
+
+    @Override
+    public int get(int v) {
+      Random random = ThreadLocalRandom.current();
+      int sum = v;
+      for (int i = 0; i < 1000; i++) {
+        sum += random.nextInt();
+      }
+      return sum;
+    }
+  }
+
   @Test
   public void benchmarkEff90() throws Exception {
     runBenchmark(effective90Trace, 500);
   }
 
   @Test
-  public void benchmarkEff90Threads2() throws Exception {
-    runMultiThreadBenchmark(2, effective90Trace, 500);
+  public void benchmarkEff95Threads1() throws Exception {
+    runMultiThreadBenchmark(new MultiThreadSource(), 1, effective95Trace, 500);
   }
 
   @Test
-  public void benchmarkEff90Threads4() throws Exception {
-    runMultiThreadBenchmark(4, effective90Trace, 500);
+  public void benchmarkEff95Threads2() throws Exception {
+    runMultiThreadBenchmark(new MultiThreadSource(), 2, effective95Trace, 500);
   }
 
   @Test
-  public void benchmarkEff90Threads6() throws Exception {
-    runMultiThreadBenchmark(6, effective90Trace, 500);
+  public void benchmarkEff95Threads4() throws Exception {
+    runMultiThreadBenchmark(new MultiThreadSource(), 4, effective95Trace, 500);
   }
 
   @Test
-  public void benchmarkEff90Threads8() throws Exception {
-    runMultiThreadBenchmark(8, effective90Trace, 500);
+  public void benchmarkEff95Threads6() throws Exception {
+    runMultiThreadBenchmark(new MultiThreadSource(), 6, effective95Trace, 500);
+  }
+
+  @Test
+  public void benchmarkEff95Threads8() throws Exception {
+    runMultiThreadBenchmark(new MultiThreadSource(), 8, effective95Trace, 500);
   }
 
   static final AccessTrace effective95Trace =
