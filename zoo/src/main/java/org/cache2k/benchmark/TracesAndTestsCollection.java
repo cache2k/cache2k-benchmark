@@ -26,6 +26,7 @@ import com.carrotsearch.junitbenchmarks.BenchmarkOptions;
 import org.cache2k.benchmark.traces.CacheAccessTraceCpp;
 import org.cache2k.benchmark.traces.CacheAccessTraceGlimpse;
 import org.cache2k.benchmark.traces.CacheAccessTraceMulti2;
+import org.cache2k.benchmark.traces.CacheAccessTraceOltp;
 import org.cache2k.benchmark.traces.CacheAccessTraceSprite;
 import org.cache2k.benchmark.traces.CacheAccessTraceWeb07;
 import org.cache2k.benchmark.traces.CacheAccessTraceWeb12;
@@ -215,6 +216,31 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
   public void benchmarkMulti2_3000() {
     runBenchmark(CacheAccessTraceMulti2.getInstance(), 3000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkOltp_1000() throws Exception {
+    runBenchmark(CacheAccessTraceOltp.getInstance(), 1000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkOltp_2000() throws Exception {
+    runBenchmark(CacheAccessTraceOltp.getInstance(), 2000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkOltp_5000() throws Exception {
+    runBenchmark(CacheAccessTraceOltp.getInstance(), 5000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkOltp_10000() throws Exception {
+    runBenchmark(CacheAccessTraceOltp.getInstance(), 10000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkOltp_15000() throws Exception {
+    runBenchmark(CacheAccessTraceOltp.getInstance(), 15000);
   }
 
 }
