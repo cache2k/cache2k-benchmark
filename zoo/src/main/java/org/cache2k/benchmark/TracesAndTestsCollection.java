@@ -60,9 +60,11 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
    * Check whether the cache does a correct replacement and holds at most the
    * given elements. This is a test not a benchmark, just for sanity checking.
    *
-   * <p/>Theory: Every cache will behave the same for size 1. That is not totally
+   * <p/>Theory: Every cache will behave the same for size 1. However, that is not totally
    * true and depends whether eviction is done before or after a new entry is
-   * put in the cache.
+   * put in the cache. Eviction is done after the entry was fetched, the eviction may
+   * decide to evict the entry just processed and keep a less recent entry in the hot set.
+   * This is why ARC and ClockPro yield lower miss counts.
    */
   @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
   public void testReplacement1() throws Exception {
