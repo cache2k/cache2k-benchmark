@@ -66,6 +66,11 @@ public class BenchmarkCollection extends TracesAndTestsCollection {
     runBenchmark(mostlyHitTrace, 500);
   }
 
+  @Test
+  public void benchmarkHits2000() {
+    runBenchmark(mostlyHitTrace, 2000);
+  }
+
   static final AccessTrace allMissTrace =
     new AccessTrace(Patterns.sequence(TRACE_LENGTH))
       .setOptHitCount(500, 0)
