@@ -45,6 +45,8 @@ import java.util.concurrent.ThreadLocalRandom;
 @BenchmarkOptions(benchmarkRounds = 3, warmupRounds = 2)
 public class BenchmarkCollection extends TracesAndTestsCollection {
 
+  public static final boolean SKIP_MULTI_THREAD = true;
+
   public static final int TRACE_LENGTH = 3 * 1000 * 1000;
 
   public static final AccessTrace traceRandomForSize1Replacement =
@@ -151,23 +153,26 @@ public class BenchmarkCollection extends TracesAndTestsCollection {
 
   @Test
   public void benchmarkEff95Threads4() throws Exception {
+    if (SKIP_MULTI_THREAD) { return; }
     runMultiThreadBenchmark(new MultiThreadSource(), 4, effective95Trace, 500);
   }
 
   @Test
   public void benchmarkEff95Threads6() throws Exception {
+    if (SKIP_MULTI_THREAD) { return; }
     runMultiThreadBenchmark(new MultiThreadSource(), 6, effective95Trace, 500);
   }
 
   @Test
   public void benchmarkEff95Threads8() throws Exception {
+    if (SKIP_MULTI_THREAD) { return; }
     runMultiThreadBenchmark(new MultiThreadSource(), 8, effective95Trace, 500);
   }
 
   static final AccessTrace effective95Trace =
     new AccessTrace(new DistAccessPattern(900), TRACE_LENGTH);
 
-  @Test
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
   public void benchmarkEff95() throws Exception {
     runBenchmark(effective95Trace, 500);
   }
