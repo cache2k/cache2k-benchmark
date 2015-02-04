@@ -266,7 +266,7 @@ plot $f "Memory consumption with expiry" "bytes"
 f=$RESULT/3ptySpeed.dat;
 (
 echo Benchmark cache2k/CLOCK cache2k/CP+ cache2k/ARC EHCache Infinispan Guava;
-printJubCsv | onlySpeed | cleanName | grep -v "Threads" |  sort | \
+printJubCsv | onlySpeed | cleanName | grep -v "Threads" |  grep -v "Hits2000"| sort | \
   pivot org.cache2k.benchmark.ClockCacheBenchmark \
         org.cache2k.benchmark.ClockProPlusCacheBenchmark \
         org.cache2k.benchmark.ArcCacheBenchmark \
@@ -280,7 +280,7 @@ plot $f "Runtime of 3 million cache requests" "runtime in seconds"
 f=$RESULT/3ptySpeedThreads.dat;
 (
 echo Benchmark cache2k/CLOCK cache2k/CP+ cache2k/ARC EHCache Infinispan Guava;
-printJubCsv | onlySpeed | grep "^benchmarkEff95Threads" | cleanName | sort | \
+printJubCsv | onlySpeed | grep "^benchmarkEff95Threads\(1\|2\)" | cleanName | sort | \
   pivot org.cache2k.benchmark.ClockCacheBenchmark \
         org.cache2k.benchmark.ClockProPlusCacheBenchmark \
         org.cache2k.benchmark.ArcCacheBenchmark \
@@ -296,7 +296,7 @@ plot $f "3 million cache requests Eff95 per thread count" "runtime in seconds"
 f=$RESULT/3ptyHitrate.dat;
 (
 echo Benchmark cache2k/CLOCK cache2k/CP+ cache2k/ARC EHCache Infinispan Guava;
-printCacheCsv | onlySpeed | cleanName | sort | \
+printCacheCsv | onlySpeed | grep -v "Threads" | cleanName | sort | \
   pivot org.cache2k.benchmark.ClockCacheBenchmark \
 	org.cache2k.benchmark.ClockProPlusCacheBenchmark \
         org.cache2k.benchmark.ArcCacheBenchmark \
@@ -332,7 +332,7 @@ impls="OPT \
         org.cache2k.benchmark.thirdparty.InfinispanCacheBenchmark \
         org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
         RAND";
-for I in Web07 Web12 Cpp Sprite Multi2; do
+for I in Web07 Web12 Cpp Sprite Multi2 Oltp; do
   f=$RESULT/trace${I}hitrate.dat;
   (
   echo $header;
