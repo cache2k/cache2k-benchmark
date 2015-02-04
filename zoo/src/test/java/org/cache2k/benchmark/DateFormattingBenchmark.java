@@ -57,13 +57,13 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
 
   static List<Date> dates;
 
-  static List<Date> provideListWith1MillionDates() {
+  static List<Date> provideListWith3MillionDates() {
     if (dates != null) {
       return dates;
     }
     Random r = new Random(1802);
     ArrayList<Date> l = new ArrayList<>();
-    for (int i = 0; i < 1000000; i++) {
+    for (int i = 0; i < 3000000; i++) {
       l.add(new Date(r.nextInt(200)));
     }
     return dates = l;
@@ -73,11 +73,21 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
    * Straight forward formatting. Get a new formatter every time.
    */
   @Test
-  public void testWithoutCache() {
+  public void testWithoutCacheAlwaysNewFormatter() {
     PrintWriter w = new PrintWriter(new CharArrayWriter());
-    List<Date> l = provideListWith1MillionDates();
+    List<Date> l = provideListWith3MillionDates();
     for (Date d : l) {
       DateFormat df = DateFormat.getDateInstance(DateFormat.LONG, Locale.FRANCE);
+      w.print(df.format(d));
+    }
+  }
+
+  @Test
+  public void testWithoutCacheSingleFormatter() {
+    PrintWriter w = new PrintWriter(new CharArrayWriter());
+    DateFormat df = DateFormat.getDateInstance(DateFormat.LONG, Locale.FRANCE);
+    List<Date> l = provideListWith3MillionDates();
+    for (Date d : l) {
       w.print(df.format(d));
     }
   }
@@ -99,7 +109,7 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
         })
         .implementation(ClockCache.class)
         .build();
-    List<Date> l = provideListWith1MillionDates();
+    List<Date> l = provideListWith3MillionDates();
     for (Date d : l) {
       w.print(c.get(d));
     }
@@ -122,7 +132,7 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
         })
         .implementation(ClockCache.class)
         .build();
-    List<Date> l = provideListWith1MillionDates();
+    List<Date> l = provideListWith3MillionDates();
     for (Date d : l) {
       w.print(c.get(d));
     }
@@ -141,7 +151,6 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
   @Test
   @SuppressWarnings("unchecked")
   public void testAssociativeCache() {
-    final PrintWriter w = new PrintWriter(new CharArrayWriter());
     Cache<Locale, Cache<Integer, Cache<Date, String>>> c = (Cache)
       CacheBuilder.newCache(Locale.class, Cache.class)
         .source(new CacheSource<Locale, Cache>() {
@@ -168,11 +177,10 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
         })
         .implementation(ClockCache.class)
         .build();
-    List<Date> l = provideListWith1MillionDates();
+    PrintWriter w = new PrintWriter(new CharArrayWriter());
+    List<Date> l = provideListWith3MillionDates();
     for (Date d : l) {
-      w.print(
-        c.get(Locale.FRANCE).get(DateFormat.LONG).get(d)
-      );
+      w.print(c.get(Locale.FRANCE).get(DateFormat.LONG).get(d));
     }
   }
 
@@ -181,7 +189,6 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
    */
   @Test
   public void testWithCacheAndKeyObject() {
-    final PrintWriter w = new PrintWriter(new CharArrayWriter());
     Cache<CacheKey, String> c =
       CacheBuilder.newCache(CacheKey.class, String.class)
         .source(new CacheSource<CacheKey, String>() {
@@ -193,7 +200,8 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
         })
         .implementation(ClockCache.class)
         .build();
-    List<Date> l = provideListWith1MillionDates();
+    PrintWriter w = new PrintWriter(new CharArrayWriter());
+    List<Date> l = provideListWith3MillionDates();
     for (Date d : l) {
       w.print(c.get(new CacheKey(Locale.FRANCE, DateFormat.LONG, d)));
     }
