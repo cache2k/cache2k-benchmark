@@ -280,7 +280,7 @@ plot $f "Runtime of 3 million cache requests" "runtime in seconds"
 f=$RESULT/3ptySpeedThreads.dat;
 (
 echo Benchmark cache2k/CLOCK cache2k/CP+ cache2k/ARC EHCache Infinispan Guava;
-printJubCsv | onlySpeed | grep "^benchmarkEff90" | cleanName | sort | \
+printJubCsv | onlySpeed | grep "^benchmarkEff95Threads" | cleanName | sort | \
   pivot org.cache2k.benchmark.ClockCacheBenchmark \
         org.cache2k.benchmark.ClockProPlusCacheBenchmark \
         org.cache2k.benchmark.ArcCacheBenchmark \
@@ -289,7 +289,7 @@ printJubCsv | onlySpeed | grep "^benchmarkEff90" | cleanName | sort | \
         org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark | \
   stripEmpty
 ) > $f
-plot $f "3 million cache requests Eff90 per thread count" "runtime in seconds"
+plot $f "3 million cache requests Eff95 per thread count" "runtime in seconds"
 
 
 
