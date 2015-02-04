@@ -103,8 +103,8 @@ public class BenchmarkingBase extends AbstractBenchmark {
   }
 
   public final void runBenchmark(BenchmarkCache<Integer, Integer> c, AccessTrace t) {
-    int[] _trace = t.getArray();
-    for (int v : _trace) {
+    Integer[] _trace = t.getObjectTrace();
+    for (Integer v : _trace) {
       c.get(v);
     }
   }

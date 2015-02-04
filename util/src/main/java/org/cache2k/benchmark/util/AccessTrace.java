@@ -48,6 +48,7 @@ public class AccessTrace implements Iterable<Integer> {
 
   AccessPattern pattern;
   private int[] trace = null;
+  private Integer[] objectTrace = null;
   int valueCount = -1;
   int lowValue = -Integer.MAX_VALUE;
   int highValue = Integer.MIN_VALUE;
@@ -127,6 +128,18 @@ public class AccessTrace implements Iterable<Integer> {
    */
   public AccessTrace(AccessPattern p, int _maxSize) {
     pattern = Patterns.strip(p, _maxSize);
+  }
+
+  public Integer[] getObjectTrace() {
+    if (objectTrace != null) {
+      return objectTrace;
+    }
+    int[] _trace = getTrace();
+    Integer[] ia = new Integer[_trace.length];
+    for (int i = 0; i < _trace.length; i++) {
+      ia[i] = _trace[i];
+    }
+    return objectTrace = ia;
   }
 
   public int[] getTrace() {
