@@ -16,7 +16,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cache2k-version>0.21-SNAPSHOT</cache2k-version>
+    <cache2k-version>0.21</cache2k-version>
   </properties>
 
   <modules>
@@ -39,15 +39,6 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <repositories>
-    <repository>
-      <id>headissue.public</id>
-      <name>headissue public maven repository</name>
-      <url>https://www.headissue.com/maven</url>
-      <layout>default</layout>
-    </repository>
-  </repositories>
 
   <profiles>
     <profile>
