@@ -5,11 +5,11 @@
   <parent>
     <groupId>org.cache2k</groupId>
     <artifactId>cache2k-benchmark-parent</artifactId>
-    <version>0.20-SNAPSHOT</version>
+    <version>0.21</version>
   </parent>
 
   <artifactId>cache2k-benchmark-traces</artifactId>
-  <version>0.20-SNAPSHOT</version>
+  <version>0.21</version>
 
   <description>A collection of real world cache access traces to test cache efficiency.</description>
 
