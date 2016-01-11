@@ -11,7 +11,7 @@ results.
 To run the benchmarks for the latest release:
 
 ```
-version=0.18;
+version=v0.21;
 git clone -b $version https://github.com/headissue/cache2k-benchmark.git
 ```
 
