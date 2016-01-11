@@ -4,7 +4,7 @@ package org.cache2k.benchmark.util;
  * #%L
  * cache2k-benchmark-util
  * %%
- * Copyright (C) 2013 - 2015 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -33,5 +33,11 @@ public class RandomAccessPatternTest {
   @Test
   public void test0() throws Exception {
     RandomAccessPattern p = new RandomAccessPattern(1);
+    assertTrue(p.isEternal());
+    assertTrue(p.hasNext());
+    assertEquals(0, p.next());
+    assertTrue(p.isEternal());
+    assertTrue(p.hasNext());
+    assertEquals(0, p.next());
   }
 }

@@ -4,7 +4,7 @@ package org.cache2k.benchmark.util;
  * #%L
  * cache2k-benchmark-util
  * %%
- * Copyright (C) 2013 - 2015 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -41,41 +41,49 @@ public class OptimumReplacementCalculationTest {
   @Test
   public void test3_3() {
     int v = calcHits(1, new int[] {1, 2, 3});
+    assertEquals(0, v);
   }
 
   @Test
   public void test2_2() {
     int v = calcHits(1, new int[] {1, 1});
+    assertEquals(1, v);
   }
 
   @Test
   public void test2_6() {
     int v = calcHits(1, new int[] {1, 1, 1, 0, 0, 0});
+    assertEquals(4, v);
   }
 
   @Test
   public void test4_4() {
     int v = calcHits(1, new int[] {1, 2, 3, 2});
+    assertEquals(0, v);
   }
 
   @Test
   public void test2_4() {
     int v = calcHits(1, new int[] {1, 1, 0, 1});
+    assertEquals(1, v);
   }
 
   @Test
   public void test4_6() {
     int v = calcHits(2, new int[] {2, 3, 1, 3, 0, 1});
+    assertEquals(2, v);
   }
 
   @Test
   public void test7_11() {
     int v = calcHits(3, new int[] {0, 4, 2, 6, 4, 1, 5, 0, 3, 1, 1});
+    assertEquals(4, v);
   }
 
   @Test
   public void test3_6() {
     int v = calcHits(2, new int[] {1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 0, 0});
+    assertEquals(8, v);
   }
 
   @Test
@@ -85,32 +93,38 @@ public class OptimumReplacementCalculationTest {
     for (int i = 0; i < _VALUE_RANGE.length; i++) {
       AccessTrace t =
         new AccessTrace(new RandomAccessPattern(_VALUE_RANGE[i]), _TRACE_SIZE[i]);
+      assertEquals(optTraceHits(t.getArray(), _VALUE_RANGE[i]/2), t.getOptHitCount(_VALUE_RANGE[i]/2));
     }
   }
 
   @Test
   public void testOptCalcMiss1K() {
     AccessTrace t = new AccessTrace(Patterns.sequence(1000));
+    assertEquals(0, t.getOptHitCount(500));
   }
 
   @Test
   public void testOptCalcMiss10K() {
     AccessTrace t = new AccessTrace(Patterns.sequence(10 * 1000));
+    assertEquals(0, t.getOptHitCount(500));
   }
 
   @Test
   public void testOptCalcMiss50K() {
     AccessTrace t = new AccessTrace(Patterns.sequence(10 * 1000));
+    assertEquals(0, t.getOptHitCount(500));
   }
 
   @Test
   public void testOptCalcMiss100K() {
     AccessTrace t = new AccessTrace(Patterns.sequence(100 * 1000));
+    assertEquals(0, t.getOptHitCount(500));
   }
 
   @Test
   public void testOptCalcMiss200K() {
     AccessTrace t = new AccessTrace(Patterns.sequence(200 * 1000));
+    assertEquals(0, t.getOptHitCount(500));
   }
 
   @Test
@@ -119,6 +133,12 @@ public class OptimumReplacementCalculationTest {
       Patterns.loop(
         Patterns.concat(Patterns.sequence(1000), Patterns.revert(Patterns.sequence(1000))),
         1000));
+    assertEquals(1000, upDownTrace.getValueCount());
+    assertEquals(999, upDownTrace.getHighValue());
+    assertEquals(2000 * 1000 , upDownTrace.getTraceLength());
+    assertEquals(50, upDownTrace.getOptHitRate(500).getPercent());
+    assertEquals(500, upDownTrace.getOptHitRate(500).get3digit());
+    assertEquals(4998, upDownTrace.getOptHitRate(500).get4digit());
   }
 
   /**

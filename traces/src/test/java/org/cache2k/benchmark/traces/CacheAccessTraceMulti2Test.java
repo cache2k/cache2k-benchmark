@@ -4,7 +4,7 @@ package org.cache2k.benchmark.traces;
  * #%L
  * cache2k-benchmark-traces
  * %%
- * Copyright (C) 2013 - 2015 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -39,6 +39,11 @@ public class CacheAccessTraceMulti2Test {
   @Test
   public void test() {
     AccessTrace t = CacheAccessTraceMulti2.getInstance();
+    assertEquals(26311, t.getTraceLength());
+    assertEquals(5684, t.getValueCount());
+    assertEquals(3538, t.getOptHitCount(100) * 10000 / t.getTraceLength());
+    assertEquals(5550, t.getOptHitCount(600) * 10000 / t.getTraceLength());
+    assertEquals(7312, t.getOptHitCount(1800) * 10000 / t.getTraceLength());
   }
 
 }

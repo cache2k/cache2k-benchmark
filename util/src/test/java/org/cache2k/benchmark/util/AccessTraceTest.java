@@ -4,7 +4,7 @@ package org.cache2k.benchmark.util;
  * #%L
  * cache2k-benchmark-util
  * %%
- * Copyright (C) 2013 - 2015 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -40,6 +40,10 @@ public class AccessTraceTest {
     File f = new File("tmp-" + System.currentTimeMillis());
     t.write(f);
     AccessTrace t2 = new AccessTrace(f);
+    assertEquals(t.getTraceLength(), t2.getTraceLength());
+    assertEquals(t.getHighValue(), t2.getHighValue());
+    assertEquals(t.getLowValue(), t2.getLowValue());
+    assertEquals(t.getValueCount(), t2.getValueCount());
     f.delete();
   }
 

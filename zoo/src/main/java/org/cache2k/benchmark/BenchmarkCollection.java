@@ -4,7 +4,7 @@ package org.cache2k.benchmark;
  * #%L
  * cache2k-benchmark-zoo
  * %%
- * Copyright (C) 2013 - 2015 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -88,6 +88,7 @@ public class BenchmarkCollection extends TracesAndTestsCollection {
   public void benchmarkMiss() {
     BenchmarkCache<Integer, Integer> c = freshCache(500);
     runBenchmark(c, allMissTrace);
+    assertEquals("allways miss", c.getMissCount(), allMissTrace.getTraceLength());
     logHitRate(c, allMissTrace, c.getMissCount());
     c.destroy();
   }
@@ -96,6 +97,7 @@ public class BenchmarkCollection extends TracesAndTestsCollection {
   public void benchmarkMiss_5000() {
     BenchmarkCache<Integer, Integer> c = freshCache(5000);
     runBenchmark(c, allMissTrace);
+    assertEquals("allways miss", c.getMissCount(), allMissTrace.getTraceLength());
     logHitRate(c, allMissTrace, c.getMissCount());
     c.destroy();
   }
@@ -104,6 +106,7 @@ public class BenchmarkCollection extends TracesAndTestsCollection {
   public void benchmarkMiss_50000() {
     BenchmarkCache<Integer, Integer> c = freshCache(50000);
     runBenchmark(c, allMissTrace);
+    assertEquals("allways miss", c.getMissCount(), allMissTrace.getTraceLength());
     logHitRate(c, allMissTrace, c.getMissCount());
     c.destroy();
   }
@@ -112,6 +115,7 @@ public class BenchmarkCollection extends TracesAndTestsCollection {
   public void benchmarkMiss_500000() {
     BenchmarkCache<Integer, Integer> c = freshCache(500000);
     runBenchmark(c, allMissTrace);
+    assertEquals("always miss", c.getMissCount(), allMissTrace.getTraceLength());
     logHitRate(c, allMissTrace, c.getMissCount());
     c.destroy();
   }

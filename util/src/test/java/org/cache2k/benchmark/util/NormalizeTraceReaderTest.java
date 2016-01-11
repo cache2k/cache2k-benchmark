@@ -4,7 +4,7 @@ package org.cache2k.benchmark.util;
  * #%L
  * cache2k-benchmark-util
  * %%
- * Copyright (C) 2013 - 2015 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -36,6 +36,12 @@ public class NormalizeTraceReaderTest {
   @Test
   public void testBasicProperties() throws Exception {
     AccessTrace t = new AccessTrace(getAccessPattern());
+    assertEquals(718, t.getValueCount());
+    assertEquals(717, t.getHighValue());
+    assertEquals(1570, t.getTraceLength());
+    assertEquals(848, t.getOptHitCount(100));
+    assertEquals(54, t.getOptHitRate(100).getPercent());
+    assertEquals(540, t.getOptHitRate(100).get3digit());
   }
 
   private AccessPattern getAccessPattern() {
@@ -52,6 +58,12 @@ public class NormalizeTraceReaderTest {
         this.getClass().getResourceAsStream("/trace-mt-20121220-partial.txt"),
         Charset.forName("UTF-8"));
     AccessTrace t2 = new AccessTrace(new NormalizePatternFilter(p));
+    assertEquals(t1.getValueCount(), t2.getValueCount());
+    assertEquals(t1.getHighValue(), t2.getHighValue());
+    assertEquals(t1.getTraceLength(), t2.getTraceLength());
+    assertEquals(t1.getArray()[0], t2.getArray()[0]);
+    assertEquals(t1.getArray()[1], t2.getArray()[1]);
+    assertEquals(t1.getArray()[7], t2.getArray()[7]);
   }
 
 }

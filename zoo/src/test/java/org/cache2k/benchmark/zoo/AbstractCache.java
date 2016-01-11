@@ -4,7 +4,7 @@ package org.cache2k.benchmark.zoo;
  * #%L
  * cache2k-benchmark-zoo
  * %%
- * Copyright (C) 2013 - 2015 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -24,7 +24,11 @@ package org.cache2k.benchmark.zoo;
 
 import org.cache2k.Cache;
 import org.cache2k.CacheEntry;
+import org.cache2k.CacheEntryProcessor;
+import org.cache2k.CacheManager;
 import org.cache2k.ClosableIterator;
+import org.cache2k.EntryProcessingResult;
+import org.cache2k.FetchCompletedListener;
 
 import java.util.List;
 import java.util.Map;
@@ -96,5 +100,65 @@ public abstract class AbstractCache<K, T> implements Cache<K, T> {
 
   @Override
   public void close() { destroy(); }
+
+  @Override
+  public boolean isClosed() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public CacheManager getCacheManager() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final void removeAll() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final T peekAndReplace(K key, T _value) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final boolean replace(K key, T _newValue) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final boolean replace(K key, T _oldValue, T _newValue) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final T peekAndRemove(K key) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final T peekAndPut(K key, T value) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final boolean remove(K key, T value) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final void fetchAll(Set<? extends K> keys, boolean replaceExistingValues, FetchCompletedListener l) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final <R> Map<K, EntryProcessingResult<R>> invokeAll(Set<? extends K> keys, CacheEntryProcessor<K, T, R> p, Object... _objs) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final Map<K, T> peekAll(Set<? extends K> keys) {
+    throw new UnsupportedOperationException();
+  }
 
 }

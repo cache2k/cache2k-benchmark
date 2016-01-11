@@ -4,7 +4,7 @@ package org.cache2k.benchmark;
  * #%L
  * cache2k-benchmark-zoo
  * %%
- * Copyright (C) 2013 - 2015 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Cache2kFactory extends BenchmarkCacheFactory {
 
   Class<?> implementation;
+  AtomicInteger counter = new AtomicInteger();
 
   @Override
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
@@ -52,7 +53,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
     final CountingDataSource<Integer, Integer> _source = _usedSource;
     final Cache<Integer, Integer> c =
       CacheBuilder.newCache(Integer.class, Integer.class)
-      .name("testCache")
+      .name("testCache-" + counter.incrementAndGet())
       .implementation(implementation)
       .source(_source)
       .expirySecs(withExpiry ? 5 * 60 : Integer.MAX_VALUE)

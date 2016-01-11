@@ -4,7 +4,7 @@ package org.cache2k.benchmark;
  * #%L
  * cache2k-benchmark-zoo
  * %%
- * Copyright (C) 2013 - 2015 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -128,6 +128,7 @@ public class BenchmarkingBase extends AbstractBenchmark {
   }
 
   public final int runMultiThreadBenchmark(BenchmarkCacheFactory.Source s, int _threadCount, AccessTrace t, int _cacheSize) throws Exception {
+    assertFalse(skipMultithreaded);
     BenchmarkCache<Integer, Integer> c = freshCache(s, _cacheSize);
     runMultiThreadBenchmark(c, _threadCount, t.getTraceLength() / _threadCount, t);
     logHitRate(c, t, c.getMissCount());

@@ -4,7 +4,7 @@ package org.cache2k.benchmark;
  * #%L
  * cache2k-benchmark-zoo
  * %%
- * Copyright (C) 2013 - 2015 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -44,6 +44,8 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   public void testSimple1() {
     BenchmarkCache<Integer, Integer> c = freshCache(1);
     int v = c.get(47);
+    assertEquals(47, v);
+    assertEquals(1, c.getMissCount());
     c.destroy();
   }
 
@@ -51,8 +53,14 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   public void testSimple2() {
     BenchmarkCache<Integer, Integer> c = freshCache(1);
     int v = c.get(47);
+    assertEquals(47, v);
+    assertEquals(1, c.getMissCount());
     v = c.get(47);
+    assertEquals(47, v);
+    assertEquals(1, c.getMissCount());
     v = c.get(48);
+    assertEquals(48, v);
+    assertEquals(2, c.getMissCount());
     c.destroy();
   }
 
@@ -76,6 +84,7 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
     } else if (c.getMissCount() == 913) {
     } else if (c.getMissCount() == 898) {
     } else {
+      assertEquals("expected == real missed", 909, c.getMissCount());
     }
     logHitRate(c, t, c.getMissCount());
     c.destroy();
@@ -92,6 +101,7 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
     AccessTrace t = BenchmarkCollection.trace1001misses;
     BenchmarkCache<Integer, Integer> c = freshCache(1000);
     runBenchmark(c, t);
+    assertEquals("expected == real missed", 1001, c.getMissCount());
     logHitRate(c, t, c.getMissCount());
     c.destroy();
   }
