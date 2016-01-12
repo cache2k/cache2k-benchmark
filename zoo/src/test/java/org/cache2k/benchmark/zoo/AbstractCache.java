@@ -161,4 +161,18 @@ public abstract class AbstractCache<K, T> implements Cache<K, T> {
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public <X> X requestInterface(Class<X> _type) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void putAll(Map<? extends K, ? extends T> m) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public <R> R invoke(K key, CacheEntryProcessor<K, T, R> entryProcessor, Object... _args) {
+    throw new UnsupportedOperationException();
+  }
 }
