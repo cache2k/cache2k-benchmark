@@ -83,6 +83,8 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
     } else if (c.getMissCount() == 908) {
     } else if (c.getMissCount() == 913) {
     } else if (c.getMissCount() == 898) {
+    } else if (c.getMissCount() == 892) {
+    } else if (c.getMissCount() == 807) {
     } else {
       assertEquals("expected == real missed", 909, c.getMissCount());
     }
