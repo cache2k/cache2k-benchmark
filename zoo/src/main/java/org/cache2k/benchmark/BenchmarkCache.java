@@ -23,16 +23,30 @@ package org.cache2k.benchmark;
  */
 
 /**
- * Interface to a cache implementation we use for benchmarking. The
- * cache is read through and just returns the input key as value via
- * get. The real misses are counted by the calls the cache performs
- * to the loader or cache source.
+ * Interface to a cache implementation we use for benchmarking.
  *
  * @author Jens Wilke; created: 2013-06-15
  */
 public abstract class BenchmarkCache<K, T> {
 
+  /**
+   * Return element from the cache, if not present read-through by calling the cache source.
+   */
   public abstract T get(K key);
+
+  /**
+   * Return the element that is present in the cache. The cache source will not be called in turn.
+   */
+  public T getIfPresent(K key) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Puts an entry in the cache. Needed for read/write benchmark.
+   */
+  public void put(K key, T value) {
+    throw new UnsupportedOperationException();
+  }
 
   /** free up all resources of the cache */
   public abstract void destroy();
