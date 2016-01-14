@@ -23,6 +23,7 @@ package org.cache2k.benchmark.jmh;
  */
 
 import org.cache2k.benchmark.Cache2kFactory;
+import org.cache2k.benchmark.Cache2kNoEvictionFactory;
 import org.cache2k.benchmark.ChmNoEvictionFactory;
 import org.openjdk.jmh.profile.*;
 import org.openjdk.jmh.runner.Runner;
@@ -59,9 +60,8 @@ public class Main {
 
   boolean quick = false;
   boolean perf = false;
-
   Class<?>[] benchmarksWithoutEviction =
-          new Class<?>[]{Cache2kFactory.class, ChmNoEvictionFactory.class};
+          new Class<?>[]{Cache2kFactory.class, Cache2kNoEvictionFactory.class, ChmNoEvictionFactory.class};
 
   public void parseArgs(String[] args) {
     for (String arg : args) {
