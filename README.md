@@ -17,8 +17,8 @@ git clone -b $version https://github.com/headissue/cache2k-benchmark.git
 
 Please replace the version, if needed.
 
-You can also checkout an run the benchmarks against the latest cache2k version.
-Please checkout and install the snapshot version of cache2k first, by:
+You can also checkout and run the benchmarks against the latest cache2k version.
+Please checkout and install the snapshot version of cache2k first:
 
 ```
 git clone https://github.com/headissue/cache2k.git
@@ -43,6 +43,15 @@ bash processBenchmarkResults.sh process
 ```
 
 The graphics will be put in `target/benchmark-reults`.
+
+## Running the JMH benchmarks
+
+The performance benchmarks will be moved over to JMH. To run the JHM benchmark suite:
+
+```
+mvn -DskipTests package
+java -jar jmh-suite/target/benchmarks.jar
+```
 
 ## The maven modules
 
