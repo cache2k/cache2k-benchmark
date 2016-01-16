@@ -1,4 +1,10 @@
-package org.cache2k.benchmark;
+/**
+ * This package is essentially a snapshot of the end of 2015 implementation state of cache2k.
+ * The purpose of this is to have an archived version of the different replacement algorithms
+ * implemented (LRU, ARC, CAR, Clock, etc.). These algorithms will be removed from the
+ * official cache2k version.
+ */
+package org.cache2k.benchmark.impl2015;
 
 /*
  * #%L
@@ -21,17 +27,3 @@ package org.cache2k.benchmark;
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-
-/**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
- */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
-
-  {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
-  }
-
-}

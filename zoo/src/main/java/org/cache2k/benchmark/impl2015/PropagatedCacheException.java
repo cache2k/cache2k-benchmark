@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.impl2015;
 
 /*
  * #%L
@@ -22,16 +22,26 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-/**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
- */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
+import org.cache2k.CacheException;
 
-  {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
+/**
+ * Wraps an application exception.
+ *
+ * If a cache receives an exception when fetching a value via the
+ * cache source it may propagate the exception wrapped into this
+ * one to the caller. Whether propagation occurs depends on the
+ * configuration and on the presence of valid data.
+ *
+ * @author Jens Wilke
+ */
+public class PropagatedCacheException extends CacheException {
+
+  public PropagatedCacheException(String _message, Throwable ex) {
+    super(_message, ex);
+  }
+
+  public PropagatedCacheException(Throwable ex) {
+    super(ex);
   }
 
 }

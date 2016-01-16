@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.impl2015.util;
 
 /*
  * #%L
@@ -22,16 +22,17 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import java.sql.Timestamp;
+
 /**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
+ * A set of utility stuff we need often.
+ *
+ * @author Jens Wilke; created: 2014-12-18
  */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
-
-  {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
+public class Util {
+  
+  public static String formatMillis(long _millis) {
+     return new Timestamp(_millis).toString();
   }
-
+  
 }

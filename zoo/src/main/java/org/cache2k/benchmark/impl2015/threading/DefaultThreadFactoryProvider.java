@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.impl2015.threading;
 
 /*
  * #%L
@@ -22,16 +22,20 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-/**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
- */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
+import java.util.Properties;
+import java.util.concurrent.ThreadFactory;
 
-  {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
+/**
+ * Provide the default implementation for the thread factory.
+ *
+ * @author Jens Wilke; created: 2014-06-10
+ */
+public class DefaultThreadFactoryProvider
+  implements ThreadFactoryProvider {
+
+  @Override
+  public ThreadFactory newThreadFactory(Properties _managerProperties, String _namePrefix) {
+    return new GlobalThreadFactory(_namePrefix);
   }
 
 }

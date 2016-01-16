@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.impl2015.threading;
 
 /*
  * #%L
@@ -22,16 +22,32 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-/**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
- */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
-  {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
+/**
+ * Factory which names the threads uniquely.
+ *
+ * @author Jens Wilke; created: 2014-06-10
+ */
+public class GlobalThreadFactory implements ThreadFactory {
+
+  AtomicInteger threadCount = new AtomicInteger();
+  String prefix = "cache2k-";
+
+  public GlobalThreadFactory(String _threadNamePrefix) {
+    if (_threadNamePrefix != null) {
+      this.prefix = _threadNamePrefix;
+    }
+  }
+
+  @Override
+  public Thread newThread(Runnable r) {
+    int id = threadCount.getAndIncrement();
+    Thread thr = new Thread(r);
+    thr.setName(prefix + Integer.toString(id, 36));
+    thr.setDaemon(true);
+    return thr;
   }
 
 }

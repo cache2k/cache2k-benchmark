@@ -1,4 +1,5 @@
-package org.cache2k.benchmark;
+
+package org.cache2k.benchmark.impl2015;
 
 /*
  * #%L
@@ -22,16 +23,44 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-/**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
- */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
+import java.io.Closeable;
+import java.util.Set;
 
-  {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
-  }
+@SuppressWarnings("UnusedDeclaration")
+public interface Cache<K, T> extends Iterable<CacheEntry<K, T>>, Closeable {
+
+  String getName();
+
+  void clear();
+
+  T get(K key);
+
+  CacheEntry<K, T> getEntry(K key);
+
+  T peek(K key);
+
+  CacheEntry<K, T> peekEntry(K key);
+
+  boolean contains(K key);
+
+  void put(K key, T value);
+
+  void remove(K key);
+
+  boolean remove(K key, T value);
+
+  int getTotalEntryCount();
+
+  ClosableIterator<CacheEntry<K, T>> iterator();
+
+  void removeAll();
+
+  void destroy();
+
+  void close();
+
+  boolean isClosed();
+
+  String toString();
 
 }

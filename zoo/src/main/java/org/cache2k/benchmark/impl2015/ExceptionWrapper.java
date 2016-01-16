@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.impl2015;
 
 /*
  * #%L
@@ -23,15 +23,32 @@ package org.cache2k.benchmark;
  */
 
 /**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
+ * We use instances of the exception wrapper for the value field in the entry.
+ * This way we can store exceptions without needing additional memory, if no exceptions
+ * happen.
+ *
+ * @author Jens Wilke; created: 2013-07-12
  */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
+public class ExceptionWrapper {
 
-  {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
+  Throwable exception;
+
+  /**
+   * Store an additional exception message with the expiry time.
+   * Gets lazily set as soon as an exception is thrown.
+   */
+  transient String additionalExceptionMessage = null;
+
+  public ExceptionWrapper(Throwable ex) {
+    exception = ex;
+  }
+
+  public Throwable getException() {
+    return exception;
+  }
+
+  public String toString() {
+    return exception.toString();
   }
 
 }

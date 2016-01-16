@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.impl2015;
 
 /*
  * #%L
@@ -23,15 +23,31 @@ package org.cache2k.benchmark;
  */
 
 /**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
+ * An internal error condition in the cache was detected that actually
+ * never is supposed to happen. If you get this error or subclasses of it,
+ * please file a bug report.
+ *
+ * @author Jens Wilke; created: 2014-06-03
  */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
+public class CacheInternalError extends Error {
 
-  {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
+  public CacheInternalError() {
+  }
+
+  public CacheInternalError(String message) {
+    super(message);
+  }
+
+  public CacheInternalError(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public CacheInternalError(Throwable cause) {
+    super(cause);
+  }
+
+  public CacheInternalError(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    super(message, cause, enableSuppression, writableStackTrace);
   }
 
 }

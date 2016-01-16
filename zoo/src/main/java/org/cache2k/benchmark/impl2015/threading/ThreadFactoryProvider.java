@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.impl2015.threading;
 
 /*
  * #%L
@@ -22,16 +22,22 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-/**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
- */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
+import org.cache2k.benchmark.impl2015.util.TunableConstants;
 
-  {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
-  }
+import java.util.Properties;
+import java.util.concurrent.ThreadFactory;
+
+/**
+ * Provider interface for a thread factory. This makes it possible to change
+ * the thread factory via the {@link TunableConstants}.
+ *
+ * @author Jens Wilke; created: 2014-06-10
+ */
+public interface ThreadFactoryProvider {
+
+  /**
+   * Construct a new thread factory for the pool.
+   */
+  ThreadFactory newThreadFactory(Properties _managerProperties, String namePrefix);
 
 }

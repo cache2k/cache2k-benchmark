@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author Jens Wilke
  */
-public class ChmNoEvictionFactory extends BenchmarkCacheFactory {
+public class ConcurrentHashMapFactory extends BenchmarkCacheFactory {
 
   @Override
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {

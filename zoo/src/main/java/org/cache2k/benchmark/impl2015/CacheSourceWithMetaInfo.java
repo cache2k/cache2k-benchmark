@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.impl2015;
 
 /*
  * #%L
@@ -23,15 +23,10 @@ package org.cache2k.benchmark;
  */
 
 /**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
+ * @author Jens Wilke; created: 2013-07-04
  */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
+public abstract class CacheSourceWithMetaInfo<K, T> {
 
-  {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
-  }
+  public abstract T get(K key, long _currentTime, T _previousValue, long _timeLastFetched) throws Throwable;
 
 }

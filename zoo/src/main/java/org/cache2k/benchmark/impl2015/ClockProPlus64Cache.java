@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.impl2015;
 
 /*
  * #%L
@@ -23,15 +23,19 @@ package org.cache2k.benchmark;
  */
 
 /**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
+ * Specialization for 64 bit systems.
  */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
+public final class ClockProPlus64Cache<K, T>  extends ClockProPlusCache<K, T> {
 
-  {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
+  /**
+   * Just increment the hit counter on 64 bit systems. Writing a 64 bit value is atomic on 64 bit systems
+   * but not on 32 bit systems. Of course the counter update itself is not an atomic operation, which will
+   * cause some missed hits. The 64 bit counter is big enough that it never wraps around in my projected
+   * lifetime...
+   */
+  @Override
+  protected void recordHit(Entry e) {
+    e.hitCnt++;
   }
 
 }

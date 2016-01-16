@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.impl2015.util;
 
 /*
  * #%L
@@ -23,15 +23,13 @@ package org.cache2k.benchmark;
  */
 
 /**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
+ * Service provider interface to implement to reroute cache2k logging to
+ * another log implementation.
+ *
+ * @author Jens Wilke; created: 2014-04-27
  */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
+public interface LogFactory {
 
-  {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
-  }
+  Log getLog(String s);
 
 }

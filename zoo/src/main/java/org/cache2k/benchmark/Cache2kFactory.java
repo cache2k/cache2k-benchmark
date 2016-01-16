@@ -25,9 +25,6 @@ package org.cache2k.benchmark;
 import org.cache2k.Cache;
 import org.cache2k.CacheBuilder;
 import org.cache2k.CacheSource;
-import org.cache2k.impl.CanCheckIntegrity;
-import org.cache2k.impl.ClockProPlus64Cache;
-import org.cache2k.impl.ClockProPlusCache;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,8 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Cache2kFactory extends BenchmarkCacheFactory {
 
-  Class<?> implementation =  "64".equals(System.getProperty("sun.arch.data.model"))
-          ? ClockProPlus64Cache.class : ClockProPlusCache.class;
+  Class<?> implementation = null;
 
   AtomicInteger counter = new AtomicInteger();
 
@@ -61,7 +57,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
       .implementation(implementation)
       .source(_source)
       .expirySecs(withExpiry ? 5 * 60 : Integer.MAX_VALUE)
-      .maxSize(_maxElements)
+      .entryCapacity(_maxElements)
       .backgroundRefresh(false)
       .build();
     return new BenchmarkCache<Integer, Integer>() {
@@ -103,9 +99,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
 
       @Override
       public void checkIntegrity() {
-        if (c instanceof CanCheckIntegrity) {
-          ((CanCheckIntegrity) c).checkIntegrity();
-        }
+        c.toString();
       }
 
       @Override

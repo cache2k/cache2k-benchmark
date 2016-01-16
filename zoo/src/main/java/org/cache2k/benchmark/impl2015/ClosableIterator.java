@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.impl2015;
 
 /*
  * #%L
@@ -22,16 +22,23 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-/**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
- */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
+import java.io.Closeable;
+import java.util.Iterator;
 
-  {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
-  }
+/**
+ * After the usage of the iterator close should be called to free resources.
+ * The cache also alters the hash table operations for the life of the iterator
+ * and switches back to normal after the iteration is finished.
+ *
+ * @author Jens Wilke; created: 2014-06-07
+ */
+public interface ClosableIterator<E> extends Iterator<E>, Closeable {
+
+  /**
+   * Immediately free resources held by the iterator. Overrides {@link Closeable#close()}
+   * since no checked exceptions are thrown by the method.
+   */
+  @Override
+  public void close();
 
 }

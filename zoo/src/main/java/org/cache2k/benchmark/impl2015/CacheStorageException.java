@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.impl2015;
 
 /*
  * #%L
@@ -23,15 +23,23 @@ package org.cache2k.benchmark;
  */
 
 /**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
+ * @author Jens Wilke; created: 2014-04-21
  */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
+public class CacheStorageException extends RuntimeException {
 
-  {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
+  public CacheStorageException() {
+  }
+
+  public CacheStorageException(String message) {
+    super(message);
+  }
+
+  public CacheStorageException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public CacheStorageException(Throwable cause) {
+    super(cause);
   }
 
 }
