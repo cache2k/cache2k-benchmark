@@ -23,7 +23,6 @@ package org.cache2k.benchmark.impl2015;
  */
 
 import org.cache2k.CacheEntry;
-import org.cache2k.storage.StorageEntry;
 
 /**
  * The cache entry. This is a combined hashtable entry with hashCode and
@@ -34,7 +33,7 @@ import org.cache2k.storage.StorageEntry;
  */
 @SuppressWarnings("unchecked")
 public class Entry<E extends Entry, K, T>
-  implements CacheEntry<K,T>, StorageEntry {
+  implements CacheEntry<K,T> {
 
   static final int FETCHED_STATE = 16;
   static final int REFRESH_STATE = FETCHED_STATE + 1;
@@ -413,44 +412,11 @@ public class Entry<E extends Entry, K, T>
     return 0;
   }
 
-  /**
-   * Used for the storage interface.
-   *
-   * @see StorageEntry
-   */
-  @Override
-  public Object getValueOrException() {
-    return value;
-  }
-
-  /**
-   * Used for the storage interface.
-   *
-   * @see StorageEntry
-   */
-  @Override
-  public long getCreatedOrUpdated() {
-    return getLastModification();
-  }
-
-  /**
-   * Used for the storage interface.
-   *
-   * @see StorageEntry
-   * @deprectated Always returns 0, only to fulfill the {@link StorageEntry} interface
-   */
-  @Override
-  public long getEntryExpiryTime() {
-    return 0;
-  }
-
   @Override
   public String toString() {
     return "Entry{" +
-      "createdOrUpdate=" + getCreatedOrUpdated() +
-      ", nextRefreshTime=" + nextRefreshTime +
+      "nextRefreshTime=" + nextRefreshTime +
       ", valueExpiryTime=" + getValueExpiryTime() +
-      ", entryExpiryTime=" + getEntryExpiryTime() +
       ", key=" + key +
       ", mHC=" + hashCode +
       ", value=" + value +
