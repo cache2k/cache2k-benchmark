@@ -22,7 +22,7 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.impl.LruCache;
+import org.cache2k.benchmark.impl2015.LruCache;
 
 /**
  *
@@ -32,7 +32,7 @@ import org.cache2k.impl.LruCache;
 public class LruCacheBenchmark extends BenchmarkCollection {
 
   {
-    factory = new Cache2kFactory().implementation(LruCache.class);
+    factory = new Cache2k2015Factory().implementation(LruCache.class);
   }
 
 }

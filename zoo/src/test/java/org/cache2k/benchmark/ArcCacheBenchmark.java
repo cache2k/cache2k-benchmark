@@ -22,7 +22,7 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.impl.ArcCache;
+import org.cache2k.benchmark.impl2015.ArcCache;
 
 /**
  * @author Jens Wilke; created: 2013-06-13
@@ -30,7 +30,7 @@ import org.cache2k.impl.ArcCache;
 public class ArcCacheBenchmark extends BenchmarkCollection {
 
   {
-    factory = new Cache2kFactory().implementation(ArcCache.class);
+    factory = new Cache2k2015Factory().implementation(ArcCache.class);
   }
 
 }

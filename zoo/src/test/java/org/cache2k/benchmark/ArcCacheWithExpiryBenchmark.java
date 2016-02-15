@@ -22,7 +22,7 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.impl.ArcCache;
+import org.cache2k.benchmark.impl2015.ArcCache;
 
 /**
  * Run benchmark collection on the ARC implementation with expiry switched on.
@@ -33,7 +33,7 @@ import org.cache2k.impl.ArcCache;
 public class ArcCacheWithExpiryBenchmark extends BenchmarkCollection {
 
   {
-    factory = new Cache2kFactory().implementation(ArcCache.class).withExpiry(true);
+    factory = new Cache2k2015Factory().implementation(ArcCache.class).withExpiry(true);
   }
 
 }

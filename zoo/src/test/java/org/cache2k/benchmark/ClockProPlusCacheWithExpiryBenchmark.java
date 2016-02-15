@@ -22,18 +22,18 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.impl.ClockProPlusCache;
+import org.cache2k.benchmark.impl2015.ClockProPlusCache;
 
 /**
  * Run the benchmark collection on the CP+ implementation with expiry switched on.
  *
  * @author Jens Wilke; created: 2013-06-13
- * @see org.cache2k.impl.ClockCache
+ * @see ClockProPlusCache
  */
 public class ClockProPlusCacheWithExpiryBenchmark extends BenchmarkCollection {
 
   {
-    factory = new Cache2kFactory().implementation(ClockProPlusCache.class).withExpiry(true);
+    factory = new Cache2k2015Factory().implementation(ClockProPlusCache.class).withExpiry(true);
   }
 
 }

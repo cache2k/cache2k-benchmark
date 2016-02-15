@@ -22,7 +22,7 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.impl.ClockCache;
+import org.cache2k.benchmark.impl2015.ClockCache;
 
 /**
  * Run benchmark collection on the CLOCK implementation.
@@ -33,7 +33,7 @@ import org.cache2k.impl.ClockCache;
 public class ClockCacheBenchmark extends BenchmarkCollection {
 
   {
-    factory = new Cache2kFactory().implementation(ClockCache.class);
+    factory = new Cache2k2015Factory().implementation(ClockCache.class);
   }
 
 }
