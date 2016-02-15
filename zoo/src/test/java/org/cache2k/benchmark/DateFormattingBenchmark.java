@@ -26,8 +26,8 @@ import com.carrotsearch.junitbenchmarks.AbstractBenchmark;
 import com.carrotsearch.junitbenchmarks.BenchmarkOptions;
 import org.cache2k.Cache;
 import org.cache2k.CacheBuilder;
+import org.cache2k.CacheEntry;
 import org.cache2k.CacheSource;
-import org.cache2k.impl.ClockCache;
 import org.junit.Test;
 
 import java.io.CharArrayWriter;
@@ -107,7 +107,6 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
             return df.format(o);
           }
         })
-        .implementation(ClockCache.class)
         .build();
     List<Date> l = provideListWith3MillionDates();
     for (Date d : l) {
@@ -130,12 +129,12 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
             return df.format(o);
           }
         })
-        .implementation(ClockCache.class)
         .build();
     List<Date> l = provideListWith3MillionDates();
     for (Date d : l) {
       w.print(c.get(d));
     }
+    c.close();
   }
 
   /**
@@ -153,35 +152,44 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
   public void testAssociativeCache() {
     Cache<Locale, Cache<Integer, Cache<Date, String>>> c = (Cache)
       CacheBuilder.newCache(Locale.class, Cache.class)
+        .eternal(true)
+        .name(DateFormattingBenchmark.class, "testAssociativeCache")
         .source(new CacheSource<Locale, Cache>() {
           @Override
           public Cache get(final Locale l) {
             return
               CacheBuilder.newCache(Integer.class, Cache.class)
+                .name(DateFormattingBenchmark.class, "testAssociativeCache-" + l)
+                .eternal(true)
                 .source(new CacheSource<Integer, Cache>() {
-                  public Cache get(final Integer f) {
+                  public Cache get(final Integer _format) {
                     return CacheBuilder.newCache(Date.class, String.class)
+                      .name(DateFormattingBenchmark.class, "testAssociativeCache-" + l + "-" + _format)
                       .source(new CacheSource<Date, String>() {
                         public String get(Date d) {
-                          DateFormat df = DateFormat.getDateInstance(f, l);
+                          DateFormat df = DateFormat.getDateInstance(_format, l);
                           return df.format(d);
                         }
                       })
-                      .implementation(ClockCache.class)
                       .build();
                   }
               })
-              .implementation(ClockCache.class)
               .build();
           }
         })
-        .implementation(ClockCache.class)
         .build();
     PrintWriter w = new PrintWriter(new CharArrayWriter());
     List<Date> l = provideListWith3MillionDates();
     for (Date d : l) {
       w.print(c.get(Locale.FRANCE).get(DateFormat.LONG).get(d));
     }
+    for (CacheEntry<Locale, Cache<Integer, Cache<Date, String>>> e : c) {
+      for (CacheEntry<Integer, Cache<Date, String>> e1 : e.getValue()) {
+        e1.getValue().close();
+      }
+      e.getValue().close();
+    }
+    c.close();
   }
 
   /**
@@ -191,6 +199,7 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
   public void testWithCacheAndKeyObject() {
     Cache<CacheKey, String> c =
       CacheBuilder.newCache(CacheKey.class, String.class)
+        .eternal(true)
         .source(new CacheSource<CacheKey, String>() {
           @Override
           public String get(CacheKey o) {
@@ -198,13 +207,13 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
             return df.format(o.date);
           }
         })
-        .implementation(ClockCache.class)
         .build();
     PrintWriter w = new PrintWriter(new CharArrayWriter());
     List<Date> l = provideListWith3MillionDates();
     for (Date d : l) {
       w.print(c.get(new CacheKey(Locale.FRANCE, DateFormat.LONG, d)));
     }
+    c.close();
   }
 
   static class CacheKey {
