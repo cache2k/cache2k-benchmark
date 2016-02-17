@@ -61,7 +61,7 @@ public abstract class Common {
       "-XX:+PrintGCTimeStamps"
     );
     ob.timeUnit(TimeUnit.MILLISECONDS);
-    dilligent(ob);
+    diligent(ob);
     return ob;
   }
 
@@ -74,10 +74,10 @@ public abstract class Common {
   }
 
   /**
-   * That't for the representative benchmark.
+   * That's for the representative benchmark.
    */
   @SuppressWarnings("unused")
-  public void dilligent(OptionsBuilder ob) {
+  public void diligent(OptionsBuilder ob) {
     ob.measurementTime(new TimeValue(10, TimeUnit.SECONDS)).forks(3).warmupIterations(5).measurementIterations(5);
   }
 

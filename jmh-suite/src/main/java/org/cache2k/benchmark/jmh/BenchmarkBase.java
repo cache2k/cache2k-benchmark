@@ -60,37 +60,9 @@ public class BenchmarkBase {
     }
   }
 
-  /**
-   *
-   * TODO: Find a way to add this to the JMH results
-   */
-  public void printUsedMemory() {
-    System.out.println();
-    System.out.println("Used memory: " + getUsedMemory());
-  }
-
-  public long getUsedMemory() {
-    final AtomicBoolean finalizerRan = new AtomicBoolean(false);
-    WeakReference<Object> ref = new WeakReference<Object>(
-      new Object() {
-        @Override protected void finalize() { finalizerRan.set(true); }
-      });
-    while (ref.get() != null && !finalizerRan.get()) {
-      System.gc();
-      System.runFinalization();
-    }
-    Runtime rt = Runtime.getRuntime();
-    return rt.totalMemory() - rt.freeMemory();
-  }
-
-  @Setup(Level.Iteration)
-  public void setupBase() {
-    printUsedMemory();
-  }
-
   @TearDown(Level.Iteration)
   public void tearDownBase() {
-    printUsedMemory();
+    ForcedGcMemoryProfiler.recordUsedMemory();
     if (getsDestroyed != null) {
       System.out.println();
       System.out.println(getsDestroyed.getStatistics());
