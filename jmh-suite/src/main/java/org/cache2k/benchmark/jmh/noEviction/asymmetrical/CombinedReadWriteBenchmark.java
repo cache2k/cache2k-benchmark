@@ -26,6 +26,7 @@ import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.util.AccessPattern;
 import org.cache2k.benchmark.util.ScrambledZipfianPattern;
+import org.openjdk.jmh.Main;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * with the test data set. No eviction and no inserts happen during the benchmark time.
  * The test data size is 11k, the cache size 32k.
  *
- * <p>This benchmark is almost identical to the one in caffeine.</p>
+ * <p>This benchmark is almost identical to the one in caffeine.
  */
 @State(Scope.Group)
 public class CombinedReadWriteBenchmark extends BenchmarkBase {
@@ -55,9 +56,6 @@ public class CombinedReadWriteBenchmark extends BenchmarkBase {
 
   Integer[] ints;
 
-  @Param("DEFAULT")
-  String cacheFactory;
-
   @Setup(Level.Iteration)
   public void setup() throws Exception {
     getsDestroyed = cache = getFactory().create(SIZE * 2);
@@ -69,22 +67,22 @@ public class CombinedReadWriteBenchmark extends BenchmarkBase {
     }
   }
 
-  @Benchmark @Group("readOnly") @GroupThreads(8)
+  @Benchmark @Group("readOnly") @GroupThreads(8) @BenchmarkMode(Mode.Throughput)
   public Integer readOnly(ThreadState threadState) {
     return cache.getIfPresent(ints[threadState.index++ & MASK]);
   }
 
-  @Benchmark @Group("writeOnly") @GroupThreads(8)
+  @Benchmark @Group("writeOnly") @GroupThreads(8) @BenchmarkMode(Mode.Throughput)
   public void writeOnly(ThreadState threadState) {
     cache.put(ints[threadState.index++ & MASK], 0);
   }
 
-  @Benchmark @Group("readWrite") @GroupThreads(6)
+  @Benchmark @Group("readWrite") @GroupThreads(6) @BenchmarkMode(Mode.Throughput)
   public Integer readWrite_get(ThreadState threadState) {
     return cache.getIfPresent(ints[threadState.index++ & MASK]);
   }
 
-  @Benchmark @Group("readWrite") @GroupThreads(2)
+  @Benchmark @Group("readWrite") @GroupThreads(2) @BenchmarkMode(Mode.Throughput)
   public void readWrite_put(ThreadState threadState) {
     cache.put(ints[threadState.index++ & MASK], 0);
   }

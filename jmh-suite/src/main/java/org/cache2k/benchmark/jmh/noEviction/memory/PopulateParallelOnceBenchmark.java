@@ -33,18 +33,16 @@ import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.Threads;
+import org.openjdk.jmh.infra.BenchmarkParams;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Populate a cache auf type Integer,Integer with 1M entries.
- * Benchmark is executed in single shot with 10 threads.
+ * Populate a cache of type Integer,Integer with 100k, 1M and 5M entries.
+ * Benchmark is executed in single shot with variable threads.
  */
 @State(Scope.Benchmark)
 public class PopulateParallelOnceBenchmark extends BenchmarkBase {
-
-  public static final int THREAD_COUNT = 10;
 
   @Param({"100000", "1000000", "5000000"})
   public int size = 1000 * 1000;
@@ -62,9 +60,9 @@ public class PopulateParallelOnceBenchmark extends BenchmarkBase {
     public long operations;
   }
 
-  @Benchmark @Threads(THREAD_COUNT) @BenchmarkMode(Mode.SingleShotTime)
-  public long populateChunkInCache(ThreadState ts) {
-    int _chunkSize = size / THREAD_COUNT;
+  @Benchmark @BenchmarkMode(Mode.SingleShotTime)
+  public long populateChunkInCache(ThreadState ts, BenchmarkParams p) {
+    int _chunkSize = size / p.getThreads();
     int _startIndex = offset.getAndAdd(_chunkSize);
     int _endIndex = _startIndex + _chunkSize;
     for (int i = _startIndex; i < _endIndex; i++) {

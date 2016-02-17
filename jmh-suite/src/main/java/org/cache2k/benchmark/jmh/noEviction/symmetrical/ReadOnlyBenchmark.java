@@ -26,8 +26,11 @@ import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.util.AccessPattern;
 import org.cache2k.benchmark.util.RandomAccessPattern;
+import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Level;
+import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
@@ -36,9 +39,13 @@ import org.openjdk.jmh.annotations.State;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Prepopulate cache with 100k entries and access it.
+ * Prepopulate cache with 100k entries and access it in a random pattern
+ * with different miss rates. The main aim of this benchmark is to check
+ * how different miss rations influence the throughput.
  *
+ * @author Jens Wilke
  */
+@State(Scope.Benchmark)
 public class ReadOnlyBenchmark extends BenchmarkBase {
 
   public static final int ENTRY_COUNT = 100 * 1000;
@@ -47,7 +54,7 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
   @Param({"0", "50", "66"})
   public int missRate = 0;
 
-  private static AtomicInteger offset = new AtomicInteger(0);
+  private final static AtomicInteger offset = new AtomicInteger(0);
 
   @State(Scope.Thread)
   public static class ThreadState {
@@ -67,14 +74,17 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
     for (int i = 0; i < PATTERN_COUNT; i++) {
       ints[i] = _pattern.next();
     }
-    for (int i = 0; i < PATTERN_COUNT; i++) {
-      cache.put(i * 2, i);
+    for (int i = 0; i < ENTRY_COUNT; i++) {
+      cache.put(i, i);
     }
   }
 
-  @Benchmark
+  @Benchmark @BenchmarkMode(Mode.Throughput)
   public long read(ThreadState threadState) {
-    return cache.getIfPresent(ints[(int) (threadState.index++ % PATTERN_COUNT)]);
+    int idx = (int) (threadState.index++ % PATTERN_COUNT);
+    Integer key = ints[idx];
+    cache.getIfPresent(key);
+    return idx;
   }
 
 }
