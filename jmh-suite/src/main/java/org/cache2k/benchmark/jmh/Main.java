@@ -30,6 +30,12 @@ package org.cache2k.benchmark.jmh;
 public class Main {
 
   public static void main(String[] args) throws Exception {
+    if (args.length > 0 && "jmh".equals(args[0])) {
+      String[] a2 = new String[args.length-1];
+      System.arraycopy(args, 1, a2, 0, a2.length);
+      org.openjdk.jmh.Main.main(a2);
+      return;
+    }
     Class c = Class.forName(Main.class.getPackage().getName() + "." + args[0]);
     Common r = (Common) c.getConstructor().newInstance();
     r.setArguments(args);
