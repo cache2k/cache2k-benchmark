@@ -74,16 +74,13 @@ public class Suite extends Common {
     for (Class<?> c : _implSet) {
       OptionsBuilder ob = commonOptions();
       parseArgs(ob);
-      ob.include("org.cache2k.benchmark.jmh.noEviction.memory..*");
-      ob.getBenchModes().clear();
-      ob.mode(Mode.SingleShotTime);
-      ob.threads(PopulateParallelOnceBenchmark.THREAD_COUNT);
-      ob.measurementIterations(1);
+      ob.include("org.cache2k.benchmark.jmh.noEviction.asymmetrical..*");
       Options opt = ob
         .param("cacheFactory", c.getCanonicalName())
         .build();
       new org.openjdk.jmh.runner.Runner(opt).run();
     }
+
   }
 
 }
