@@ -98,6 +98,11 @@ public class ConcurrentHashMapFactory extends BenchmarkCacheFactory {
       }
       return 0;
     }
+
+    @Override
+    public String getStatistics() {
+      return "mapimpl=" + map.getClass().getName();
+    }
   }
 
 }
