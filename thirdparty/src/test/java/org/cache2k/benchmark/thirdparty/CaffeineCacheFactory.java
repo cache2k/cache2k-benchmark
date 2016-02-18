@@ -22,33 +22,24 @@ package org.cache2k.benchmark.thirdparty;
  * #L%
  */
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Jens Wilke; created: 2013-12-08
  */
-public class GuavaCacheFactory extends BenchmarkCacheFactory {
+public class CaffeineCacheFactory extends BenchmarkCacheFactory {
 
   @Override
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
     MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
     c.loader = new MyCacheLoader();
     c.size = _maxElements;
-    CacheBuilder cb =
-      CacheBuilder.newBuilder()
-        .maximumSize(_maxElements);
-    if (withExpiry) {
-      cb.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
-    }
-    c.cache = cb.build(c.loader);
+    createCache(_maxElements, c);
     return c;
   }
 
@@ -57,17 +48,19 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
     MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
     c.loader = new MyCacheLoaderWithSource(s);
     c.size = _maxElements;
-    CacheBuilder cb =
-      CacheBuilder.newBuilder()
-        .maximumSize(_maxElements);
-    if (withExpiry) {
-      cb.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
-    }
-    c.cache = cb.build(c.loader);
+    createCache(_maxElements, c);
     return c;
   }
 
-  static class MyCacheLoader extends CacheLoader<Integer,Integer> {
+  private void createCache(final int _maxElements, final MyBenchmarkCacheAdapter _c) {
+    Caffeine b = Caffeine.newBuilder().maximumSize(_maxElements);
+    if (withExpiry) {
+      b.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
+    }
+    _c.cache = b.build(_c.loader);
+  }
+
+  static class MyCacheLoader implements com.github.benmanes.caffeine.cache.CacheLoader<Integer,Integer> {
 
     int missCnt;
 
@@ -76,6 +69,7 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
       missCnt++;
       return key;
     }
+
   }
 
   static class MyCacheLoaderWithSource extends  MyCacheLoader {
@@ -111,11 +105,7 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
 
     @Override
     public Integer get(Integer key) {
-      try {
-        return cache.get(key);
-      } catch (ExecutionException e) {
-        return null;
-      }
+      return cache.get(key);
     }
 
     @Override
@@ -126,6 +116,11 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
     @Override
     public int getMissCount() {
       return loader.missCnt;
+    }
+
+    @Override
+    public String getStatistics() {
+      return cache.toString();
     }
 
   }
