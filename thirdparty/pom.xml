@@ -23,7 +23,6 @@
       <groupId>net.sf.ehcache.internal</groupId>
       <artifactId>ehcache-core</artifactId>
       <version>2.9.0</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
