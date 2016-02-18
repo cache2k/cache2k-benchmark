@@ -24,6 +24,7 @@ package org.cache2k.benchmark.thirdparty;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.PersistenceConfiguration;
 import net.sf.ehcache.constructs.blocking.CacheEntryFactory;
@@ -109,7 +110,7 @@ public class EhCacheFactory extends BenchmarkCacheFactory {
 
     CacheConfiguration config;
     MyCacheEntryFactory entryFactory;
-    SelfPopulatingCache cache;
+    Ehcache cache;
 
     MyBenchmarkCache(Source _source, CacheConfiguration v) {
       this.config = v;
