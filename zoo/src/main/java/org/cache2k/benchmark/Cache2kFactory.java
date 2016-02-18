@@ -57,7 +57,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
       .implementation(implementation)
       .source(_source)
       .expirySecs(withExpiry ? 5 * 60 : Integer.MAX_VALUE)
-      .entryCapacity(_maxElements)
+      .maxSize(_maxElements)
       .backgroundRefresh(false)
       .build();
     return new BenchmarkCache<Integer, Integer>() {
