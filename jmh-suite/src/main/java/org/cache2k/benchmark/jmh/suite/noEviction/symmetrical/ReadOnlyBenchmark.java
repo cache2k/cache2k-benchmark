@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.jmh.noEviction.symmetrical;
+package org.cache2k.benchmark.jmh.suite.noEviction.symmetrical;
 
 /*
  * #%L
@@ -26,7 +26,6 @@ import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.util.AccessPattern;
 import org.cache2k.benchmark.util.RandomAccessPattern;
-import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Level;

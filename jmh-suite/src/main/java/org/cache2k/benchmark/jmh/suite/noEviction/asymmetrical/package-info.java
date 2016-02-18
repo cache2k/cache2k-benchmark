@@ -1,7 +1,7 @@
 /**
  * Set of benchmarks that run asymmetrical benchmarks with different threads.
  */
-package org.cache2k.benchmark.jmh.noEviction.asymmetrical;
+package org.cache2k.benchmark.jmh.suite.noEviction.asymmetrical;
 
 /*
  * #%L

@@ -1,7 +1,7 @@
 /**
- * Benchmark for memory usage. We do not run these in multiple iterations.
+ * Single threaded benchmarks.
  */
-package org.cache2k.benchmark.jmh.noEviction.memory;
+package org.cache2k.benchmark.jmh.suite.noEviction.single;
 
 /*
  * #%L

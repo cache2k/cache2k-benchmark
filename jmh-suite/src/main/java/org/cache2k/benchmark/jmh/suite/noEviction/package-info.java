@@ -1,7 +1,7 @@
 /**
- * Single threaded benchmarks.
+ * Benchmarks with no eviction needed. We benchmark basically normal map behavior.
  */
-package org.cache2k.benchmark.jmh.noEviction.single;
+package org.cache2k.benchmark.jmh.suite.noEviction;
 
 /*
  * #%L

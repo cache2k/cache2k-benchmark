@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.jmh.noEviction.asymmetrical;
+package org.cache2k.benchmark.jmh.suite.noEviction.asymmetrical;
 
 /*
  * #%L
@@ -26,7 +26,6 @@ import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.util.AccessPattern;
 import org.cache2k.benchmark.util.ScrambledZipfianPattern;
-import org.openjdk.jmh.Main;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
