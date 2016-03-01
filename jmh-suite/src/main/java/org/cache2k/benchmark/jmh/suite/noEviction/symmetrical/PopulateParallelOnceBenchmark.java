@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @State(Scope.Benchmark)
 public class PopulateParallelOnceBenchmark extends BenchmarkBase {
 
-  @Param({"100000", "1000000", "5000000"})
+  @Param({"1000000", "2000000", "4000000", "8000000"})
   public int size = 1000 * 1000;
   protected final AtomicInteger offset = new AtomicInteger(0);
 
