@@ -50,8 +50,8 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
   public static final int ENTRY_COUNT = 100 * 1000;
   public static final int PATTERN_COUNT = 1000 * 1000;
 
-  @Param({"0", "50", "66"})
-  public int missRate = 0;
+  @Param({"100", "50", "33"})
+  public int hitRate = 0;
 
   private final static AtomicInteger offset = new AtomicInteger(0);
 
@@ -69,7 +69,7 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
     getsDestroyed = cache = getFactory().create(ENTRY_COUNT);
     ints = new Integer[PATTERN_COUNT];
     AccessPattern _pattern =
-      new RandomAccessPattern((int) (ENTRY_COUNT * (100D / (100 - missRate))));
+      new RandomAccessPattern((int) (ENTRY_COUNT * (100D / hitRate)));
     for (int i = 0; i < PATTERN_COUNT; i++) {
       ints[i] = _pattern.next();
     }
