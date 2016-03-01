@@ -13,6 +13,23 @@
 RESULT="target/jmh-result";
 SITE="../cache2k/src/site/resources/benchmark-result";
 
+processCommandLine() {
+  pars="$#";
+  while true; do
+    case "$1" in
+      --dir) RESULT="$2"; shift 1;;
+      -*) echo "unknown option: $1"; exit 1;;
+      *) break;;
+    esac
+    shift 1;
+  done
+  if test -z "$1"; then
+    echo "Run with: processBenchmarkResults.sh copyData | process | copyToSite";
+  else
+   "$@";
+  fi
+}
+
 json() {
 cat $RESULT/data.json;
 }
@@ -218,11 +235,11 @@ json | \
 plot $f "PopulateParallelOnceBenchmark: Insert entries once $threads threads (Cache size)" "runtime in seconds"
 done
 
-f=$RESULT/readOnly.dat
+f=$RESULT/populateParallelOnce-memory.dat
 (
 echo "threads-size CHM cache2k Caffeine Guava";
 json | \
-    jq -r '.[] |  select (.benchmark | contains ("ReadOnlyBenchmark") ) | [ (.threads | tostring) + "-" + .params.missRate, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
+    jq -r ".[] |  select (.benchmark | contains (\"PopulateParallelOnceBenchmark\") ) | select (.threads == 1 ) | [ .params.size, .params.cacheFactory, .secondaryMetric.\+forced-gc-mem.total.score ] | @csv"  | \
     sort | tr -d '"' | \
     pivot \
           "org.cache2k.benchmark.ConcurrentHashMapFactory" \
@@ -232,7 +249,23 @@ json | \
           | sort | \
     stripEmpty
 ) > $f
-plot $f "Random reads in 100k entries with variable miss rate (threads-missRate)" "ops/s"
+plot $f "PopulateParallelOnceBenchmark: Insert entries once (Cache size)" "used memory after forces GC"
+
+f=$RESULT/readOnly.dat
+(
+echo "threads-size CHM cache2k Caffeine Guava";
+json | \
+    jq -r '.[] |  select (.benchmark | contains ("ReadOnlyBenchmark") ) | [ (.threads | tostring) + "-" + .params.hitRate, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
+    sort | tr -d '"' | \
+    pivot \
+          "org.cache2k.benchmark.ConcurrentHashMapFactory" \
+          "org.cache2k.benchmark.Cache2kFactory" \
+          "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
+          "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
+          | sort | \
+    stripEmpty
+) > $f
+plot $f "Random reads in 100k entries with variable hit rate (threads-hitRate)" "ops/s"
 
 f=$RESULT/combinedReadWrite.dat
 (
@@ -253,8 +286,5 @@ plot $f "CombinedReadWrite" "ops/s"
 
 }
 
-if test -z "$1"; then
-  echo "Run with: processBenchmarkResults.sh copyData | process | copyToSite";
-else
- "$@";
-fi
+processCommandLine "$@";
+shift $shift;
