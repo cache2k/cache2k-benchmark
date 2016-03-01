@@ -31,7 +31,8 @@ processCommandLine() {
 }
 
 json() {
-cat $RESULT/data.json;
+cat $RESULT/data.json
+# | sed 's/+forced-gc-mem.used/forcedGcMemUsed/'
 }
 
 # pivot "<impl>,<impl2>,..."
@@ -199,7 +200,7 @@ json | \
           "org.cache2k.benchmark.ConcurrentHashMapFactory" | sort | \
     stripEmpty
 ) > $f
-plot $f "PopulateParallelOnceBenchmark: Insert entries once with variable threads (threads-entryCount)" "runtime in seconds"
+plot $f "PopulateParallelOnceBenchmark (threads-entryCount)" "runtime in seconds"
 
 f=$RESULT/populateParallelOnce.dat
 (
@@ -215,7 +216,7 @@ json | \
           | sort | \
     stripEmpty
 ) > $f
-plot $f "PopulateParallelOnceBenchmark: Insert entries once with variable threads (threads-entryCount)" "runtime in seconds"
+plot $f "PopulateParallelOnceBenchmark (threads-entryCount)" "runtime in seconds"
 
 for threads in 1 2 4; do
 f=$RESULT/populateParallelOnce-$threads.dat
@@ -232,14 +233,14 @@ json | \
           | sort | \
     stripEmpty
 ) > $f
-plot $f "PopulateParallelOnceBenchmark: Insert entries once $threads threads (Cache size)" "runtime in seconds"
+plot $f "PopulateParallelOnceBenchmark $threads threads (Cache size)" "runtime in seconds"
 done
 
 f=$RESULT/populateParallelOnce-memory.dat
 (
 echo "threads-size CHM cache2k Caffeine Guava";
 json | \
-    jq -r ".[] |  select (.benchmark | contains (\"PopulateParallelOnceBenchmark\") ) | select (.threads == 1 ) | [ .params.size, .params.cacheFactory, .secondaryMetric.\+forced-gc-mem.total.score ] | @csv"  | \
+    jq -r ".[] |  select (.benchmark | contains (\"PopulateParallelOnceBenchmark\") ) | select (.threads == 1 ) | [ .params.size, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used\"][\"score\"] ] | @csv"  | \
     sort | tr -d '"' | \
     pivot \
           "org.cache2k.benchmark.ConcurrentHashMapFactory" \
@@ -249,7 +250,7 @@ json | \
           | sort | \
     stripEmpty
 ) > $f
-plot $f "PopulateParallelOnceBenchmark: Insert entries once (Cache size)" "used memory after forces GC"
+plot $f "PopulateParallelOnceBenchmark heap size (Cache size)" "used heap bytes after forced GC"
 
 f=$RESULT/readOnly.dat
 (
@@ -265,7 +266,7 @@ json | \
           | sort | \
     stripEmpty
 ) > $f
-plot $f "Random reads in 100k entries with variable hit rate (threads-hitRate)" "ops/s"
+plot $f "ReadOnlyBenchmark (threads-hitRate)" "ops/s"
 
 f=$RESULT/combinedReadWrite.dat
 (
