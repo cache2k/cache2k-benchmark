@@ -24,26 +24,38 @@ processCommandLine() {
     shift 1;
   done
   if test -z "$1"; then
-    echo "Run with: processBenchmarkResults.sh copyData | process | copyToSite";
+    echo "Run with: processBenchmarkResults.sh process";
   else
    "$@";
   fi
 }
 
 json() {
-cat $RESULT/data.json
-# | sed 's/+forced-gc-mem.used/forcedGcMemUsed/'
+if test -f  $RESULT/data.json.gz; then
+  cat $RESULT/data.json.gz;
+else
+  cat $RESULT/data.json
+fi
+}
+
+# scaleToMegaBytes
+#
+# Scale the score down to megabytes with 2 digit precision.
+#
+scaleBytesToMegaBytes() {
+awk -F, '{ printf ("%s,%s,%.2f\n", $1, $2, $3/1024/1024); }'
 }
 
 # pivot "<impl>,<impl2>,..."
 #
 # Input format:
 #
-# benchmarkMostlyHit_6E|org.cache2k.benchmark.LruCacheBenchmark|0.596
-# benchmarkMostlyHit_6E|org.cache2k.benchmark.LruSt030709CacheBenchmark|0.248
-# benchmarkMostlyHit_6E|org.cache2k.benchmark.RecentDefaultCacheBenchmark|0.573
-# benchmarkRandom_6E|org.cache2k.benchmark.ArcCacheBenchmark|0.169
-# benchmarkRandom_6E|org.cache2k.benchmark.ClockCacheBenchmark|0.138
+# 1000000,org.cache2k.benchmark.Cache2kFactory,0.26509106983333336
+# 2000000,org.cache2k.benchmark.Cache2kFactory,0.51293869775
+# 4000000,org.cache2k.benchmark.Cache2kFactory,1.5091185168999999
+# 8000000,org.cache2k.benchmark.Cache2kFactory,5.391231625266667
+# 1000000,org.cache2k.benchmark.Cache2kWithExpiryFactory,0.39409388270000006
+# 2000000,org.cache2k.benchmark.Cache2kWithExpiryFactory,0.9784698428333333
 # . . .
 
 # Output format:
@@ -78,7 +90,13 @@ function flushRow() {
  printf ("%s ", row);
  for (k = 1; k <= keysCnt; k++) {
    key=colKeys[k];
-   printf ("%s ", data[key]);
+   v=data[key];
+   # missing data points need to have a ?
+   if (v=="") {
+     printf ("? ");
+   } else {
+     printf ("%s ", data[key]);
+   }
  }
  printf "\n";
 }
@@ -92,42 +110,6 @@ EOF
 cleanName() {
   awk '{ sub(/benchmark/, "", $1); print; }';
 }
-
-copyData() {
-test -d $RESULT || mkdir -p $RESULT;
-cp benchmark.log $RESULT/;
-cp thirdparty/target/junit-benchmark.xml $RESULT/thirdparty-junit-benchmark.xml;
-cp zoo/target/junit-benchmark.xml $RESULT/zoo-junit-benchmark.xml;
-cp thirdparty/target/cache2k-benchmark-result.csv $RESULT/thirdparty-cache2k-benchmark-result.csv;
-cp zoo/target/cache2k-benchmark-result.csv $RESULT/zoo-cache2k-benchmark-result.csv;
-}
-
-copyToSite() {
-test -d "$SITE" || mkdir -p "$SITE";
-cp "$RESULT"/* "$SITE"/;
-}
-
-# print a csv with the junit benchmark results. old version.
-# the xml contains only the data from the last JVM fork.
-printJubCsvOld() {
-for I in $RESULT/*-junit-benchmark.xml; do
-  xml2 < $I | 2csv -d"|" testname @name @classname @round-avg @round-stddev @benchmark-rounds
-done
-}
-
-extract_jub_csv_from_log_awk=`cat <<"EOF"
-/^Running / { class=$2; }
-/measured [0-9]* out of/ { rounds=$3; split($1, A, ":"); name=A[1]; }
-/ round: / {
-  n=split(name, A, ".");
-  method=A[n];
-  roundavg=$2;
-  split($4, A, "]");
-  stddev=A[1];
-  print method"|"class"|"roundavg"|"stddev"|"rounds;
-}
-EOF
-`
 
 stripEmpty() {
 awk 'NF > 1 { print; }';
@@ -186,6 +168,40 @@ cols=$(( `head -n 1 "$in" | wc -w` ));
   echo ""; 
 ) > "$in".plot
 gnuplot "$in".plot;
+
+# just a copy of above but leaving out the title for texts/blogs providing an image title
+local out="`dirname "$in"`/`basename "$in" .dat`-notitle.svg";
+(
+echo "set terminal svg"
+echo "set output '$out'"
+echo "set boxwidth 0.9 absolute";
+echo "set style fill solid 1.00 border lt -1";
+echo "set key outside right top vertical Right noreverse noenhanced autotitles nobox";
+echo "set style histogram clustered gap 2 title  offset character 0, 0, 0";
+echo "set datafile missing '-'";
+echo "set style data histograms";
+echo "set xtics border in scale 0,0 nomirror rotate by -45  offset character 0, 0, 0 autojustify";
+echo 'set xtics  norangelimit font "1"';
+echo "set xtics   ()"
+test -z "$xTitle" || echo "set xlabel '${xTitle}'";
+test -z "$yTitle" || echo "set ylabel '${yTitle}'";
+echo "set yrange [ 0.0 : $maxYRange ] noreverse nowriteback";
+# echo "i = 22";
+# echo "plot '$in' using 2:xtic(1) ti col, '' u 3 ti col, '' u 4 ti col";
+#if [ "`cat $in | wc -l`" -lt 3 ]; then
+#  echo  -n "plot '$in' using 2 ti col";
+#else
+  echo  -n "plot '$in' using 2:xtic(1) ti col";
+#fi
+cols=$(( `head -n 1 "$in" | wc -w` ));
+  idx=3;
+  while [ $idx -le $cols ]; do
+    echo -n ", '' u $idx ti col";
+    idx=$(( $idx + 1 ));
+  done
+  echo "";
+) > "${in}-notitle.plot"
+gnuplot "${in}-notitle.plot";
 }
 
 process() {
@@ -200,7 +216,7 @@ json | \
           "org.cache2k.benchmark.ConcurrentHashMapFactory" | sort | \
     stripEmpty
 ) > $f
-plot $f "PopulateParallelOnceBenchmark (threads-entryCount)" "runtime in seconds"
+plot $f "PopulateParallelOnceBenchmark multiple threads" "runtime in seconds" "threads - cache size (entries)"
 
 f=$RESULT/populateParallelOnce.dat
 (
@@ -216,12 +232,12 @@ json | \
           | sort | \
     stripEmpty
 ) > $f
-plot $f "PopulateParallelOnceBenchmark (threads-entryCount)" "runtime in seconds"
+plot $f "PopulateParallelOnceBenchmark multiple threads" "runtime in seconds" "threads - cache size (entries)"
 
 for threads in 1 2 4; do
 f=$RESULT/populateParallelOnce-$threads.dat
 (
-echo "threads-size CHM cache2k Caffeine Guava";
+echo "size CHM cache2k Caffeine Guava";
 json | \
     jq -r ".[] |  select (.benchmark | contains (\"PopulateParallelOnceBenchmark\") ) | select (.threads == $threads ) | [ .params.size, .params.cacheFactory, .primaryMetric.score ] | @csv"  | \
     sort | tr -d '"' | \
@@ -233,15 +249,15 @@ json | \
           | sort | \
     stripEmpty
 ) > $f
-plot $f "PopulateParallelOnceBenchmark $threads threads (Cache size)" "runtime in seconds"
+plot $f "PopulateParallelOnceBenchmark $threads threads" "runtime in seconds" "cache size (entries)"
 done
 
 f=$RESULT/populateParallelOnce-memory.dat
 (
-echo "threads-size CHM cache2k Caffeine Guava";
+echo "size CHM cache2k Caffeine Guava";
 json | \
     jq -r ".[] |  select (.benchmark | contains (\"PopulateParallelOnceBenchmark\") ) | select (.threads == 1 ) | [ .params.size, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used\"][\"score\"] ] | @csv"  | \
-    sort | tr -d '"' | \
+    sort | tr -d '"' | scaleBytesToMegaBytes | \
     pivot \
           "org.cache2k.benchmark.ConcurrentHashMapFactory" \
           "org.cache2k.benchmark.Cache2kFactory" \
@@ -250,7 +266,7 @@ json | \
           | sort | \
     stripEmpty
 ) > $f
-plot $f "PopulateParallelOnceBenchmark heap size (Cache size)" "used heap bytes after forced GC"
+plot $f "PopulateParallelOnceBenchmark heap size after forced GC" "MB" "cache size (entries)"
 
 f=$RESULT/readOnly.dat
 (
