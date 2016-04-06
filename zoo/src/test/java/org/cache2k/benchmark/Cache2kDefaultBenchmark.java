@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.impl2015;
+package org.cache2k.benchmark;
 
 /*
  * #%L
@@ -22,30 +22,13 @@ package org.cache2k.benchmark.impl2015;
  * #L%
  */
 
-import org.cache2k.CacheException;
-
 /**
- * A misconfiguration upon cache initialization is detected.
- * The cache is unable to operate.
- *
- * @author Jens Wilke; created: 2014-08-17
+ * @author Jens Wilke; created: 2013-06-13
  */
-public class CacheMisconfigurationException extends CacheException {
+public class Cache2kDefaultBenchmark extends BenchmarkCollection {
 
-  public CacheMisconfigurationException() {
-    super();
-  }
-
-  public CacheMisconfigurationException(String message) {
-    super(message);
-  }
-
-  public CacheMisconfigurationException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public CacheMisconfigurationException(Throwable cause) {
-    super(cause);
+  {
+    factory = new Cache2kFactory();
   }
 
 }
