@@ -140,6 +140,7 @@ public class BenchmarkingBase extends AbstractBenchmark {
 
   public void logHitRate(BenchmarkCache c, AccessTrace _trace, long _missCount) {
     int _optHitRate = _trace.getOptHitRate(c.getCacheSize()).get4digit();
+    int _optHitCount = _trace.getOptHitCount(c.getCacheSize());
     String _testName = extractTestName();
     if (onlyOneResult.contains(_testName)) {
       return;
@@ -149,7 +150,7 @@ public class BenchmarkingBase extends AbstractBenchmark {
     if (c.getCacheSize() > 3000) {
       _usedMem = calculateUsedMemory();
     }
-    saveHitRate(_testName, c.getCacheSize(), _trace, _optHitRate, _missCount, _usedMem);
+    saveHitRate(_testName, c.getCacheSize(), _trace, _optHitRate,_optHitCount, _missCount, _usedMem);
     c.checkIntegrity();
     String _cacheStatistics = c.getStatistics();
     System.out.println(_cacheStatistics);
@@ -186,7 +187,7 @@ public class BenchmarkingBase extends AbstractBenchmark {
     return _usedMem;
   }
 
-  void saveHitRate(String _testName, int _cacheSize, AccessTrace _trace, int _optHitRate, long _missCount, long _usedMem) {
+  void saveHitRate(String _testName, int _cacheSize, AccessTrace _trace, int _optHitRate, int _optHitCount, long _missCount, long _usedMem) {
     double _hitRateTimes100 =
       (_trace.getTraceLength() - _missCount) * 100D / _trace.getTraceLength();
     String _hitRate = String.format("%.2f", _hitRateTimes100);
@@ -198,6 +199,7 @@ public class BenchmarkingBase extends AbstractBenchmark {
     s += ", missCount=" + _missCount + ", hitRatePercent=" + _hitRate;
     if (_optHitRate >= 0) {
       s += ", optHitRatePercent=" + String.format("%.2f", _optHitRate * 1D / 100);
+      s += ", optHitCount=" + _optHitCount;
     }
     s += ", randomHitRatePercent=" + String.format("%.2f", _trace.getRandomHitRate(_cacheSize).getFactor() * 100);
     s += ", uniqueValues=" + _trace.getValueCount();
@@ -216,6 +218,7 @@ public class BenchmarkingBase extends AbstractBenchmark {
       String.format("%.2f", _optHitRate * 1D / 100) + "|" + // 7
       String.format("%.2f", _trace.getRandomHitRate(_cacheSize).getFactor() * 100) + "|" +  // 8
       _usedMem; // 9
+
     if (!benchmarkName2csv.containsKey(_testName)) {
       benchmarkName2csv.put(_testName, _csvLine);
       writeCsv(_csvLine);

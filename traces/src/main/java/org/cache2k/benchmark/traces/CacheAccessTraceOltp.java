@@ -33,14 +33,11 @@ public class CacheAccessTraceOltp {
 
   public static AccessTrace getInstance() {
     return TraceCache.getTraceLazy("trace-oltp.trc.bin.gz")
-        .setOptHitCount(999, 0)
-        .setOptHitCount(1000, 0)
-        .setOptHitCount(1999, 0)
-        .setOptHitCount(2000, 0)
-        .setOptHitCount(4999, 0)
-        .setOptHitCount(5000, 0)
-        .setOptHitCount(10000, 0)
-        .setOptHitCount(15000, 0);
+      .setOptHitCount(1000, 490093)
+      .setOptHitCount(2000, 552149)
+      .setOptHitCount(5000, 624076)
+      .setOptHitCount(10000, 667490)
+      .setOptHitCount(15000, 686870);
   }
 
 }
