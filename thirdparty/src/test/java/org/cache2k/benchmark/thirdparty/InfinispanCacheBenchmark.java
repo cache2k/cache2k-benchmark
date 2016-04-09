@@ -37,14 +37,4 @@ public class InfinispanCacheBenchmark extends BenchmarkCollection {
     factory = new InfinispanCacheFactory();
   }
 
-  /**
-   * We expect the original test to fail for Infinispan.
-   * As of 20131210, test fails with: expected:&lt;1001> but was:&lt;1328>
-   */
-  @Test(expected=AssertionError.class)
-  @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
-  public void testSize1000() throws Exception {
-    super.testSize1000();
-  }
-
 }

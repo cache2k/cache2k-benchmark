@@ -120,12 +120,12 @@ public class BenchmarkCollection extends TracesAndTestsCollection {
     c.destroy();
   }
 
-  public static final AccessTrace randomTrace =
+  public static final AccessTrace randomTrace1000 =
     new AccessTrace(new RandomAccessPattern(1000), TRACE_LENGTH);
 
   @Test
   public void benchmarkRandom()  throws Exception {
-    runBenchmark(randomTrace, 500);
+    runBenchmark(randomTrace1000, 500);
   }
 
 
@@ -180,36 +180,6 @@ public class BenchmarkCollection extends TracesAndTestsCollection {
 
   static final AccessTrace effective95Trace =
     new AccessTrace(new DistAccessPattern(900), TRACE_LENGTH);
-
-  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
-  public void benchmarkEff95() throws Exception {
-    runBenchmark(effective95Trace, 500);
-  }
-
-  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
-  public void benchmarkTotalRandom_100() {
-    runBenchmark(randomTrace, 100);
-  }
-
-  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
-  public void benchmarkTotalRandom_200() {
-    runBenchmark(randomTrace, 200);
-  }
-
-  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
-  public void benchmarkTotalRandom_350() {
-    runBenchmark(randomTrace, 350);
-  }
-
-  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
-  public void benchmarkTotalRandom_500() {
-    runBenchmark(randomTrace, 500);
-  }
-
-  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
-  public void benchmarkTotalRandom_800() {
-    runBenchmark(randomTrace, 800);
-  }
 
 
 

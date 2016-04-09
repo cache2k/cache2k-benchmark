@@ -35,8 +35,4 @@ public class InfinispanCacheWithExpiryBenchmark extends BenchmarkCollection {
     factory = new InfinispanCacheFactory().withExpiry(true);
   }
 
-  @Ignore("yields: expected == real missed expected:<1001> but was:<1328>")
-  @Test @Override
-  public void testSize1000() { }
-
 }

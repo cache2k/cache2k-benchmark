@@ -31,6 +31,7 @@ import org.cache2k.benchmark.traces.CacheAccessTraceSprite;
 import org.cache2k.benchmark.traces.CacheAccessTraceWeb07;
 import org.cache2k.benchmark.traces.CacheAccessTraceWeb12;
 import org.cache2k.benchmark.util.AccessTrace;
+import org.cache2k.benchmark.util.ZipfianPattern;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -79,15 +80,8 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
     AccessTrace t = BenchmarkCollection.traceRandomForSize1Replacement;
     BenchmarkCache<Integer, Integer> c = freshCache(1);
     runBenchmark(c, t);
-    if (c.getMissCount() == 810) {
-    } else if (c.getMissCount() == 908) {
-    } else if (c.getMissCount() == 913) {
-    } else if (c.getMissCount() == 898) {
-    } else if (c.getMissCount() == 892) {
-    } else if (c.getMissCount() == 807) {
-    } else {
-      assertEquals("expected == real missed", 909, c.getMissCount());
-    }
+    assertEquals("expected == real missed", 909, c.getMissCount());
+
     logHitRate(c, t, c.getMissCount());
     c.destroy();
   }
@@ -258,4 +252,48 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
     runBenchmark(CacheAccessTraceOltp.getInstance(), 15000);
   }
 
+  public static final int TRACE_LENGTH = 3 * 1000 * 1000;
+
+  static final AccessTrace zipf900Trace =
+    new AccessTrace(new ZipfianPattern(900), TRACE_LENGTH);
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkZipf900_500() throws Exception {
+    runBenchmark(zipf900Trace, 500);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkZipf900_700() throws Exception {
+    runBenchmark(zipf900Trace, 700);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkEff95() throws Exception {
+    runBenchmark(BenchmarkCollection.effective95Trace, 500);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkTotalRandom1000_100() {
+    runBenchmark(BenchmarkCollection.randomTrace1000, 100);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkTotalRandom1000_200() {
+    runBenchmark(BenchmarkCollection.randomTrace1000, 200);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkTotalRandom1000_350() {
+    runBenchmark(BenchmarkCollection.randomTrace1000, 350);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkTotalRandom1000_500() {
+    runBenchmark(BenchmarkCollection.randomTrace1000, 500);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkTotalRandom1000_800() {
+    runBenchmark(BenchmarkCollection.randomTrace1000, 800);
+  }
 }

@@ -22,6 +22,7 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import org.cache2k.benchmark.impl2015.LruCache;
 import org.junit.After;
 import static org.junit.Assert.*;
 import com.carrotsearch.junitbenchmarks.AbstractBenchmark;
