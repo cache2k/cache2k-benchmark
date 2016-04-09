@@ -2,7 +2,7 @@ package org.cache2k.benchmark.zoo;
 
 /*
  * #%L
- * cache2k-benchmark-zoo
+ * zoo
  * %%
  * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%

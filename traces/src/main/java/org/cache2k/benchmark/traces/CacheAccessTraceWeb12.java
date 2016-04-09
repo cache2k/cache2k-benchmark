@@ -2,7 +2,7 @@ package org.cache2k.benchmark.traces;
 
 /*
  * #%L
- * cache2k-benchmark-traces
+ * traces
  * %%
  * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%

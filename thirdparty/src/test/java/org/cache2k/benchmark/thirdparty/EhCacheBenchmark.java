@@ -2,7 +2,7 @@ package org.cache2k.benchmark.thirdparty;
 
 /*
  * #%L
- * cache2k-benchmark-thirdparty
+ * thirdparty
  * %%
  * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%
