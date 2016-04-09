@@ -111,6 +111,7 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
     @Override
     public void put(final Integer key, final Integer value) {
       cache.put(key, value);
+      cache.cleanUp();
     }
 
     @Override
