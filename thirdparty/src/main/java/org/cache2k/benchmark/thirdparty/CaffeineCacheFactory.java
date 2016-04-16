@@ -27,12 +27,20 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Jens Wilke; created: 2013-12-08
  */
 public class CaffeineCacheFactory extends BenchmarkCacheFactory {
+
+  private boolean sameThreadEviction = false;
+
+  CaffeineCacheFactory sameThreadEviction(boolean f) {
+    sameThreadEviction = f;
+    return this;
+  }
 
   @Override
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
@@ -54,6 +62,9 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
 
   private void createCache(final int _maxElements, final MyBenchmarkCacheAdapter _c) {
     Caffeine b = Caffeine.newBuilder().maximumSize(_maxElements);
+    if (sameThreadEviction) {
+      b.executor(Runnable::run);
+    }
     if (withExpiry) {
       b.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
     }
@@ -111,7 +122,6 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
     @Override
     public void put(final Integer key, final Integer value) {
       cache.put(key, value);
-      cache.cleanUp();
     }
 
     @Override

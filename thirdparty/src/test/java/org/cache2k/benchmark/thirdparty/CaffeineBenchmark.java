@@ -30,7 +30,7 @@ import org.cache2k.benchmark.BenchmarkCollection;
 public class CaffeineBenchmark extends BenchmarkCollection {
 
   {
-    factory = new CaffeineCacheFactory();
+    factory = new CaffeineCacheFactory().sameThreadEviction(true);
   }
 
 }
