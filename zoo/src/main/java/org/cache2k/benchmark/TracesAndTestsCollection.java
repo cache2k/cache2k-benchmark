@@ -258,6 +258,16 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
     new AccessTrace(new ZipfianPattern(900), TRACE_LENGTH);
 
   @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkZipf900_100() throws Exception {
+    runBenchmark(zipf900Trace, 100);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkZipf900_300() throws Exception {
+    runBenchmark(zipf900Trace, 300);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
   public void benchmarkZipf900_500() throws Exception {
     runBenchmark(zipf900Trace, 500);
   }
