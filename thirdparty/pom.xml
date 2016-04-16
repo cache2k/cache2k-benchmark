@@ -39,6 +39,25 @@
       <artifactId>caffeine</artifactId>
       <version>2.2.6</version>
     </dependency>
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>simulator</artifactId>
+      <version>2.2.6</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.cache2k</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>net.sf.ehcache</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.github.brianfrankcooper.ycsb</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
 
   <repositories>
