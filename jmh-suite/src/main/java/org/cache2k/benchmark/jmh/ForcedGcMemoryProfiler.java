@@ -85,8 +85,8 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       return Collections.emptyList();
     }
     return Arrays.asList(
-      new ProfilerResult("+forced-gc-mem.used", (double) usedMemory, "bytes", AggregationPolicy.MAX),
-      new ProfilerResult("+forced-gc-mem.total", (double) totalMemory, "bytes", AggregationPolicy.MAX)
+      new ProfilerResult("+forced-gc-mem.used", (double) usedMemory, "bytes", AggregationPolicy.AVG),
+      new ProfilerResult("+forced-gc-mem.total", (double) totalMemory, "bytes", AggregationPolicy.AVG)
     );
   }
 
