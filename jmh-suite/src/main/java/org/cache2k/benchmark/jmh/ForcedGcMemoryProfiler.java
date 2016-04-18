@@ -30,6 +30,8 @@ import org.openjdk.jmh.results.AggregationPolicy;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.Result;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryUsage;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,6 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ForcedGcMemoryProfiler implements InternalProfiler {
 
+  static boolean enable;
   static long usedMemory;
   static long totalMemory;
 
@@ -51,7 +54,13 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
    * used memory. This enforces a full garbage collection.
    */
   public static void recordUsedMemory() {
-    usedMemory = getUsedMemory();
+    if (enable) {
+      long m2 =  getUsedMemory();
+      do {
+        usedMemory = m2;
+        m2 = getUsedMemory();
+      } while (m2 < usedMemory);
+    }
   }
 
   private static long getUsedMemory() {
@@ -64,9 +73,10 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       System.gc();
       System.runFinalization();
     }
-    Runtime rt = Runtime.getRuntime();
-    totalMemory = rt.totalMemory();
-    return rt.totalMemory() - rt.freeMemory();
+    MemoryUsage mu = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+    totalMemory = mu.getCommitted();
+    return mu.getUsed();
+
   }
 
   @Override
@@ -82,7 +92,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
 
   @Override
   public void beforeIteration(final BenchmarkParams benchmarkParams, final IterationParams iterationParams) {
-
+    enable = true;
   }
 
   @Override
