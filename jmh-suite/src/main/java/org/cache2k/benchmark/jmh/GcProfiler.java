@@ -353,7 +353,7 @@ public class GcProfiler implements InternalProfiler {
   }
 
   static class Defaults {
-    static final String PREFIX = "+h7e.";
+    static final String PREFIX = "+c2k.";
   }
 
 }
