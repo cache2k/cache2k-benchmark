@@ -15,7 +15,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cache2k-version>0.24-SNAPSHOT</cache2k-version>
+    <cache2k-version>0.25-SNAPSHOT</cache2k-version>
   </properties>
 
   <modules>

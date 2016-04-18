@@ -25,9 +25,10 @@ package org.cache2k.benchmark;
 import com.carrotsearch.junitbenchmarks.AbstractBenchmark;
 import com.carrotsearch.junitbenchmarks.BenchmarkOptions;
 import org.cache2k.Cache;
-import org.cache2k.CacheBuilder;
+import org.cache2k.Cache2kBuilder;
 import org.cache2k.CacheEntry;
 import org.cache2k.CacheSource;
+import org.cache2k.integration.CacheLoader;
 import org.junit.Test;
 
 import java.io.CharArrayWriter;
@@ -100,10 +101,10 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
     final PrintWriter w = new PrintWriter(new CharArrayWriter());
     final DateFormat df = DateFormat.getDateInstance(DateFormat.LONG, Locale.FRANCE);
     Cache<Date, String> c =
-      CacheBuilder.newCache(Date.class, String.class)
-        .source(new CacheSource<Date, String>() {
+      Cache2kBuilder.of(Date.class, String.class)
+        .loader(new CacheLoader<Date, String>() {
           @Override
-          public synchronized String get(Date o) {
+          public synchronized String load(Date o) {
             return df.format(o);
           }
         })
@@ -121,10 +122,10 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
   public void testWithCacheNewFormatter() {
     final PrintWriter w = new PrintWriter(new CharArrayWriter());
     Cache<Date, String> c =
-      CacheBuilder.newCache(Date.class, String.class)
-        .source(new CacheSource<Date, String>() {
+      Cache2kBuilder.of(Date.class, String.class)
+        .loader(new CacheLoader<Date, String>() {
           @Override
-          public String get(Date o) {
+          public String load(Date o) {
             DateFormat df = DateFormat.getDateInstance(DateFormat.LONG, Locale.FRANCE);
             return df.format(o);
           }
@@ -151,22 +152,22 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
   @SuppressWarnings("unchecked")
   public void testAssociativeCache() {
     Cache<Locale, Cache<Integer, Cache<Date, String>>> c = (Cache)
-      CacheBuilder.newCache(Locale.class, Cache.class)
+      Cache2kBuilder.of(Locale.class, Cache.class)
         .eternal(true)
         .name(DateFormattingBenchmark.class, "testAssociativeCache")
-        .source(new CacheSource<Locale, Cache>() {
+        .loader(new CacheLoader<Locale, Cache>() {
           @Override
-          public Cache get(final Locale l) {
+          public Cache load(final Locale l) {
             return
-              CacheBuilder.newCache(Integer.class, Cache.class)
+              Cache2kBuilder.of(Integer.class, Cache.class)
                 .name(DateFormattingBenchmark.class, "testAssociativeCache-" + l)
                 .eternal(true)
-                .source(new CacheSource<Integer, Cache>() {
-                  public Cache get(final Integer _format) {
-                    return CacheBuilder.newCache(Date.class, String.class)
+                .loader(new CacheLoader<Integer, Cache>() {
+                  public Cache load(final Integer _format) {
+                    return Cache2kBuilder.of(Date.class, String.class)
                       .name(DateFormattingBenchmark.class, "testAssociativeCache-" + l + "-" + _format)
-                      .source(new CacheSource<Date, String>() {
-                        public String get(Date d) {
+                      .loader(new CacheLoader<Date, String>() {
+                        public String load(Date d) {
                           DateFormat df = DateFormat.getDateInstance(_format, l);
                           return df.format(d);
                         }
@@ -198,11 +199,11 @@ public class DateFormattingBenchmark extends AbstractBenchmark {
   @Test
   public void testWithCacheAndKeyObject() {
     Cache<CacheKey, String> c =
-      CacheBuilder.newCache(CacheKey.class, String.class)
+      Cache2kBuilder.of(CacheKey.class, String.class)
         .eternal(true)
-        .source(new CacheSource<CacheKey, String>() {
+        .loader(new CacheLoader<CacheKey, String>() {
           @Override
-          public String get(CacheKey o) {
+          public String load(CacheKey o) {
             DateFormat df = DateFormat.getDateInstance(o.format, o.locale);
             return df.format(o.date);
           }

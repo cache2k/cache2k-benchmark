@@ -23,17 +23,16 @@ package org.cache2k.benchmark;
  */
 
 import org.cache2k.Cache;
-import org.cache2k.CacheBuilder;
-import org.cache2k.CacheSource;
+import org.cache2k.Cache2kBuilder;
+import org.cache2k.integration.CacheLoader;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Jens Wilke; created: 2013-12-08
  */
 public class Cache2kFactory extends BenchmarkCacheFactory {
-
-  Class<?> implementation = null;
 
   AtomicInteger counter = new AtomicInteger();
 
@@ -52,12 +51,11 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
     }
     final CountingDataSource<Integer, Integer> _source = _usedSource;
     final Cache<Integer, Integer> c =
-      CacheBuilder.newCache(Integer.class, Integer.class)
+      Cache2kBuilder.of(Integer.class, Integer.class)
       .name("testCache-" + counter.incrementAndGet())
-      .implementation(implementation)
-      .source(_source)
-      .expirySecs(withExpiry ? 5 * 60 : Integer.MAX_VALUE)
-      .maxSize(_maxElements)
+      .loader(_source)
+      .expiryDuration(withExpiry ? 5 * 60 : Integer.MAX_VALUE, TimeUnit.SECONDS)
+      .entryCapacity(_maxElements)
       .refreshAhead(false)
       .build();
     return new BenchmarkCache<Integer, Integer>() {
@@ -109,15 +107,10 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
     };
   }
 
-  public Cache2kFactory implementation(Class<?> c) {
-    implementation = c;
-    return this;
-  }
-
   /**
    * @author Jens Wilke; created: 2013-06-24
    */
-  public static class CountingDataSource<K, T> implements CacheSource<K, T> {
+  public static class CountingDataSource<K, T> extends CacheLoader<K, T> {
 
     private int missCnt;
 
@@ -130,7 +123,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public T get(K o) {
+    public T load(K o) {
       incrementMissCount();
       return (T) o;
     }

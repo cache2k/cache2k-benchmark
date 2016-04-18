@@ -49,7 +49,7 @@ public class HashMapReferenceBenchmark extends AbstractBenchmark {
     HashMap<Integer, Integer> map = new HashMap<>();
     int cnt = 0;
     for (int i = 0; i < 1000; i++) {
-      map.put(i, g.get(i));
+      map.put(i, g.load(i));
       cnt++;
     }
     int sum = 0;

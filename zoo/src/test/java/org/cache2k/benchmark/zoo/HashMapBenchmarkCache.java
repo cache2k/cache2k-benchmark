@@ -24,6 +24,7 @@ package org.cache2k.benchmark.zoo;
 
 import org.cache2k.CacheSource;
 import org.cache2k.benchmark.BenchmarkCache;
+import org.cache2k.integration.CacheLoader;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -46,9 +47,9 @@ public class HashMapBenchmarkCache<K,T> extends BenchmarkCache<K, T> {
   int missCnt;
   int evictCnt;
   HashMap<K,T> map = new HashMap<>();
-  CacheSource<K, T> cacheSource;
+  CacheLoader<K, T> cacheSource;
 
-  public HashMapBenchmarkCache(CacheSource<K, T> _cacheSource, int _maxElements) {
+  public HashMapBenchmarkCache(CacheLoader<K, T> _cacheSource, int _maxElements) {
     if (_maxElements <= 0) {
       throw new IllegalArgumentException("Maximum size must be greater 0");
     }
@@ -76,7 +77,7 @@ public class HashMapBenchmarkCache<K,T> extends BenchmarkCache<K, T> {
       randomlyEvictEntry();
     }
     try {
-      v = cacheSource.get(key);
+      v = cacheSource.load(key);
     } catch (Throwable t) {
       throw new RuntimeException("never happens in testing", t);
     }
