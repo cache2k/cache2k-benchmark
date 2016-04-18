@@ -25,21 +25,22 @@ package org.cache2k.benchmark.thirdparty;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
+import net.sf.ehcache.Element;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.PersistenceConfiguration;
 import net.sf.ehcache.constructs.blocking.CacheEntryFactory;
-import net.sf.ehcache.constructs.blocking.SelfPopulatingCache;
 import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 
 /**
- * EHCache2 using the self populating cache.
+ * EHCache2 not using the self populating cache.
  *
- * @author Jens Wilke; created: 2013-12-08
+ * @author Jens Wilke
  */
-public class EhCacheFactory extends BenchmarkCacheFactory {
+public class EhCacheDirectFactory extends BenchmarkCacheFactory {
 
+  static final CacheManager CACHE_MANAGER = CacheManager.getInstance();
   static final String CACHE_NAME = "testCache";
 
   Algorithm algorithm = Algorithm.DEFAULT;
@@ -52,10 +53,6 @@ public class EhCacheFactory extends BenchmarkCacheFactory {
   @Override
   public BenchmarkCache<Integer, Integer> create(Source _source, int _maxElements) {
     return new MyBenchmarkCache(_source, createCacheConfiguration(_maxElements));
-  }
-
-  protected CacheManager getManager() {
-    return CacheManager.getInstance();
   }
 
   protected CacheConfiguration createCacheConfiguration(int _maxElements) {
@@ -75,7 +72,7 @@ public class EhCacheFactory extends BenchmarkCacheFactory {
     return c;
   }
 
-  public EhCacheFactory algorithm(Algorithm v) {
+  public EhCacheDirectFactory algorithm(Algorithm v) {
     algorithm = v;
     return this;
   }
@@ -116,14 +113,15 @@ public class EhCacheFactory extends BenchmarkCacheFactory {
 
     MyBenchmarkCache(Source _source, CacheConfiguration v) {
       this.config = v;
-      Cache _testCache = new net.sf.ehcache.Cache(v);
-      getManager().addCache(_testCache);
+      Cache _testCache = new Cache(v);
+      CACHE_MANAGER.addCache(_testCache);
       if (_source != null) {
         entryFactory = new DelegatingEntryFactory(_source);
       } else {
         entryFactory = new MyCacheEntryFactory();
       }
-      cache = new SelfPopulatingCache(_testCache, entryFactory);
+      cache = _testCache;
+      cache.flush();
     }
 
     @Override
@@ -132,13 +130,31 @@ public class EhCacheFactory extends BenchmarkCacheFactory {
     }
 
     @Override
+    public Integer getIfPresent(final Integer key) {
+      Element e = cache.get(key);
+      if (e != null) {
+        return (Integer) e.getObjectValue();
+      }
+      return null;
+    }
+
+    @Override
+    public void put(final Integer key, final Integer value) {
+      cache.put(new Element(key, value));
+    }
+
+    @Override
     public Integer get(Integer key) {
-      return (Integer) cache.get(key).getObjectValue();
+      Element e = cache.get(key);
+      if (e == null) {
+        put(key, key);
+      }
+      return key;
     }
 
     @Override
     public void destroy() {
-      CacheManager.getInstance().removeCache("testCache");
+      CACHE_MANAGER.removeCache(CACHE_NAME);
     }
 
     @Override

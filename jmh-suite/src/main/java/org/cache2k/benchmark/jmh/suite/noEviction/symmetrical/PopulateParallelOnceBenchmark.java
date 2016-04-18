@@ -38,7 +38,7 @@ import org.openjdk.jmh.infra.BenchmarkParams;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Populate a cache of type Integer,Integer with 100k, 1M and 5M entries.
+ * Populate a cache of type Integer,Integer with 1M, 2M, 4M, 8M entries.
  * Benchmark is executed in single shot with variable threads.
  */
 @State(Scope.Benchmark)

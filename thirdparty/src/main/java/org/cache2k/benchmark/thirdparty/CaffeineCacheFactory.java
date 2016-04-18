@@ -22,6 +22,7 @@ package org.cache2k.benchmark.thirdparty;
  * #L%
  */
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
@@ -45,7 +46,6 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
   @Override
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
     MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
-    c.loader = new MyCacheLoader();
     c.size = _maxElements;
     createCache(_maxElements, c);
     return c;
@@ -60,7 +60,7 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
     return c;
   }
 
-  private void createCache(final int _maxElements, final MyBenchmarkCacheAdapter _c) {
+  private void createCache(final int _maxElements, final MyBenchmarkCacheAdapter _adapter) {
     Caffeine b = Caffeine.newBuilder().maximumSize(_maxElements);
     if (sameThreadEviction) {
       b.executor(Runnable::run);
@@ -68,7 +68,11 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
     if (withExpiry) {
       b.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
     }
-    _c.cache = b.build(_c.loader);
+    if (_adapter.loader != null) {
+      _adapter.cache = _adapter.loadingCache = b.build(_adapter.loader);
+    } else {
+      _adapter.cache = b.build();
+    }
   }
 
   static class MyCacheLoader implements com.github.benmanes.caffeine.cache.CacheLoader<Integer,Integer> {
@@ -102,7 +106,8 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
 
     MyCacheLoader loader;
     int size;
-    LoadingCache<Integer, Integer> cache;
+    Cache<Integer, Integer> cache;
+    LoadingCache<Integer, Integer> loadingCache;
 
     @Override
     public int getCacheSize() {
@@ -116,7 +121,7 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
 
     @Override
     public Integer get(Integer key) {
-      return cache.get(key);
+      return loadingCache.get(key);
     }
 
     @Override
@@ -131,7 +136,10 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
 
     @Override
     public int getMissCount() {
-      return loader.missCnt;
+      if (loader != null) {
+        return loader.missCnt;
+      }
+      return -1;
     }
 
     @Override
