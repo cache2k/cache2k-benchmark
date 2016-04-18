@@ -24,6 +24,7 @@ package org.cache2k.benchmark.traces;
 
 import org.cache2k.benchmark.util.AccessTrace;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 
@@ -50,6 +51,24 @@ class TraceCache {
       throw new RuntimeException("Cannot load trace " + _fileName, e);
     }
     return t;
+  }
+
+  static AccessTrace getTraceLazy(String key, Provider p) {
+    AccessTrace t = name2trace.get(key);
+    try {
+      if (t == null) {
+        t = p.provide();
+        name2trace.put(key, t);
+      }
+    } catch (Exception e) {
+      throw new RuntimeException("Cannot load trace: " + key, e);
+    }
+    return t;
+  }
+
+  interface Provider {
+
+    AccessTrace provide() throws IOException;
   }
 
 }

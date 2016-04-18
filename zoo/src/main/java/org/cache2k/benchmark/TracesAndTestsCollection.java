@@ -28,6 +28,11 @@ import org.cache2k.benchmark.traces.CacheAccessTraceGlimpse;
 import org.cache2k.benchmark.traces.CacheAccessTraceMulti2;
 import org.cache2k.benchmark.traces.CacheAccessTraceOltp;
 import org.cache2k.benchmark.traces.CacheAccessTraceSprite;
+import org.cache2k.benchmark.traces.CacheAccessTraceUmassFinancial1;
+import org.cache2k.benchmark.traces.CacheAccessTraceUmassFinancial2;
+import org.cache2k.benchmark.traces.CacheAccessTraceUmassWebSearch1;
+import org.cache2k.benchmark.traces.CacheAccessTraceUmassWebSearch2;
+import org.cache2k.benchmark.traces.CacheAccessTraceUmassWebSearch3;
 import org.cache2k.benchmark.traces.CacheAccessTraceWeb07;
 import org.cache2k.benchmark.traces.CacheAccessTraceWeb12;
 import org.cache2k.benchmark.util.AccessTrace;
@@ -250,6 +255,81 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
   public void benchmarkOltp_15000() throws Exception {
     runBenchmark(CacheAccessTraceOltp.getInstance(), 15000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassFinancial1_50000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassFinancial1.getInstance(), 50000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassFinancial1_100000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassFinancial1.getInstance(), 100000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassFinancial1_200000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassFinancial1.getInstance(), 200000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassFinancial2_10000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassFinancial2.getInstance(), 10000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassFinancial2_40000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassFinancial2.getInstance(), 40000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassFinancial2_90000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassFinancial2.getInstance(), 90000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassWebSearch1_70000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassWebSearch1.getInstance(), 70000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassWebSearch1_80000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassWebSearch1.getInstance(), 80000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassWebSearch1_90000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassWebSearch1.getInstance(), 90000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassWebSearch2_100000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassWebSearch2.getInstance(), 100000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassWebSearch2_200000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassWebSearch2.getInstance(), 200000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassWebSearch2_300000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassWebSearch2.getInstance(), 300000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassWebSearch3_100000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassWebSearch3.getInstance(), 100000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassWebSearch3_200000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassWebSearch3.getInstance(), 200000);
+  }
+
+  @Test @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+  public void benchmarkUmassWebSearch3_300000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassWebSearch3.getInstance(), 300000);
   }
 
   public static final int TRACE_LENGTH = 3 * 1000 * 1000;
