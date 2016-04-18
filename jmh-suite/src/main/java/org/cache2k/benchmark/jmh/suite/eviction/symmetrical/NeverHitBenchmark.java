@@ -35,8 +35,8 @@ import org.openjdk.jmh.annotations.State;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Prepopulate cache with 100k entries and access it in a random pattern
- * with different hot rates.
+ * Access a cache of size 1M an ascending sequence, never producing any hit.
+ * Each thread starts at another offset.
  *
  * @author Jens Wilke
  */
