@@ -147,9 +147,6 @@ public class BenchmarkingBase extends AbstractBenchmark {
     }
     onlyOneResult.add(_testName);
     long _usedMem = -1;
-    if (c.getCacheSize() > 3000) {
-      _usedMem = calculateUsedMemory();
-    }
     saveHitRate(_testName, c.getCacheSize(), _trace, _optHitRate,_optHitCount, _missCount, _usedMem);
     c.checkIntegrity();
     String _cacheStatistics = c.getStatistics();
@@ -203,6 +200,7 @@ public class BenchmarkingBase extends AbstractBenchmark {
     }
     s += ", randomHitRatePercent=" + String.format("%.2f", _trace.getRandomHitRate(_cacheSize).getFactor() * 100);
     s += ", uniqueValues=" + _trace.getValueCount();
+    s += ", maxHitRate=" + String.format("%.2f", _trace.getRandomHitRate(_trace.getValueCount()).getFactor() * 100);
     s += ", usedMem=" + _usedMem;
     System.out.println(_testName + ": " + s);
     int idx = _testName.lastIndexOf('.');
