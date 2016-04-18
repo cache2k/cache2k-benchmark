@@ -50,11 +50,6 @@ public class HitCountRecorder {
     addCounterResult(
       "opCount", hitCount + missCount, "op", AggregationPolicy.AVG
     );
-    setResult(
-      "hitRate",
-      getCounterResult("hitCount") * 100D /
-        getCounterResult("opCount"), "hitRate", AggregationPolicy.AVG
-    );
   }
 
 }
