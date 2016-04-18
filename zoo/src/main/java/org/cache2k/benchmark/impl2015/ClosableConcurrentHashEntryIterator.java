@@ -22,8 +22,6 @@ package org.cache2k.benchmark.impl2015;
  * #L%
  */
 
-import org.cache2k.ClosableIterator;
-
 import java.util.NoSuchElementException;
 
 /**
