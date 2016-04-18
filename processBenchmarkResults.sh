@@ -327,18 +327,21 @@ printJubCsv | onlySpeed | cleanName | sort | \
 plot $f "Runtime of 3 million cache requests with entry expiry" "runtime in seconds"
 
 
-header="Size OPT LRU CLOCK CP+ ARC EHCache Infinispan Guava Caffeine RAND";
+header="Size OPT LRU S/LRU CLOCK CP+ ARC CAR S/Lirs EHCache Infinispan Guava Caffeine RAND";
 impls="OPT \
 	org.cache2k.benchmark.LruCacheBenchmark \
+        org.cache2k.benchmark.thirdparty.CaffeineSimulatorLruBenchmark \
         org.cache2k.benchmark.ClockCacheBenchmark \
         org.cache2k.benchmark.ClockProPlusCacheBenchmark \
         org.cache2k.benchmark.ArcCacheBenchmark \
+        org.cache2k.benchmark.CarCacheBenchmark \
+        org.cache2k.benchmark.thirdparty.CaffeineSimulatorLirsBenchmark \
         org.cache2k.benchmark.thirdparty.EhCacheBenchmark \
         org.cache2k.benchmark.thirdparty.InfinispanCacheBenchmark \
         org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineBenchmark \
         RAND";
-for I in Web07 Web12 Cpp Sprite Multi2 Oltp; do
+for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 TotalRandom1000; do
   f=$RESULT/trace${I}hitrate.dat;
   (
   echo $header;
