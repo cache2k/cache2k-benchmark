@@ -22,6 +22,11 @@ package org.cache2k.benchmark.util;
  * #L%
  */
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -30,12 +35,10 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -168,6 +171,11 @@ public class AccessTrace implements Iterable<Integer> {
     return this;
   }
 
+  public AccessTrace disableOptHitCount() {
+    size2opt = null;
+    return this;
+  }
+
   public void write(File f) throws IOException {
     FileChannel out = new RandomAccessFile(f, "rw").getChannel();
     ByteBuffer buf = out.map(FileChannel.MapMode.READ_WRITE, 0, getTrace().length * 4);
@@ -218,6 +226,9 @@ public class AccessTrace implements Iterable<Integer> {
     if (_size <= 0) {
       throw new IllegalArgumentException("size must be greater 0");
     }
+    if (size2opt == null) {
+      return 0;
+    }
     Integer v = size2opt.get(_size);
     if (v != null) {
       return v;
@@ -244,8 +255,8 @@ public class AccessTrace implements Iterable<Integer> {
   }
 
   int calcRandomHits(int _size, int _seed) {
-    HashSet<Integer> _cache = new HashSet<>();
-    List<Integer> _list = new ArrayList<>();
+    IntSet _cache = new IntOpenHashSet();
+    IntList _list = new IntArrayList();
     Random _random = new Random(_seed);
     int _hitCnt = 0;
     for (int v : getTrace()) {
@@ -253,7 +264,6 @@ public class AccessTrace implements Iterable<Integer> {
         _hitCnt++;
       } else {
         if (_cache.size() == _size) {
-          Iterator<Integer> it = _cache.iterator();
           int cnt = _random.nextInt(_cache.size());
           _cache.remove(_list.get(cnt));
           _list.remove(cnt);
@@ -268,9 +278,7 @@ public class AccessTrace implements Iterable<Integer> {
   int calcRandomHits(int _size) {
     return
       (calcRandomHits(_size, 1802) +
-      calcRandomHits(_size, 4711) +
-      calcRandomHits(_size, getTrace().length) +
-      calcRandomHits(_size, getTrace()[getTrace().length - 1])) / 4;
+      calcRandomHits(_size, 4711)) / 2;
   }
 
   /**
