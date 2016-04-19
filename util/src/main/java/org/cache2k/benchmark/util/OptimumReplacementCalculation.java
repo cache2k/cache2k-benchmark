@@ -36,7 +36,7 @@ import java.util.TreeMap;
  *
  * @author Jens Wilke; created: 2013-10-16
  */
-final class OptimumReplacementCalculation {
+public class OptimumReplacementCalculation {
 
   private int size;
   private int hit;
@@ -51,7 +51,7 @@ final class OptimumReplacementCalculation {
    */
   private TreeMap<Integer, Integer> pos2value = new TreeMap<>();
 
-  OptimumReplacementCalculation(int _size, int[] _trace) {
+  public OptimumReplacementCalculation(int _size, int[] _trace) {
     size = _size;
     trace = _trace;
     for (step = 0; step < trace.length;  step++) {
@@ -82,7 +82,7 @@ final class OptimumReplacementCalculation {
     return almostMax--;
   }
 
-  int getHitCount() {
+  public int getHitCount() {
     return hit;
   }
 

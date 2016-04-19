@@ -22,18 +22,14 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.impl2015.ClockProPlusCache;
-
 /**
- * Run the benchmark collection on the CP+ implementation with expiry switched on.
- *
- * @author Jens Wilke; created: 2013-06-13
- * @see ClockProPlusCache
+ * @author Jens Wilke
  */
-public class ClockProPlusCacheWithExpiryBenchmark extends BenchmarkCollection {
+public interface SimulatorPolicy {
 
-  {
-    factory = new Cache2k2015Factory().implementation(ClockProPlusCache.class).withExpiry(true);
-  }
+  void record(Integer v);
+
+  long getMissCount();
 
 }
+

@@ -27,6 +27,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
+import org.cache2k.benchmark.SimulatorPolicy;
 
 /**
  * Integrates the caffeine simulator. This only produces meaningful results
@@ -62,18 +63,13 @@ public class CaffeineSimulatorCacheFactory extends BenchmarkCacheFactory {
     return c;
   }
 
-  @Override
-  public BenchmarkCache<Integer, Integer> create(Source s, int _maxElements) {
-    throw new UnsupportedOperationException("custom source not supported");
-  }
-
   public interface PolicyFactory {
 
     Policy create(Config _config);
 
   }
 
-  static class MyBenchmarkCacheAdapter extends BenchmarkCache<Integer, Integer> {
+  static class MyBenchmarkCacheAdapter extends BenchmarkCache<Integer, Integer> implements SimulatorPolicy {
 
     int size;
     Policy policy;
@@ -83,31 +79,18 @@ public class CaffeineSimulatorCacheFactory extends BenchmarkCacheFactory {
       return size;
     }
 
-    @Override
-    public Integer getIfPresent(final Integer key) {
-      throw new UnsupportedOperationException();
+    public void record(Integer v) {
+      policy.record(v);
     }
 
-    @Override
-    public Integer get(Integer key) {
-      policy.record(key);
-      return key;
-    }
-
-    @Override
-    public void put(final Integer key, final Integer value) {
-      throw new UnsupportedOperationException();
+    public long getMissCount() {
+      policy.finished();
+      return policy.stats().missCount();
     }
 
     @Override
     public void destroy() {
       policy.finished();
-    }
-
-    @Override
-    public int getMissCount() {
-      policy.finished();
-      return (int) policy.stats().missCount();
     }
 
     @Override

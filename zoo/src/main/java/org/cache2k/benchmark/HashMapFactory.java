@@ -31,12 +31,7 @@ public class HashMapFactory extends BenchmarkCacheFactory {
 
   @Override
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
-    return new ConcurrentHashMapFactory.MyCache(new HashMap<Integer, Integer>(), _maxElements, null);
-  }
-
-  @Override
-  public BenchmarkCache<Integer, Integer> create(Source s, int _maxElements) {
-    return new ConcurrentHashMapFactory.MyCache(new HashMap<Integer,Integer>(), _maxElements, s);
+    return new ConcurrentHashMapFactory.MyCache(new HashMap<Integer, Integer>(), _maxElements);
   }
 
 }

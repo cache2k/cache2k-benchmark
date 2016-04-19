@@ -51,63 +51,22 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
     return c;
   }
 
-  @Override
-  public BenchmarkCache<Integer, Integer> create(Source s, int _maxElements) {
-    MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
-    c.loader = new MyCacheLoaderWithSource(s);
-    c.size = _maxElements;
-    createCache(_maxElements, c);
-    return c;
-  }
-
   private void createCache(final int _maxElements, final MyBenchmarkCacheAdapter _adapter) {
     Caffeine b = Caffeine.newBuilder().maximumSize(_maxElements);
     if (sameThreadEviction) {
       b.executor(Runnable::run);
+      b.initialCapacity(_maxElements);
     }
     if (withExpiry) {
       b.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
     }
-    if (_adapter.loader != null) {
-      _adapter.cache = _adapter.loadingCache = b.build(_adapter.loader);
-    } else {
-      _adapter.cache = b.build();
-    }
-  }
-
-  static class MyCacheLoader implements com.github.benmanes.caffeine.cache.CacheLoader<Integer,Integer> {
-
-    int missCnt;
-
-    @Override
-    public Integer load(Integer key) throws Exception {
-      missCnt++;
-      return key;
-    }
-
-  }
-
-  static class MyCacheLoaderWithSource extends  MyCacheLoader {
-
-    Source source;
-
-    MyCacheLoaderWithSource(Source source) {
-      this.source = source;
-    }
-
-    @Override
-    public Integer load(Integer key) throws Exception {
-      missCnt++;
-      return source.get(key);
-    }
+    _adapter.cache = b.build();
   }
 
   static class MyBenchmarkCacheAdapter extends BenchmarkCache<Integer, Integer> {
 
-    MyCacheLoader loader;
     int size;
     Cache<Integer, Integer> cache;
-    LoadingCache<Integer, Integer> loadingCache;
 
     @Override
     public int getCacheSize() {
@@ -120,11 +79,6 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public Integer get(Integer key) {
-      return loadingCache.get(key);
-    }
-
-    @Override
     public void put(final Integer key, final Integer value) {
       cache.put(key, value);
     }
@@ -132,14 +86,6 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
     @Override
     public void destroy() {
       cache.cleanUp();
-    }
-
-    @Override
-    public int getMissCount() {
-      if (loader != null) {
-        return loader.missCnt;
-      }
-      return -1;
     }
 
     @Override

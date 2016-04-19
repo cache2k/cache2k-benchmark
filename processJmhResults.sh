@@ -342,7 +342,7 @@ f=$RESULT/RandomSequenceCacheBenchmark.dat
 (
 echo "threads cache2k Caffeine Guava EhCache2";
 json | \
-    jq -r '.[] |  select (.benchmark | contains ("RandomSequenceCacheBenchmark") ) | [ (.threads | tostring), .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
+    jq -r '.[] |  select (.benchmark | contains ("RandomSequenceCacheBenchmark") ) | [ (.threads | tostring)  + "-" + .params.hitRate, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
     sort | tr -d '"' | \
     pivot \
           "org.cache2k.benchmark.Cache2kFactory" \
@@ -358,7 +358,7 @@ f=$RESULT/RandomSequenceCacheBenchmarkGc.dat
 (
 echo "threads cache2k Caffeine Guava EhCache2";
 json | \
-    jq -r ".[] |  select (.benchmark | contains (\"RandomSequenceCacheBenchmark\") ) | [ (.threads | tostring), .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used\"][\"score\"] ] | @csv"  | \
+    jq -r ".[] |  select (.benchmark | contains (\"RandomSequenceCacheBenchmark\") ) | [ (.threads | tostring) + \"-\" + .params.hitRate, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used\"][\"score\"] ] | @csv"  | \
     sort | tr -d '"' | scaleBytesToMegaBytes | \
     pivot \
           "org.cache2k.benchmark.Cache2kFactory" \

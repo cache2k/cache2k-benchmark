@@ -22,9 +22,7 @@ package org.cache2k.benchmark.thirdparty;
  * #L%
  */
 
-import com.carrotsearch.junitbenchmarks.BenchmarkOptions;
 import org.cache2k.benchmark.BenchmarkCollection;
-import org.junit.Test;
 
 /**
  * Run the benchmark collection woth JBoss Infinispan.

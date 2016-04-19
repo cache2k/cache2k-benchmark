@@ -25,8 +25,8 @@ package org.cache2k.benchmark.thirdparty;
 /**
  * @author Jens Wilke; created: 2013-12-01
  */
-public class EhCacheWithExpiryBenchmark extends EhCacheBenchmark {
+public class EhCache2WithExpiryBenchmark extends EhCache2Benchmark {
 
-  { factory = new EhCacheFactory().withExpiry(true); }
+  { factory = new EhCache2Factory().withExpiry(true); }
 
 }

@@ -22,43 +22,15 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.zoo.HashMapBenchmarkFactory;
-import org.junit.Ignore;
+import org.cache2k.benchmark.impl2015.RandomCache;
 
 /**
  * @author Jens Wilke; created: 2013-06-13
  */
-public class HashMapBenchmark extends BenchmarkCollection {
+public class RandomCacheBenchmark extends BenchmarkCollection {
 
   {
-    skipMultithreaded = true;
-    factory = new HashMapBenchmarkFactory();
+    factory = new Cache2k2015Factory().implementation(RandomCache.class);
   }
 
-  @Ignore @Override
-  public void benchmarkMiss_500000() {}
-
-  @Ignore @Override
-  public void benchmarkMiss_50000() {}
-
-
-  @Ignore @Override
-  public void benchmarkEff95Threads1() throws Exception {
-  }
-
-  @Ignore @Override
-  public void benchmarkEff95Threads2() throws Exception {
-  }
-
-  @Ignore @Override
-  public void benchmarkEff95Threads4() throws Exception {
-  }
-
-  @Ignore @Override
-  public void benchmarkEff95Threads6() throws Exception {
-  }
-
-  @Ignore @Override
-  public void benchmarkEff95Threads8() throws Exception {
-  }
 }

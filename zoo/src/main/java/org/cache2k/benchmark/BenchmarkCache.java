@@ -30,11 +30,6 @@ package org.cache2k.benchmark;
 public abstract class BenchmarkCache<K, T> {
 
   /**
-   * Return element from the cache, if not present read-through by calling the cache source.
-   */
-  public abstract T get(K key);
-
-  /**
    * Return the element that is present in the cache. The cache source will not be called in turn.
    */
   public T getIfPresent(K key) {
@@ -53,13 +48,6 @@ public abstract class BenchmarkCache<K, T> {
 
   /** Configured maximum entry count of the cache */
   public abstract int getCacheSize();
-
-  /**
-   * How many misses happened in the cache. It is illegal here to
-   * use the miss counter of the target cache implementation. Instead
-   * the misses need to be counted by the cache source.
-   */
-  public abstract int getMissCount();
 
   /** Statistics string produced by the cache. */
   public String getStatistics() { return "<none>"; }

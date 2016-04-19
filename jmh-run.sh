@@ -113,13 +113,13 @@ SINGLE_THREADED="HashMapFactory"
 NO_EVICTION="ConcurrentHashMapFactory"
 
 # Implementations with complete caching features
-COMPLETE="Cache2kFactory Cache2kWithExpiryFactory"
+COMPLETE="Cache2kFactory"
 
 TARGET="target/jmh-result";
 test -d $TARGET || mkdir -p $TARGET;
 
 if test -z "$no3pty"; then
-COMPLETE="$COMPLETE thirdparty.CaffeineCacheFactory thirdparty.GuavaCacheFactory thirdparty.EhCacheDirectFactory";
+COMPLETE="$COMPLETE thirdparty.CaffeineCacheFactory thirdparty.GuavaCacheFactory thirdparty.EhCache2Factory";
 fi
 
 startTimer;

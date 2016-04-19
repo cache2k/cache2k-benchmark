@@ -22,12 +22,9 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import com.carrotsearch.junitbenchmarks.AbstractBenchmark;
-import com.carrotsearch.junitbenchmarks.BenchmarkOptions;
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
 import org.cache2k.CacheEntry;
-import org.cache2k.CacheSource;
 import org.cache2k.integration.CacheLoader;
 import org.junit.Test;
 
@@ -53,8 +50,7 @@ import java.util.Random;
  *
  * @author Jens Wilke; created: 2013-12-08
  */
-@BenchmarkOptions(benchmarkRounds = 3, warmupRounds = 2)
-public class DateFormattingBenchmark extends AbstractBenchmark {
+public class DateFormattingBenchmark {
 
   static List<Date> dates;
 

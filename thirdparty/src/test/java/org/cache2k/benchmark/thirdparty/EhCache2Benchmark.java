@@ -27,10 +27,10 @@ import org.cache2k.benchmark.BenchmarkCollection;
 /**
  * @author Jens Wilke; created: 2013-06-13
  */
-public class EhCacheBenchmark extends BenchmarkCollection {
+public class EhCache2Benchmark extends BenchmarkCollection {
 
   {
-    factory = new EhCacheFactory();
+    factory = new EhCache2Factory();
   }
 
 }

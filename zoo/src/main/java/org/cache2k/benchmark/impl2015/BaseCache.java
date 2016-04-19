@@ -1124,6 +1124,7 @@ public abstract class BaseCache<E extends Entry, K, T> implements Cache<K,T> {
         e.nextRefreshTime = stopStartTimer(_nextRefreshTime, e, System.currentTimeMillis());
       }
       evictEventually();
+      return;
     }
   }
 

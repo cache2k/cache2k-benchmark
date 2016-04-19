@@ -310,7 +310,7 @@ public class AccessTrace implements Iterable<Integer> {
   }
 
   private void initStatistics() {
-    Set<Integer> _values = new HashSet<>();
+    IntSet _values = new IntOpenHashSet();
     for (int v : getTrace()) {
       _values.add(v);
       if (v < lowValue) {

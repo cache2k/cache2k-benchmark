@@ -22,10 +22,7 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.impl2015.LruCache;
 import org.junit.After;
-import static org.junit.Assert.*;
-import com.carrotsearch.junitbenchmarks.AbstractBenchmark;
 import org.cache2k.benchmark.util.AccessTrace;
 
 import java.io.FileWriter;
@@ -38,28 +35,23 @@ import java.util.TreeMap;
 /**
  * @author Jens Wilke; created: 2013-12-08
  */
-public class BenchmarkingBase extends AbstractBenchmark {
+public class BenchmarkingBase {
 
   static Map<String,String> benchmarkName2csv = new TreeMap<>();
   static HashSet<String> onlyOneResult = new HashSet<>();
-
-  protected boolean skipMultithreaded = false;
   protected BenchmarkCacheFactory factory = new Cache2kFactory();
 
   BenchmarkCache<Integer, Integer> cache = null;
+
+  public BenchmarkCache<Integer, Integer> freshCache(AccessTrace t, int _maxElements) {
+    return freshCache(_maxElements);
+  }
 
   public BenchmarkCache<Integer, Integer> freshCache(int _maxElements) {
     if (cache != null) {
       throw new IllegalStateException("Two caches in one test? Please call destroyCache() first");
     }
     return cache = factory.create(_maxElements);
-  }
-
-  public BenchmarkCache<Integer, Integer> freshCache(BenchmarkCacheFactory.Source s, int _maxElements) {
-    if (cache != null) {
-      throw new IllegalStateException("Two caches in one test? Please call destroyCache() first");
-    }
-    return cache = factory.create(s, _maxElements);
   }
 
   public void destroyCache() {
@@ -74,73 +66,39 @@ public class BenchmarkingBase extends AbstractBenchmark {
     destroyCache();
   }
 
-  public final void runMultiThreadBenchmark(
-    final BenchmarkCache<Integer, Integer> c,
-    int _threadCount,
-    int _startOffset,
-    AccessTrace... _traces) throws Exception {
-    Thread[] _threads = new Thread[_threadCount];
-    for (int i = 0; i < _threadCount; i++) {
-      final int[] _trace = _traces[i % _traces.length].getArray();
-      final int _startIdx = (_startOffset * i) % _trace.length;
-      Runnable r = new Runnable() {
-        @Override
-        public void run() {
-          int idx = _startIdx;
-          do {
-            c.get(_trace[idx]);
-            idx = (idx + 1) % _trace.length;
-          } while (idx != _startIdx);
-        }
-      };
-      Thread t = new Thread(r);
-      t.start();
-      _threads[i] = t;
-    }
-    for (int i = 0; i < _threadCount; i++) {
-      _threads[i].join();
-    }
-
-  }
-
-  public final void runBenchmark(BenchmarkCache<Integer, Integer> c, AccessTrace t) {
+  public final long runBenchmark(BenchmarkCache<Integer, Integer> c, AccessTrace t) {
     Integer[] _trace = t.getObjectTrace();
-    for (Integer v : _trace) {
-      c.get(v);
+    if (c instanceof SimulatorPolicy) {
+      SimulatorPolicy p = (SimulatorPolicy) c;
+      for (Integer k : _trace) {
+        ((SimulatorPolicy) c).record(k);
+      }
+      return p.getMissCount();
     }
+    long _missCount =  0;
+    for (Integer k : _trace) {
+      Integer v = c.getIfPresent(k);
+      if (v == null) {
+        c.put(k, k);
+        _missCount++;
+      }
+    }
+    return _missCount;
   }
 
   public final int runBenchmark(AccessTrace t, int _cacheSize) {
-    return runBenchmark(null, t, _cacheSize);
-  }
-
-  public final int runBenchmark(BenchmarkCacheFactory.Source s, AccessTrace t, int _cacheSize) {
     BenchmarkCache<Integer, Integer> c;
-    if (s == null) {
-      c = freshCache(_cacheSize);
-    } else {
-      c = freshCache(s, _cacheSize);
-    }
-    runBenchmark(c, t);
-    logHitRate(c, t, c.getMissCount());
+    c = freshCache(t, _cacheSize);
+    long _missCount = runBenchmark(c, t);
+    logHitRate(c, t, _missCount);
     c.destroy();
     return
-      ((t.getTraceLength() - c.getMissCount()) * 10000 + t.getTraceLength() / 2) / t.getTraceLength();
-  }
-
-  public final int runMultiThreadBenchmark(BenchmarkCacheFactory.Source s, int _threadCount, AccessTrace t, int _cacheSize) throws Exception {
-    assertFalse(skipMultithreaded);
-    BenchmarkCache<Integer, Integer> c = freshCache(s, _cacheSize);
-    runMultiThreadBenchmark(c, _threadCount, t.getTraceLength() / _threadCount, t);
-    logHitRate(c, t, c.getMissCount());
-    c.destroy();
-    return
-      ((t.getTraceLength() - c.getMissCount()) * 10000 + t.getTraceLength() / 2) / t.getTraceLength();
+      ((t.getTraceLength() - (int) _missCount) * 10000 + t.getTraceLength() / 2) / t.getTraceLength();
   }
 
   public void logHitRate(BenchmarkCache c, AccessTrace _trace, long _missCount) {
-    int _optHitRate = _trace.getOptHitRate(c.getCacheSize()).get4digit();
-    int _optHitCount = _trace.getOptHitCount(c.getCacheSize());
+    int _optHitRate = -1;
+    int _optHitCount = -1;
     String _testName = extractTestName();
     if (onlyOneResult.contains(_testName)) {
       return;
@@ -152,36 +110,6 @@ public class BenchmarkingBase extends AbstractBenchmark {
     String _cacheStatistics = c.getStatistics();
     System.out.println(_cacheStatistics);
     System.out.flush();
-  }
-
-  private long calculateUsedMemory() {
-    long _usedMem;
-    System.out.println("cache2k benchmark is requesting GC (record used memory)...");
-    try {
-      Runtime.getRuntime().gc();
-      Thread.sleep(55);
-      Runtime.getRuntime().gc();
-      Thread.sleep(55);
-      Runtime.getRuntime().gc();
-      Thread.sleep(55);
-      Runtime.getRuntime().gc();
-      Thread.sleep(55);
-    } catch (Exception ignore) { }
-    long _total;
-    long _total2;
-    long _count = -1;
-    do {
-      _count++;
-      _total = Runtime.getRuntime().totalMemory();
-      try {
-        Thread.sleep(25);
-      } catch (Exception ignore) { }
-      long _free = Runtime.getRuntime().freeMemory();
-      _total2 = Runtime.getRuntime().totalMemory();
-      _usedMem = _total - _free;
-    } while (_total != _total2);
-    System.out.println("looped for stable total memory, count=" + _count + ", total=" + _total + ", used=" + _usedMem);
-    return _usedMem;
   }
 
   void saveHitRate(String _testName, int _cacheSize, AccessTrace _trace, int _optHitRate, int _optHitCount, long _missCount, long _usedMem) {
@@ -198,10 +126,7 @@ public class BenchmarkingBase extends AbstractBenchmark {
       s += ", optHitRatePercent=" + String.format("%.2f", _optHitRate * 1D / 100);
       s += ", optHitCount=" + _optHitCount;
     }
-    s += ", randomHitRatePercent=" + String.format("%.2f", _trace.getRandomHitRate(_cacheSize).getFactor() * 100);
     s += ", uniqueValues=" + _trace.getValueCount();
-    s += ", maxHitRate=" + String.format("%.2f", _trace.getRandomHitRate(_trace.getValueCount()).getFactor() * 100);
-    s += ", usedMem=" + _usedMem;
     System.out.println(_testName + ": " + s);
     int idx = _testName.lastIndexOf('.');
     String _cacheImplementation = _testName.substring(0, idx);
@@ -212,10 +137,7 @@ public class BenchmarkingBase extends AbstractBenchmark {
         String.format("%.2f", _hitRateTimes100) + "|" + // 3
         _cacheSize + "|" + // 4
       _trace.getTraceLength() + "|" + // 5
-      _trace.getValueCount() + "|" + // 6
-      String.format("%.2f", _optHitRate * 1D / 100) + "|" + // 7
-      String.format("%.2f", _trace.getRandomHitRate(_cacheSize).getFactor() * 100) + "|" +  // 8
-      _usedMem; // 9
+      _trace.getValueCount(); // 6
 
     if (!benchmarkName2csv.containsKey(_testName)) {
       benchmarkName2csv.put(_testName, _csvLine);

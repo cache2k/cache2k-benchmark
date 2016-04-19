@@ -56,11 +56,6 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
 
   @Override
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
-    return create(null, _maxElements);
-  }
-
-  @Override
-  public BenchmarkCache<Integer, Integer> create(Source _source, int _maxElements) {
     EmbeddedCacheManager m = getCacheMangaer();
     ConfigurationBuilder cb = new ConfigurationBuilder();
 
@@ -78,63 +73,27 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
     }
     m.defineConfiguration(CACHE_NAME, cb.build());
     Cache<Integer, Integer> _cache = m.getCache(CACHE_NAME);
-    return _source != null ? new MyBenchmarkCache(_source, _cache) : new MyBenchmarkCache(_cache);
+    return new MyBenchmarkCache(_cache);
   }
 
   public enum Algorithm { DEFAULT, LRU, LIRS, UNORDERED }
 
-  static class MySimpleCacheSource {
-
-    int missCnt;
-
-    public Integer get(Integer key) {
-      missCnt++;
-      return key;
-    }
-
-  }
-
-  static class DelegatingSimpleCacheSource extends MySimpleCacheSource {
-
-    Source source;
-
-    DelegatingSimpleCacheSource(Source source) {
-      this.source = source;
-    }
-
-    public Integer get(Integer key) {
-      missCnt++;
-      return source.get(key);
-    }
-
-  }
-
   static class MyBenchmarkCache extends BenchmarkCache<Integer, Integer> {
 
     Cache<Integer, Integer> cache;
-    MySimpleCacheSource source = new MySimpleCacheSource();
 
     MyBenchmarkCache(Cache<Integer, Integer> cache) {
       this.cache = cache;
     }
 
-    MyBenchmarkCache(Source s, Cache<Integer, Integer> cache) {
-      this.cache = cache;
-      source = new DelegatingSimpleCacheSource(s);
+    @Override
+    public Integer getIfPresent(final Integer key) {
+      return cache.get(key);
     }
 
-    /**
-     * Delegates to a cache source if not found. It seems rather complicated to
-     * define a custom cache loader, so simulate a loading cache.
-     */
     @Override
-    public Integer get(Integer key) {
-      Integer v = cache.get(key);
-      if (v == null) {
-        v = source.get(key);
-        cache.put(key, v);
-      }
-      return v;
+    public void put(Integer key, Integer value) {
+      cache.put(key, value);
     }
 
     @Override
@@ -145,11 +104,6 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
     @Override
     public int getCacheSize() {
       return cache.getCacheConfiguration().eviction().maxEntries();
-    }
-
-    @Override
-    public int getMissCount() {
-      return source.missCnt;
     }
 
     @Override

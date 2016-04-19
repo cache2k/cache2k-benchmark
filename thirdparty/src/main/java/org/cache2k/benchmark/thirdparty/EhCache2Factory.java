@@ -25,6 +25,7 @@ package org.cache2k.benchmark.thirdparty;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
+import net.sf.ehcache.Element;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.PersistenceConfiguration;
 import net.sf.ehcache.constructs.blocking.CacheEntryFactory;
@@ -38,7 +39,7 @@ import org.cache2k.benchmark.BenchmarkCacheFactory;
  *
  * @author Jens Wilke; created: 2013-12-08
  */
-public class EhCacheFactory extends BenchmarkCacheFactory {
+public class EhCache2Factory extends BenchmarkCacheFactory {
 
   static final String CACHE_NAME = "testCache";
 
@@ -46,12 +47,7 @@ public class EhCacheFactory extends BenchmarkCacheFactory {
 
   @Override
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
-    return this.create(null, _maxElements);
-  }
-
-  @Override
-  public BenchmarkCache<Integer, Integer> create(Source _source, int _maxElements) {
-    return new MyBenchmarkCache(_source, createCacheConfiguration(_maxElements));
+    return new MyBenchmarkCache(createCacheConfiguration(_maxElements));
   }
 
   protected CacheManager getManager() {
@@ -75,55 +71,20 @@ public class EhCacheFactory extends BenchmarkCacheFactory {
     return c;
   }
 
-  public EhCacheFactory algorithm(Algorithm v) {
+  public EhCache2Factory algorithm(Algorithm v) {
     algorithm = v;
     return this;
-  }
-
-  static class MyCacheEntryFactory implements CacheEntryFactory {
-
-    int missCount;
-
-    @Override
-    public Object createEntry(Object key) throws Exception {
-      missCount++;
-      return key;
-    }
-
-  }
-
-  static class DelegatingEntryFactory extends MyCacheEntryFactory {
-
-    Source source;
-
-    DelegatingEntryFactory(Source source) {
-      this.source = source;
-    }
-
-    @Override
-    public Object createEntry(Object key) throws Exception {
-      missCount++;
-      return source.get((Integer) key);
-    }
-
   }
 
   class MyBenchmarkCache extends BenchmarkCache<Integer, Integer> {
 
     CacheConfiguration config;
-    MyCacheEntryFactory entryFactory;
     Ehcache cache;
 
-    MyBenchmarkCache(Source _source, CacheConfiguration v) {
+    MyBenchmarkCache(CacheConfiguration v) {
       this.config = v;
-      Cache _testCache = new net.sf.ehcache.Cache(v);
+      Ehcache _testCache = cache = new net.sf.ehcache.Cache(v);
       getManager().addCache(_testCache);
-      if (_source != null) {
-        entryFactory = new DelegatingEntryFactory(_source);
-      } else {
-        entryFactory = new MyCacheEntryFactory();
-      }
-      cache = new SelfPopulatingCache(_testCache, entryFactory);
     }
 
     @Override
@@ -132,8 +93,17 @@ public class EhCacheFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public Integer get(Integer key) {
-      return (Integer) cache.get(key).getObjectValue();
+    public Integer getIfPresent(final Integer key) {
+      Element e = cache.get(key);
+      if (e != null) {
+        return (Integer) e.getObjectValue();
+      }
+      return null;
+    }
+
+    @Override
+    public void put(final Integer key, final Integer value) {
+      cache.put(new Element(key, value));
     }
 
     @Override
@@ -141,10 +111,6 @@ public class EhCacheFactory extends BenchmarkCacheFactory {
       CacheManager.getInstance().removeCache("testCache");
     }
 
-    @Override
-    public int getMissCount() {
-      return entryFactory.missCount;
-    }
   }
 
   public enum Algorithm { DEFAULT, CLOCK }

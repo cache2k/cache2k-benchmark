@@ -24,6 +24,7 @@ package org.cache2k.benchmark;
 
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
+import org.cache2k.CacheBuilder;
 import org.cache2k.integration.CacheLoader;
 
 import java.util.concurrent.TimeUnit;
@@ -37,37 +38,25 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
   AtomicInteger counter = new AtomicInteger();
 
   @Override
-  public BenchmarkCache<Integer, Integer> create(int _maxElements) {
-    return this.create(null, _maxElements);
-  }
-
-  @Override
-  public BenchmarkCache<Integer, Integer> create(Source s, final int _maxElements) {
-    CountingDataSource<Integer, Integer> _usedSource;
-    if (s == null) {
-      _usedSource = new CountingDataSource<>();
-    } else {
-      _usedSource = new DelegatingSource(s);
-    }
-    final CountingDataSource<Integer, Integer> _source = _usedSource;
-    final Cache<Integer, Integer> c =
-      Cache2kBuilder.of(Integer.class, Integer.class)
+  public BenchmarkCache<Integer, Integer> create(final int _maxElements) {
+    CacheBuilder<Integer, Integer> b =
+    CacheBuilder.newCache(Integer.class, Integer.class)
       .name("testCache-" + counter.incrementAndGet())
-      .loader(_source)
       .expiryDuration(withExpiry ? 5 * 60 : Integer.MAX_VALUE, TimeUnit.SECONDS)
       .entryCapacity(_maxElements)
-      .refreshAhead(false)
-      .build();
+      .refreshAhead(false);
+    if (withExpiry) {
+      b.expiryDuration(5 * 60, TimeUnit.SECONDS);
+    } else {
+      b.eternal(true);
+    }
+
+    final Cache<Integer, Integer> c = b.build();
     return new BenchmarkCache<Integer, Integer>() {
 
       @Override
       public int getCacheSize() {
         return _maxElements;
-      }
-
-      @Override
-      public Integer get(Integer key) {
-        return c.get(key);
       }
 
       @Override
@@ -91,11 +80,6 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
       }
 
       @Override
-      public int getMissCount() {
-        return _source.getMissCount();
-      }
-
-      @Override
       public void checkIntegrity() {
         c.toString();
       }
@@ -105,43 +89,6 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
         return c;
       }
     };
-  }
-
-  /**
-   * @author Jens Wilke; created: 2013-06-24
-   */
-  public static class CountingDataSource<K, T> extends CacheLoader<K, T> {
-
-    private int missCnt;
-
-    protected final void incrementMissCount() {
-      missCnt++;
-    }
-
-    public final int getMissCount() {
-      return missCnt;
-    }
-
-    @Override
-    public T load(K o) {
-      incrementMissCount();
-      return (T) o;
-    }
-
-  }
-
-  public static class DelegatingSource extends CountingDataSource<Integer, Integer> {
-
-    Source source;
-
-    public DelegatingSource(Source source) {
-      this.source = source;
-    }
-
-    public Integer get(Integer v) {
-      incrementMissCount();
-      return source.get(v);
-    }
 
   }
 

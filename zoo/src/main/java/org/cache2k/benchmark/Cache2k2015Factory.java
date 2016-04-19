@@ -41,20 +41,7 @@ public class Cache2k2015Factory extends BenchmarkCacheFactory {
   AtomicInteger counter = new AtomicInteger();
 
   @Override
-  public BenchmarkCache<Integer, Integer> create(int _maxElements) {
-    return this.create(null, _maxElements);
-  }
-
-  @Override
-  public BenchmarkCache<Integer, Integer> create(Source s, final int _maxElements) {
-    CountingDataSource<Integer, Integer> _usedSource;
-    if (s == null) {
-      _usedSource = new CountingDataSource<>();
-    } else {
-      _usedSource = new DelegatingSource(s);
-    }
-
-    final CountingDataSource<Integer, Integer> _source = _usedSource;
+  public BenchmarkCache<Integer, Integer> create(final int _maxElements) {
     final BaseCache bc;
     try {
       bc = (BaseCache) implementation.newInstance();
@@ -62,12 +49,12 @@ public class Cache2k2015Factory extends BenchmarkCacheFactory {
       throw new RuntimeException(e);
     }
     final Cache<Integer, Integer> c = bc;
-    bc.setSource(_source);
     CacheConfig<Integer, Integer> cc = new CacheConfig<>();
     cc.setName("testCache-" + counter.incrementAndGet());
     cc.setExpirySeconds(withExpiry ? 5 * 60 : Integer.MAX_VALUE);
     cc.setEntryCapacity(_maxElements);
     cc.setBackgroundRefresh(false);
+    cc.setKeepDataAfterExpired(false);
     bc.setCacheConfig(cc);
     bc.init();
     return new BenchmarkCache<Integer, Integer>() {
@@ -75,11 +62,6 @@ public class Cache2k2015Factory extends BenchmarkCacheFactory {
       @Override
       public int getCacheSize() {
         return _maxElements;
-      }
-
-      @Override
-      public Integer get(Integer key) {
-        return c.get(key);
       }
 
       @Override
@@ -100,11 +82,6 @@ public class Cache2k2015Factory extends BenchmarkCacheFactory {
       @Override
       public String getStatistics() {
         return c.toString();
-      }
-
-      @Override
-      public int getMissCount() {
-        return _source.getMissCount();
       }
 
       @Override
@@ -145,21 +122,6 @@ public class Cache2k2015Factory extends BenchmarkCacheFactory {
     public T get(K o) {
       incrementMissCount();
       return (T) o;
-    }
-
-  }
-
-  public static class DelegatingSource extends CountingDataSource<Integer, Integer> {
-
-    Source source;
-
-    public DelegatingSource(Source source) {
-      this.source = source;
-    }
-
-    public Integer get(Integer v) {
-      incrementMissCount();
-      return source.get(v);
     }
 
   }

@@ -25,10 +25,10 @@ package org.cache2k.benchmark.thirdparty;
 /**
  * @author Jens Wilke; created: 2013-12-01
  */
-public class EhCacheClockBenchmark extends EhCacheBenchmark {
+public class EhCache2ClockBenchmark extends EhCache2Benchmark {
 
   {
-    factory = new EhCacheFactory().algorithm(EhCacheFactory.Algorithm.CLOCK);
+    factory = new EhCache2Factory().algorithm(EhCache2Factory.Algorithm.CLOCK);
   }
 
 }

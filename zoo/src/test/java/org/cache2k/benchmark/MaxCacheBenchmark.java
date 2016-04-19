@@ -22,18 +22,19 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.impl2015.ArcCache;
+import org.cache2k.benchmark.util.AccessTrace;
 
 /**
- * Run benchmark collection on the ARC implementation with expiry switched on.
+ * Calculate the maximum hit rate possible by using a cache with the size of the
+ * of the trace value space.
  *
  * @author Jens Wilke; created: 2013-06-13
- * @see ArcCache
  */
-public class ArcCacheWithExpiryBenchmark extends BenchmarkCollection {
+public class MaxCacheBenchmark extends RandomCacheBenchmark {
 
-  {
-    factory = new Cache2k2015Factory().implementation(ArcCache.class).withExpiry(true);
+  @Override
+  public BenchmarkCache<Integer, Integer> freshCache(AccessTrace t, int _maxElements) {
+    return freshCache(t.getValueCount());
   }
 
 }

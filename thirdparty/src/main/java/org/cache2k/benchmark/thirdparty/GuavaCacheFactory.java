@@ -22,6 +22,7 @@ package org.cache2k.benchmark.thirdparty;
  * #L%
  */
 
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -40,7 +41,6 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
   @Override
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
     MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
-    c.loader = new MyCacheLoader();
     c.size = _maxElements;
     CacheBuilder cb =
       CacheBuilder.newBuilder()
@@ -48,56 +48,14 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
     if (withExpiry) {
       cb.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
     }
-    c.cache = cb.build(c.loader);
+    c.cache = cb.build();
     return c;
-  }
-
-  @Override
-  public BenchmarkCache<Integer, Integer> create(Source s, int _maxElements) {
-    MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
-    c.loader = new MyCacheLoaderWithSource(s);
-    c.size = _maxElements;
-    CacheBuilder cb =
-      CacheBuilder.newBuilder()
-        .maximumSize(_maxElements);
-    if (withExpiry) {
-      cb.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
-    }
-    c.cache = cb.build(c.loader);
-    return c;
-  }
-
-  static class MyCacheLoader extends CacheLoader<Integer,Integer> {
-
-    int missCnt;
-
-    @Override
-    public Integer load(Integer key) throws Exception {
-      missCnt++;
-      return key;
-    }
-  }
-
-  static class MyCacheLoaderWithSource extends  MyCacheLoader {
-
-    Source source;
-
-    MyCacheLoaderWithSource(Source source) {
-      this.source = source;
-    }
-
-    @Override
-    public Integer load(Integer key) throws Exception {
-      missCnt++;
-      return source.get(key);
-    }
   }
 
   static class MyBenchmarkCacheAdapter extends BenchmarkCache<Integer, Integer> {
 
-    MyCacheLoader loader;
     int size;
-    LoadingCache<Integer, Integer> cache;
+    Cache<Integer, Integer> cache;
 
     @Override
     public int getCacheSize() {
@@ -110,15 +68,6 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public Integer get(Integer key) {
-      try {
-        return cache.get(key);
-      } catch (ExecutionException e) {
-        return null;
-      }
-    }
-
-    @Override
     public void put(final Integer key, final Integer value) {
       cache.put(key, value);
     }
@@ -126,11 +75,6 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
     @Override
     public void destroy() {
       cache.cleanUp();
-    }
-
-    @Override
-    public int getMissCount() {
-      return loader.missCnt;
     }
 
   }

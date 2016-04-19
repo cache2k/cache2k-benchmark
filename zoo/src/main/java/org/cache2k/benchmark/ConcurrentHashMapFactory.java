@@ -24,7 +24,6 @@ package org.cache2k.benchmark;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Use a {@link ConcurrentHashMap} as cache implementation. No eviction is done. Intended
@@ -37,29 +36,21 @@ public class ConcurrentHashMapFactory extends BenchmarkCacheFactory {
 
   @Override
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
-    return new MyCache(new ConcurrentHashMap<Integer,Integer>(), _maxElements, null);
-  }
-
-  @Override
-  public BenchmarkCache<Integer, Integer> create(Source s, int _maxElements) {
-    return new MyCache(new ConcurrentHashMap<Integer,Integer>(), _maxElements, s);
+    return new MyCache(new ConcurrentHashMap<Integer,Integer>(), _maxElements);
   }
 
   static class MyCache extends BenchmarkCache<Integer, Integer> {
 
     int maxElements;
     Map<Integer, Integer> map;
-    BenchmarkCacheFactory.Source source;
 
-    public MyCache(Map<Integer, Integer> map, int maxElements, Source source) {
+    public MyCache(Map<Integer, Integer> map, int maxElements) {
       this.map = map;
       this.maxElements = maxElements;
-      this.source = source;
     }
 
     @Override
     public void destroy() {
-      getMissCount();
       map = null;
     }
 
@@ -73,30 +64,9 @@ public class ConcurrentHashMapFactory extends BenchmarkCacheFactory {
       return map.get(key);
     }
 
-    /**
-     * Simulate read through by calling source.
-     */
-    @Override
-    public Integer get(Integer key) {
-      Integer v = map.get(key);
-      if (v == null) {
-        v = source.get(key);
-        map.put(key, v);
-      }
-      return v;
-    }
-
     @Override
     public int getCacheSize() {
       return map.size();
-    }
-
-    @Override
-    public int getMissCount() {
-      if (map.size() > maxElements) {
-        throw new IllegalArgumentException("only relevant for benchmarking with 100% hit rate");
-      }
-      return 0;
     }
 
     @Override
