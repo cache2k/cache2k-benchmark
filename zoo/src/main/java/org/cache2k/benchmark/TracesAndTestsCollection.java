@@ -263,18 +263,18 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   }
 
   @Test
-  public void benchmarkUmassWebSearch1_70000() throws Exception {
-    runBenchmark(CacheAccessTraceUmassWebSearch1.getInstance(), 70000);
+  public void benchmarkUmassWebSearch1_100000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassWebSearch1.getInstance(), 100000);
   }
 
   @Test
-  public void benchmarkUmassWebSearch1_80000() throws Exception {
-    runBenchmark(CacheAccessTraceUmassWebSearch1.getInstance(), 80000);
+  public void benchmarkUmassWebSearch1_200000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassWebSearch1.getInstance(), 200000);
   }
 
   @Test
-  public void benchmarkUmassWebSearch1_90000() throws Exception {
-    runBenchmark(CacheAccessTraceUmassWebSearch1.getInstance(), 90000);
+  public void benchmarkUmassWebSearch1_300000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassWebSearch1.getInstance(), 300000);
   }
 
   @Test
