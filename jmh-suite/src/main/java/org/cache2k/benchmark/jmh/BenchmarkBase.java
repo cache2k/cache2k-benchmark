@@ -28,14 +28,12 @@ import org.cache2k.benchmark.Cache2kFactory;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 
-import java.lang.ref.WeakReference;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
+ * Base for all JMH cache benchmarks, controlling the cache lifecycle and
+ * recording memory usage.
  *
  * @author Jens Wilke
  */
@@ -61,7 +59,7 @@ public class BenchmarkBase {
   }
 
   @TearDown(Level.Iteration)
-  public void tearDownBase() {
+  public void tearDownBase() throws Exception {
     ForcedGcMemoryProfiler.recordUsedMemory();
     if (getsDestroyed != null) {
       System.out.println();

@@ -33,6 +33,23 @@ SITE="../cache2k/src/site/resources/benchmark-result";
 # benchmarkEffective95_6E 0.04 0.059 
 #
 
+processCommandLine() {
+  pars="$#";
+  while true; do
+    case "$1" in
+      --dir) RESULT="$2"; shift 1;;
+      -*) echo "unknown option: $1"; exit 1;;
+      *) break;;
+    esac
+    shift 1;
+  done
+  if test -z "$1"; then
+    echo "Run with: processBenchmarkResults.sh process";
+  else
+   "$@";
+  fi
+}
+
 pivot() {
 local cols="$1";
 shift;
@@ -76,8 +93,6 @@ cleanName() {
 copyData() {
 test -d $RESULT || mkdir -p $RESULT;
 cp benchmark.log $RESULT/;
-cp thirdparty/target/junit-benchmark.xml $RESULT/thirdparty-junit-benchmark.xml;
-cp zoo/target/junit-benchmark.xml $RESULT/zoo-junit-benchmark.xml;
 cp thirdparty/target/cache2k-benchmark-result.csv $RESULT/thirdparty-cache2k-benchmark-result.csv;
 cp zoo/target/cache2k-benchmark-result.csv $RESULT/zoo-cache2k-benchmark-result.csv;
 }
@@ -142,7 +157,8 @@ END {
   range=range*1.1; 
 #   if (range > 100) { print 100; } else { print range; }
 }
-EOF`
+EOF
+`
 
 maxYRange() {
 awk "$maxYRange_awk";
@@ -193,26 +209,12 @@ printMemory() {
   printCacheCsv | awk -F\| '{ print $1"|"$2"|"$9; }'
 }
 
-# printOptHitrate
-#
-# In column 7 of the results there is the optimum hitrate for the trace.
-# Extract it and print it out as cache implementation.
-printOptHitrate() {
-  printCacheCsv | awk -F\| '{ print $1"|OPT|"$7"|"$4; }' | sort | uniq
-}
-
-printRandomHitrate() {
-  printCacheCsv | awk -F\| '{ print $1"|RAND|"$8"|"$4; }' | sort | uniq
-}
-
 alongSize() {
   awk -F\| '{ print $4"|"$2"|"$3; }';
 }
 
 printHitrate() {
   printCacheCsv;
-  printOptHitrate;
-  printRandomHitrate;
 }
 
 process() {
@@ -220,115 +222,8 @@ rm -rf $RESULT/*.dat;
 rm -rf $RESULT/*.svg;
 rm -rf $RESULT/*.plot;
 
-f=$RESULT/speedHits.dat;
-(
-echo Benchmark HashMap+Counter cache2k/CLOCK cache2k/CP+ cache2k/ARC EHCache Infinispan Guava Caffeine;
-printJubCsv | onlySpeed | grep "^benchmarkHits" | cleanName | sort | \
-  pivot org.cache2k.benchmark.HashMapBenchmark \
-        org.cache2k.benchmark.ClockCacheBenchmark \
-        org.cache2k.benchmark.Cache2kDefaultBenchmark \
-        org.cache2k.benchmark.ArcCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.EhCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.InfinispanCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.CaffeineBenchmark |
-  stripEmpty
-) > $f
-plot $f "Runtime of 3 million cache hits" "runtime in seconds"
-
-f=$RESULT/memory.dat;
-(
-echo Benchmark cache2k/CLOCK cache2k/CP+ cache2k/ARC EHCache Infinispan Guava Caffeine;
-printMemory | grep "^benchmarkMiss_500000\|^benchmarkEff95\|^benchmarkTotalRandom_800" | cleanName | sort | \
-  pivot org.cache2k.benchmark.ClockCacheBenchmark \
-        org.cache2k.benchmark.ClockProPlusCacheBenchmark \
-        org.cache2k.benchmark.ArcCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.EhCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.InfinispanCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.CaffeineBenchmark |
-  stripEmpty
-) > $f
-plot $f "Memory consumption" "bytes"
-
-f=$RESULT/memoryWithExpiry.dat;
-(
-echo Benchmark cache2k/CLOCK cache2k/CP+ cache2k/ARC EHCache Infinispan Guava;
-printMemory | grep "^benchmarkMiss_500000\|^benchmarkEff95\|^benchmarkTotalRandom_800" | cleanName | sort | \
-  pivot org.cache2k.benchmark.ClockCacheWithExpiryBenchmark \
-	org.cache2k.benchmark.ClockProPlusCacheWithExpiryBenchmark \
-        org.cache2k.benchmark.ArcCacheWithExpiryBenchmark \
-        org.cache2k.benchmark.thirdparty.EhCacheWithExpiryBenchmark \
-        org.cache2k.benchmark.thirdparty.InfinispanCacheWithExpiryBenchmark \
-        org.cache2k.benchmark.thirdparty.GuavaCacheWithExpiryBenchmark | \
-  stripEmpty
-) > $f
-plot $f "Memory consumption with expiry" "bytes"
-
-f=$RESULT/3ptySpeed.dat;
-(
-echo Benchmark cache2k/CLOCK cache2k/CP+ cache2k/ARC EHCache Infinispan Guava Caffeine;
-printJubCsv | onlySpeed | cleanName | grep -v "Threads" |  grep -v "Hits2000"| sort | \
-  pivot org.cache2k.benchmark.ClockCacheBenchmark \
-        org.cache2k.benchmark.ClockProPlusCacheBenchmark \
-        org.cache2k.benchmark.ArcCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.EhCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.InfinispanCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.CaffeineBenchmark |
-  stripEmpty
-) > $f
-plot $f "Runtime of 3 million cache requests" "runtime in seconds"
-
-f=$RESULT/3ptySpeedThreads.dat;
-(
-echo Benchmark cache2k/CLOCK cache2k/CP+ cache2k/ARC EHCache Infinispan Guava Caffeine;
-printJubCsv | onlySpeed | grep "^benchmarkEff95Threads\(1\|2\)" | cleanName | sort | \
-  pivot org.cache2k.benchmark.ClockCacheBenchmark \
-        org.cache2k.benchmark.Cache2kDefaultBenchmark \
-        org.cache2k.benchmark.ArcCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.EhCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.InfinispanCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.CaffeineBenchmark |
-  stripEmpty
-) > $f
-plot $f "3 million cache requests Eff95 per thread count" "runtime in seconds"
-
-
-
-f=$RESULT/3ptyHitrate.dat;
-(
-echo Benchmark cache2k/CLOCK cache2k/CP+ cache2k/ARC EHCache Infinispan Guava Caffeine;
-printCacheCsv | onlySpeed | grep -v "Threads" | cleanName | sort | \
-  pivot org.cache2k.benchmark.ClockCacheBenchmark \
-	org.cache2k.benchmark.ClockProPlusCacheBenchmark \
-        org.cache2k.benchmark.ArcCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.EhCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.InfinispanCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
-        org.cache2k.benchmark.thirdparty.CaffeineBenchmark |
-  stripEmpty
-) > $f
-plot $f "Hitrate of 3 million cache requests" "runtime in seconds"
-
-f=$RESULT/3ptySpeedWithExpiry.dat;
-(
-echo Benchmark cache2k/CLOCK cache2k/CP+ cache2k/ARC EHCache Infinispan Guava;
-printJubCsv | onlySpeed | cleanName | sort | \
-  pivot org.cache2k.benchmark.ClockCacheWithExpiryBenchmark \
-	org.cache2k.benchmark.ClockProPlusCacheWithExpiryBenchmark \
-        org.cache2k.benchmark.ArcCacheWithExpiryBenchmark \
-        org.cache2k.benchmark.thirdparty.EhCacheWithExpiryBenchmark \
-        org.cache2k.benchmark.thirdparty.InfinispanCacheWithExpiryBenchmark \
-        org.cache2k.benchmark.thirdparty.GuavaCacheWithExpiryBenchmark | \
-  stripEmpty
-) > $f
-plot $f "Runtime of 3 million cache requests with entry expiry" "runtime in seconds"
-
-
 header="Size OPT LRU S/LRU CLOCK CP+ ARC CAR S/Lirs EHCache Infinispan Guava Caffeine RAND";
-impls="OPT \
+impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
 	org.cache2k.benchmark.LruCacheBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineSimulatorLruBenchmark \
         org.cache2k.benchmark.ClockCacheBenchmark \
@@ -336,11 +231,11 @@ impls="OPT \
         org.cache2k.benchmark.ArcCacheBenchmark \
         org.cache2k.benchmark.CarCacheBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineSimulatorLirsBenchmark \
-        org.cache2k.benchmark.thirdparty.EhCacheBenchmark \
+        org.cache2k.benchmark.thirdparty.EhCache2Benchmark \
         org.cache2k.benchmark.thirdparty.InfinispanCacheBenchmark \
         org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineBenchmark \
-        RAND";
+        org.cache2k.benchmark.RandomCacheBenchmark";
 for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 TotalRandom1000; do
   f=$RESULT/trace${I}hitrate.dat;
   (
@@ -353,8 +248,5 @@ for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 TotalRandom1000; do
 done
 }
 
-if test -z "$1"; then
-  echo "Run with: processBenchmarkResults.sh copyData | process | copyToSite";
-else
- "$@";
-fi
+processCommandLine "$@";
+

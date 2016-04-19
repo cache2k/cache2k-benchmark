@@ -198,7 +198,9 @@ if test -z "$dry"; then
 
 result=$TARGET/data.json
 # merge all results into single json file
-cat $TARGET/result-*.json | awk ' /^]/ { f=1; next; } f && /^\[/ { print "  ,"; next; } { print; } END { print "]"; }' > $result
+# A sequence of the lines "]", "[", "]" will be ignored, there may be an empty json file, if a run fails
+# A sequence of the lines "]", "[" will be replaced with ","
+at $TARGET/result-*.json | awk '/^]/ { f=1; g=0; next; } f && /^\[/ { g=1; f=0; next; } g { print "  ,"; g=0; } { print; } END { print "]"; }' > $result
 
 fi
 

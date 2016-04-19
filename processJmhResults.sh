@@ -13,6 +13,18 @@
 RESULT="target/jmh-result";
 SITE="../cache2k/src/site/resources/benchmark-result";
 
+# replace class names by short name of each cache implementation for graph labeling
+cacheShortNames() {
+local script=`cat << EOF
+s/org.cache2k.benchmark.thirdparty.EhCache2Factory/EhCache2/
+s/org.cache2k.benchmark.thirdparty.CaffeineCacheFactory/Caffeine/
+s/org.cache2k.benchmark.thirdparty.GuavaCacheFactory/Guava/
+s/org.cache2k.benchmark.Cache2kFactory/cache2k/
+EOF
+`
+sed "$script";
+}
+
 processCommandLine() {
   pars="$#";
   while true; do
@@ -45,6 +57,11 @@ fi
 scaleBytesToMegaBytes() {
 awk -F, '{ printf ("%s,%s,%.2f\n", $1, $2, $3/1024/1024); }'
 }
+
+scaleBytesToMegaBytes3MemAlloc() {
+awk -F, '{ printf ("%s,%s,%.2f,%.2f,%.2f,%s\n", $1, $2, $3/1024/1024,$4/1024/1024,$5/1024/1024,$6); }'
+}
+
 
 # pivot "<impl>,<impl2>,..."
 #
@@ -103,6 +120,8 @@ function flushRow() {
 EOF
 `
 
+
+
 # renameBenchmarks
 #
 # Strip benchmark from the name.
@@ -150,7 +169,11 @@ echo 'set xtics  norangelimit font "1"';
 echo "set xtics   ()"
 test -z "$xTitle" || echo "set xlabel '${xTitle}'";
 test -z "$yTitle" || echo "set ylabel '${yTitle}'";
-echo "set title '$title'";
+# http://stackoverflow.com/questions/15549830/how-to-get-gnuplot-to-use-a-centered-multi-line-title-with-left-aligned-lines
+# the title is always centered over the graph, excluding the legend!
+# echo "set title '$title'";
+echo "set title \"$title\"";
+
 echo "set yrange [ 0.0 : $maxYRange ] noreverse nowriteback";
 # echo "i = 22";
 # echo "plot '$in' using 2:xtic(1) ti col, '' u 3 ti col, '' u 4 ti col";
@@ -204,6 +227,40 @@ cols=$(( `head -n 1 "$in" | wc -w` ));
 gnuplot "${in}-notitle.plot";
 }
 
+
+# example:
+# 1-20,org.cache2k.benchmark.Cache2kFactory,0.00,65.72,993.08,614.8539540861144
+# 1-20,org.cache2k.benchmark.thirdparty.CaffeineCacheFactory,0.00,71.27,1000.42,852.382233323991
+# 1-20,org.cache2k.benchmark.thirdparty.EhCache2Factory,0.00,58.28,606.75,204.83546236165807
+extractMemoryThreadsHitRate() {
+local query=`cat << EOF
+.[] |  select (.benchmark | contains ("$1") ) |
+  [ (.threads | tostring) + "-" + .params.hitRate, .params.cacheFactory,
+    .["secondaryMetrics"]["+forced-gc-mem.used"]["score"],
+    .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"]["score"],
+    .["secondaryMetrics"]["+forced-gc-mem.total"]["score"],
+    .["secondaryMetrics"]["+c2k.gc.alloc.rate"]["score"]
+  ] | @csv
+EOF
+`
+json | \
+    jq -r "$query" | \
+    sort | tr -d '"' | scaleBytesToMegaBytes3MemAlloc
+}
+
+plotMemoryGraphs() {
+read title;
+read benchmark;
+while read key description; do
+  f=$RESULT/${benchmark}Memory$key.dat
+  (
+    echo "threads usedHeap/AfterGc@end usedHeap/AfterGc/max() totalHeap allocRate(MB/s)";
+    extractMemoryThreadsHitRate $benchmark | grep "^$key" | sed 's/^[^,]*,\(.*\)/\1/' | cacheShortNames | tr , " "
+  ) > $f
+  plot $f "$title\n$description" "MB" "cache"
+done
+}
+
 process() {
 f=$RESULT/populateParallelOnceCache2k.dat
 (
@@ -229,7 +286,7 @@ json | \
           "org.cache2k.benchmark.Cache2kFactory" \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
-          "org.cache2k.benchmark.thirdparty.EhCacheDirectFactory" \
+          "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -247,7 +304,7 @@ json | \
           "org.cache2k.benchmark.Cache2kFactory" \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
-          "org.cache2k.benchmark.thirdparty.EhCacheDirectFactory" \
+          "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -265,7 +322,7 @@ json | \
           "org.cache2k.benchmark.Cache2kFactory" \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
-          "org.cache2k.benchmark.thirdparty.EhCacheDirectFactory" \
+          "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -282,7 +339,7 @@ json | \
           "org.cache2k.benchmark.Cache2kFactory" \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
-          "org.cache2k.benchmark.thirdparty.EhCacheDirectFactory" \
+          "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -300,7 +357,7 @@ json | \
           "org.cache2k.benchmark.Cache2kFactory" \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
-          "org.cache2k.benchmark.thirdparty.EhCacheDirectFactory" \
+          "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -316,7 +373,7 @@ json | \
           "org.cache2k.benchmark.Cache2kFactory" \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
-          "org.cache2k.benchmark.thirdparty.EhCacheDirectFactory" \
+          "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -332,7 +389,7 @@ json | \
           "org.cache2k.benchmark.Cache2kFactory" \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
-          "org.cache2k.benchmark.thirdparty.EhCacheDirectFactory" \
+          "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -348,11 +405,11 @@ json | \
           "org.cache2k.benchmark.Cache2kFactory" \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
-          "org.cache2k.benchmark.thirdparty.EhCacheDirectFactory" \
+          "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
           | sort | \
     stripEmpty
 ) > $f
-plot $f "RandomSequenceCacheBenchmark (threads)" "ops/s"
+plot $f "RandomSequenceCacheBenchmark / Throughput" "ops/s"
 
 f=$RESULT/RandomSequenceCacheBenchmarkGc.dat
 (
@@ -364,27 +421,28 @@ json | \
           "org.cache2k.benchmark.Cache2kFactory" \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
-          "org.cache2k.benchmark.thirdparty.EhCacheDirectFactory" \
+          "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
           | sort | \
     stripEmpty
 ) > $f
-plot $f "RandomSequenceCacheBenchmark (threads)" "MB" "threads"
+plot $f "RandomSequenceCacheBenchmark / Used Heap Memory" "MB" "threads - hit rate"
 
-f=$RESULT/RandomSequenceCacheBenchmarkThreadsHitrate.dat
 (
-echo "threads cache2k Caffeine Guava EhCache2";
-json | \
-    jq -r '.[] |  select (.benchmark | contains ("RandomSequenceCacheBenchmark") ) | [ (.threads | tostring) + "-" + .params.hitRate, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
-    sort | tr -d '"' | \
-    pivot \
-          "org.cache2k.benchmark.Cache2kFactory" \
-          "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
-          "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
-          "org.cache2k.benchmark.thirdparty.EhCacheDirectFactory" \
-          | sort | \
-    stripEmpty
-) > $f
-plot $f "RandomSequenceCacheBenchmark (threads-hitRate)" "ops/s"
+cat << EOF
+RandomSequenceCacheBenchmark / Memory
+RandomSequenceCacheBenchmark
+4-80 (at 4 threads, 80% hit rate)
+4-50 (at 4 threads, 50% hit rate)
+EOF
+) | plotMemoryGraphs
+
+(
+cat << EOF
+NeverHitBenchmark / Memory
+NeverHitBenchmark
+1 (at one thread)
+EOF
+) | plotMemoryGraphs
 
 f=$RESULT/RandomSequenceCacheBenchmarkThreadsHitrate2Hitrate.dat
 (
@@ -396,14 +454,12 @@ json | \
           "org.cache2k.benchmark.Cache2kFactory" \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
-          "org.cache2k.benchmark.thirdparty.EhCacheDirectFactory" \
+          "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
           | sort | \
     stripEmpty
 ) > $f
-plot $f "RandomSequenceCacheBenchmark (threads-hitRate)" "effective hitrate"
-
+plot $f "RandomSequenceCacheBenchmark / Effective Hit Rate" "effective hitrate" "threads - hit rate"
 
 }
 
 processCommandLine "$@";
-shift $shift;
