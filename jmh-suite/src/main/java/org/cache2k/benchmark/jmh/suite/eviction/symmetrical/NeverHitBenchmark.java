@@ -35,7 +35,7 @@ import org.openjdk.jmh.annotations.State;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Access a cache of size 1M an ascending sequence, never producing any hit.
+ * Continuously access a cache of size 1M an ascending sequence, never producing any hit.
  * Each thread starts at another offset.
  *
  * @author Jens Wilke
