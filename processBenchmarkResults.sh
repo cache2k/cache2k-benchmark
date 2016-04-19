@@ -222,7 +222,7 @@ rm -rf $RESULT/*.dat;
 rm -rf $RESULT/*.svg;
 rm -rf $RESULT/*.plot;
 
-header="Size OPT LRU S/LRU CLOCK CP+ ARC CAR S/Lirs EHCache Infinispan Guava Caffeine RAND";
+header="Size OPT LRU S/LRU CLOCK CP+ ARC CAR S/Lirs EHCache2 Infinispan Guava Caffeine RAND";
 impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
 	org.cache2k.benchmark.LruCacheBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineSimulatorLruBenchmark \
@@ -236,7 +236,8 @@ impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
         org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineBenchmark \
         org.cache2k.benchmark.RandomCacheBenchmark";
-for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 TotalRandom1000; do
+for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 TotalRandom1000 \
+         UmassWebSearch1 UmassWebSearch2 UmassWebSearch3 UmassFinancial1 UmassFinancial2; do
   f=$RESULT/trace${I}hitrate.dat;
   (
   echo $header;
