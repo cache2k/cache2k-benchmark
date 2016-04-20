@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Record the used heap memory during a test run by forcing a full garbage collection.
+ * Record the used heap memory of a benchmark iteration by forcing a full garbage collection.
  *
  * @author Jens Wilke
  */
@@ -49,7 +49,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
 
   static boolean enable;
   static long usedMemory;
-  static long usedMemoryRetry;
+  static long usedMemorySettled;
   static long totalMemory;
   static long gcTimeMillis;
 
@@ -67,9 +67,9 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
         }
-        usedMemoryRetry = m2;
+        usedMemorySettled = m2;
         m2 = getUsedMemory();
-      } while (m2 < usedMemoryRetry);
+      } while (m2 < usedMemorySettled);
       gcTimeMillis = System.currentTimeMillis() - t0;
     }
   }
@@ -134,8 +134,8 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       return Collections.emptyList();
     }
     return Arrays.asList(
-      new ProfilerResult("+forced-gc-mem.usedRetry", (double) usedMemoryRetry, "bytes", AggregationPolicy.AVG),
-      new ProfilerResult("+forced-gc-mem.used", (double) usedMemory, "bytes", AggregationPolicy.AVG),
+      new ProfilerResult("+forced-gc-mem.used.settled", (double) usedMemorySettled, "bytes", AggregationPolicy.AVG),
+      new ProfilerResult("+forced-gc-mem.used.after", (double) usedMemory, "bytes", AggregationPolicy.AVG),
       new ProfilerResult("+forced-gc-mem.total", (double) totalMemory, "bytes", AggregationPolicy.AVG),
       new ProfilerResult("+forced-gc-mem.gcTimeMillis", (double) gcTimeMillis, "ms", AggregationPolicy.AVG)
     );
