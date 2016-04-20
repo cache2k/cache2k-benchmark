@@ -23,15 +23,15 @@ package org.cache2k.benchmark;
  */
 
 import org.cache2k.benchmark.traces.CacheAccessTraceCpp;
+import org.cache2k.benchmark.traces.CacheAccessTraceOrmAccessBusy;
 import org.cache2k.benchmark.traces.CacheAccessTraceGlimpse;
 import org.cache2k.benchmark.traces.CacheAccessTraceMulti2;
 import org.cache2k.benchmark.traces.CacheAccessTraceOltp;
+import org.cache2k.benchmark.traces.CacheAccessTraceOrmAccessNight;
 import org.cache2k.benchmark.traces.CacheAccessTraceSprite;
 import org.cache2k.benchmark.traces.CacheAccessTraceUmassFinancial1;
 import org.cache2k.benchmark.traces.CacheAccessTraceUmassFinancial2;
 import org.cache2k.benchmark.traces.CacheAccessTraceUmassWebSearch1;
-import org.cache2k.benchmark.traces.CacheAccessTraceUmassWebSearch2;
-import org.cache2k.benchmark.traces.CacheAccessTraceUmassWebSearch3;
 import org.cache2k.benchmark.traces.CacheAccessTraceWeb07;
 import org.cache2k.benchmark.traces.CacheAccessTraceWeb12;
 import org.cache2k.benchmark.util.AccessTrace;
@@ -277,34 +277,56 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
     runBenchmark(CacheAccessTraceUmassWebSearch1.getInstance(), 300000);
   }
 
+
+
   @Test
-  public void benchmarkUmassWebSearch2_100000() throws Exception {
-    runBenchmark(CacheAccessTraceUmassWebSearch2.getInstance(), 100000);
+  public void benchmarkOrmAccessNight_625() throws Exception {
+    runBenchmark(CacheAccessTraceOrmAccessNight.getInstance(), 625);
+  }
+  @Test
+  public void benchmarkOrmAccessNight_1250() throws Exception {
+    runBenchmark(CacheAccessTraceOrmAccessNight.getInstance(), 1250);
+  }
+  @Test
+  public void benchmarkOrmAccessNight_2500() throws Exception {
+    runBenchmark(CacheAccessTraceOrmAccessNight.getInstance(), 2500);
+  }
+  @Test
+  public void benchmarkOrmAccessNight_5000() throws Exception {
+    runBenchmark(CacheAccessTraceOrmAccessNight.getInstance(), 5000);
+  }
+  @Test
+  public void benchmarkOrmAccessNight_10000() throws Exception {
+    runBenchmark(CacheAccessTraceOrmAccessNight.getInstance(), 10000);
+  }
+  @Test
+  public void benchmarkOrmAccessNight_20000() throws Exception {
+    runBenchmark(CacheAccessTraceOrmAccessNight.getInstance(), 20000);
   }
 
   @Test
-  public void benchmarkUmassWebSearch2_200000() throws Exception {
-    runBenchmark(CacheAccessTraceUmassWebSearch2.getInstance(), 200000);
+  public void benchmarkOrmAccessBusytime_625() throws Exception {
+    runBenchmark(CacheAccessTraceOrmAccessBusy.getInstance(), 625);
   }
-
   @Test
-  public void benchmarkUmassWebSearch2_300000() throws Exception {
-    runBenchmark(CacheAccessTraceUmassWebSearch2.getInstance(), 300000);
+  public void benchmarkOrmAccessBusytime_1250() throws Exception {
+    runBenchmark(CacheAccessTraceOrmAccessBusy.getInstance(), 1250);
   }
-
   @Test
-  public void benchmarkUmassWebSearch3_100000() throws Exception {
-    runBenchmark(CacheAccessTraceUmassWebSearch3.getInstance(), 100000);
+  public void benchmarkOrmAccessBusytime_2500() throws Exception {
+    runBenchmark(CacheAccessTraceOrmAccessBusy.getInstance(), 2500);
   }
-
   @Test
-  public void benchmarkUmassWebSearch3_200000() throws Exception {
-    runBenchmark(CacheAccessTraceUmassWebSearch3.getInstance(), 200000);
+  public void benchmarkOrmAccessBusytime_5000() throws Exception {
+    runBenchmark(CacheAccessTraceOrmAccessBusy.getInstance(), 5000);
   }
-
   @Test
-  public void benchmarkUmassWebSearch3_300000() throws Exception {
-    runBenchmark(CacheAccessTraceUmassWebSearch3.getInstance(), 300000);
+  public void benchmarkOrmAccessBusytime_10000() throws Exception {
+    runBenchmark(CacheAccessTraceOrmAccessBusy.getInstance(), 10000);
+  }
+  @Test
+  public void benchmarkOrmAccessBusytime_20000() throws Exception {
+    runBenchmark(CacheAccessTraceOrmAccessBusy.getInstance(), 20000);
   }
 
   public static final int TRACE_LENGTH = 3 * 1000 * 1000;

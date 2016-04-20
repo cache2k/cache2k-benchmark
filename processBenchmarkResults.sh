@@ -237,7 +237,8 @@ impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineBenchmark \
         org.cache2k.benchmark.RandomCacheBenchmark";
 for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 TotalRandom1000 \
-         UmassWebSearch1 UmassWebSearch2 UmassWebSearch3 UmassFinancial1 UmassFinancial2; do
+         UmassWebSearch1 UmassFinancial1 UmassFinancial2 \
+         OrmAccessMorning OrmAccessBusytime OrmAccessNight OrmAccessDaytime; do
   f=$RESULT/trace${I}hitrate.dat;
   (
   echo $header;

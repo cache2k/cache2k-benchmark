@@ -22,9 +22,11 @@ package org.cache2k.benchmark.traces;
  * #L%
  */
 
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.cache2k.benchmark.util.AccessTrace;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 
@@ -43,8 +45,14 @@ class TraceCache {
     AccessTrace t = name2trace.get(_fileName);
     try {
       if (t == null) {
-        t = new AccessTrace(
-          new GZIPInputStream(TraceCache.class.getResourceAsStream(_fileName)));
+        InputStream _resourceInput = TraceCache.class.getResourceAsStream(_fileName);
+        InputStream _inputForTrace;
+        if (_fileName.endsWith(".bz2")) {
+          _inputForTrace = new BZip2CompressorInputStream(_resourceInput);
+        } else {
+          _inputForTrace = new GZIPInputStream(_resourceInput);
+        }
+        t = new AccessTrace(_inputForTrace);
         name2trace.put(_fileName, t);
       }
     } catch (Exception e) {
