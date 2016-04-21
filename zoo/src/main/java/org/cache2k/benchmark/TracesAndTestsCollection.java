@@ -233,6 +233,16 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   }
 
   @Test
+  public void benchmarkUmassFinancial1_12500() throws Exception {
+    runBenchmark(CacheAccessTraceUmassFinancial1.getInstance(), 12500);
+  }
+
+  @Test
+  public void benchmarkUmassFinancial1_25000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassFinancial1.getInstance(), 25000);
+  }
+
+  @Test
   public void benchmarkUmassFinancial1_50000() throws Exception {
     runBenchmark(CacheAccessTraceUmassFinancial1.getInstance(), 50000);
   }
@@ -248,8 +258,18 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   }
 
   @Test
+  public void benchmarkUmassFinancial2_5000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassFinancial2.getInstance(), 5000);
+  }
+
+  @Test
   public void benchmarkUmassFinancial2_10000() throws Exception {
     runBenchmark(CacheAccessTraceUmassFinancial2.getInstance(), 10000);
+  }
+
+  @Test
+  public void benchmarkUmassFinancial2_20000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassFinancial2.getInstance(), 20000);
   }
 
   @Test
@@ -258,8 +278,8 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   }
 
   @Test
-  public void benchmarkUmassFinancial2_90000() throws Exception {
-    runBenchmark(CacheAccessTraceUmassFinancial2.getInstance(), 90000);
+  public void benchmarkUmassFinancial2_80000() throws Exception {
+    runBenchmark(CacheAccessTraceUmassFinancial2.getInstance(), 80000);
   }
 
   @Test

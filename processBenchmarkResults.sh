@@ -222,7 +222,7 @@ rm -rf $RESULT/*.dat;
 rm -rf $RESULT/*.svg;
 rm -rf $RESULT/*.plot;
 
-header="Size OPT LRU S/LRU CLOCK CP+ ARC CAR S/Lirs EHCache2 Infinispan Guava Caffeine RAND";
+header="Size OPT LRU S/LRU CLOCK CP+ ARC CAR S/Lirs EHCache2 Infinispan Guava Caffeine S/Mru S/Lfu S/WTLfu S/WTLfu90 RAND";
 impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
 	org.cache2k.benchmark.LruCacheBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineSimulatorLruBenchmark \
@@ -235,10 +235,14 @@ impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
         org.cache2k.benchmark.thirdparty.InfinispanCacheBenchmark \
         org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineBenchmark \
+        org.cache2k.benchmark.thirdparty.CaffeineSimulatorMruBenchmark \
+        org.cache2k.benchmark.thirdparty.CaffeineSimulatorLfuBenchmark \
+        org.cache2k.benchmark.thirdparty.CaffeineSimulatorWTinyLfuBenchmark \
+        org.cache2k.benchmark.thirdparty.CaffeineSimulatorWTinyLfu90Benchmark \
         org.cache2k.benchmark.RandomCacheBenchmark";
 for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 TotalRandom1000 \
          UmassWebSearch1 UmassFinancial1 UmassFinancial2 \
-         OrmAccessMorning OrmAccessBusytime OrmAccessNight OrmAccessDaytime; do
+         OrmAccessBusytime OrmAccessNight; do
   f=$RESULT/trace${I}hitrate.dat;
   (
   echo $header;

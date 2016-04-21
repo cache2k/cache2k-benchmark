@@ -1,8 +1,8 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.thirdparty;
 
 /*
  * #%L
- * zoo
+ * thirdparty
  * %%
  * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%
@@ -22,10 +22,23 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import com.github.benmanes.caffeine.cache.simulator.admission.Admission;
+import com.github.benmanes.caffeine.cache.simulator.policy.linked.FrequentlyUsedPolicy;
+import com.typesafe.config.ConfigFactory;
+import org.cache2k.benchmark.BenchmarkCollection;
+
 /**
- * This was the place for the previous performance benchmarks.
- * Just pass through.
+ * The FrequentlyUsedPolicy with LFU policy from the caffeine simulator.
+ *
+ * @author Jens Wilke
  */
-public class BenchmarkCollection extends TracesAndTestsCollection {
+public class CaffeineSimulatorLfuBenchmark extends BenchmarkCollection {
+
+  {
+    factory =
+      new CaffeineSimulatorCacheFactory()
+        .config(ConfigFactory.empty())
+        .policy(cfg -> new FrequentlyUsedPolicy(Admission.ALWAYS, FrequentlyUsedPolicy.EvictionPolicy.LFU, cfg));
+  }
 
 }
