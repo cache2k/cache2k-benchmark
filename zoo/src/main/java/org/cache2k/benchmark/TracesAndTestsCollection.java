@@ -193,6 +193,16 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   }
 
   @Test
+  public void benchmarkGlimpse_1000() {
+    runBenchmark(CacheAccessTraceGlimpse.getInstance(), 1000);
+  }
+
+  @Test
+  public void benchmarkGlimpse_2000() {
+    runBenchmark(CacheAccessTraceGlimpse.getInstance(), 2000);
+  }
+
+  @Test
   public void benchmarkMulti2_600() {
     runBenchmark(CacheAccessTraceMulti2.getInstance(), 600);
   }
@@ -355,6 +365,11 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
     new AccessTrace(new ZipfianPattern(900), TRACE_LENGTH);
 
   @Test
+  public void benchmarkZipf900_50() throws Exception {
+    runBenchmark(zipf900Trace, 50);
+  }
+
+  @Test
   public void benchmarkZipf900_100() throws Exception {
     runBenchmark(zipf900Trace, 100);
   }
@@ -372,6 +387,29 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   @Test
   public void benchmarkZipf900_700() throws Exception {
     runBenchmark(zipf900Trace, 700);
+  }
+
+  public static final int ZIPF10K_TRACE_LENGTH = 10 * 1000 * 1000;
+
+  static final AccessTrace zipf10kTrace =
+    new AccessTrace(new ZipfianPattern(10000), ZIPF10K_TRACE_LENGTH);
+
+
+  @Test
+  public void benchmarkZipf10k_500() throws Exception {
+    runBenchmark(zipf10kTrace, 500);
+  }
+
+
+  @Test
+  public void benchmarkZipf10k_2000() throws Exception {
+    runBenchmark(zipf10kTrace, 2000);
+  }
+
+
+  @Test
+  public void benchmarkZipf10k_8000() throws Exception {
+    runBenchmark(zipf10kTrace, 8000);
   }
 
   static final AccessTrace effective95Trace =

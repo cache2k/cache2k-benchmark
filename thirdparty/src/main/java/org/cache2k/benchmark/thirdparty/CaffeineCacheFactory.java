@@ -32,14 +32,22 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author Jens Wilke; created: 2013-12-08
+ * Factory for Caffeine
+ *
+ * @author Jens Wilke
  */
 public class CaffeineCacheFactory extends BenchmarkCacheFactory {
 
   private boolean sameThreadEviction = false;
+  private boolean fullEvictionCapacity = false;
 
   CaffeineCacheFactory sameThreadEviction(boolean f) {
     sameThreadEviction = f;
+    return this;
+  }
+
+  CaffeineCacheFactory fullEvictionCapacity(boolean f) {
+    fullEvictionCapacity = f;
     return this;
   }
 
@@ -55,6 +63,8 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
     Caffeine b = Caffeine.newBuilder().maximumSize(_maxElements);
     if (sameThreadEviction) {
       b.executor(Runnable::run);
+    }
+    if (fullEvictionCapacity) {
       b.initialCapacity(_maxElements);
     }
     if (withExpiry) {

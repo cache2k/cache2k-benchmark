@@ -222,7 +222,7 @@ rm -rf $RESULT/*.dat;
 rm -rf $RESULT/*.svg;
 rm -rf $RESULT/*.plot;
 
-header="Size OPT LRU S/LRU CLOCK CP+ ARC CAR S/Lirs EHCache2 Infinispan Guava Caffeine S/Mru S/Lfu S/WTLfu S/WTLfu90 RAND";
+header="Size OPT LRU S/LRU CLOCK Cache2k ARC CAR S/Lirs EHCache2 Guava Caffeine S/Mru S/Lfu S/WTLfu S/WTLfu90 RAND";
 impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
 	org.cache2k.benchmark.LruCacheBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineSimulatorLruBenchmark \
@@ -232,7 +232,6 @@ impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
         org.cache2k.benchmark.CarCacheBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineSimulatorLirsBenchmark \
         org.cache2k.benchmark.thirdparty.EhCache2Benchmark \
-        org.cache2k.benchmark.thirdparty.InfinispanCacheBenchmark \
         org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineSimulatorMruBenchmark \
@@ -240,9 +239,9 @@ impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineSimulatorWTinyLfuBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineSimulatorWTinyLfu90Benchmark \
         org.cache2k.benchmark.RandomCacheBenchmark";
-for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 TotalRandom1000 \
+for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 Zipf10k TotalRandom1000 \
          UmassWebSearch1 UmassFinancial1 UmassFinancial2 \
-         OrmAccessBusytime OrmAccessNight; do
+         OrmAccessBusytime OrmAccessNight Glimpse; do
   f=$RESULT/trace${I}hitrate.dat;
   (
   echo $header;
@@ -252,7 +251,55 @@ for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 TotalRandom1000 \
   ) > $f
   plot $f "Hitrates for $I trace";
 done
+
+header="Size OPT LRU CLOCK EHCache2 Guava Caffeine cache2k RAND";
+impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
+	   org.cache2k.benchmark.LruCacheBenchmark \
+       org.cache2k.benchmark.ClockCacheBenchmark \
+       org.cache2k.benchmark.thirdparty.EhCache2Benchmark \
+       org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
+       org.cache2k.benchmark.thirdparty.CaffeineBenchmark \
+       org.cache2k.benchmark.Cache2kDefaultBenchmark \
+       org.cache2k.benchmark.RandomCacheBenchmark";
+for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 Zipf10k TotalRandom1000 \
+         UmassWebSearch1 UmassFinancial1 UmassFinancial2 \
+         OrmAccessBusytime OrmAccessNight Glimpse; do
+  f=$RESULT/trace${I}hitrateProducts.dat;
+  (
+  echo $header;
+  printHitrate | grep "^benchmark${I}_" | alongSize | sort -n -k1 -t'|' | \
+    pivot $impls | \
+    stripEmpty
+  ) > $f
+  plot $f "Hitrates for $I trace";
+done
+
+header="Size OPT LRU CLOCK EHCache2 Guava Caffeine Caffeine- cache2k RAND";
+impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
+	   org.cache2k.benchmark.LruCacheBenchmark \
+       org.cache2k.benchmark.ClockCacheBenchmark \
+       org.cache2k.benchmark.thirdparty.EhCache2Benchmark \
+       org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
+       org.cache2k.benchmark.thirdparty.CaffeineBenchmark \
+       org.cache2k.benchmark.thirdparty.CaffeineRegularBenchmark \
+       org.cache2k.benchmark.Cache2kDefaultBenchmark \
+       org.cache2k.benchmark.RandomCacheBenchmark";
+for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 Zipf10k TotalRandom1000 \
+         UmassWebSearch1 UmassFinancial1 UmassFinancial2 \
+         OrmAccessBusytime OrmAccessNight Glimpse; do
+  f=$RESULT/trace${I}hitrateProductsCaffeineRegular.dat;
+  (
+  echo $header;
+  printHitrate | grep "^benchmark${I}_" | alongSize | sort -n -k1 -t'|' | \
+    pivot $impls | \
+    stripEmpty
+  ) > $f
+  plot $f "Hitrates for $I trace";
+done
+
 }
+
+
 
 processCommandLine "$@";
 

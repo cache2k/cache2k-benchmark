@@ -124,6 +124,18 @@ fi
 
 startTimer;
 
+cpuList() {
+if [ "$1" = 1 ]; then
+  echo "1";
+elif [ "$1" = 2 ]; then
+  echo "1,2";
+elif [ "$1" = 3 ]; then
+  echo "1,2,3";
+elif [ "$1" = 4 ]; then
+  echo "1,2,3,0";
+fi
+}
+
 #
 # Multi threaded with variable thread counts, no eviction needed
 #
@@ -135,7 +147,7 @@ for impl in $NO_EVICTION $COMPLETE; do
       fn="$TARGET/result-$runid";
       echo;
       echo "## $runid";
-      $java -jar $JAR $benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER \
+      taskset -c `cpuList $threads` $java -jar $JAR $benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER \
            -t $threads -p cacheFactory=org.cache2k.benchmark.$impl \
            -rf json -rff "$fn.json" \
            2>&1 | tee $fn.out | filterProgress
@@ -151,7 +163,7 @@ done
 #
 # Multi threaded with variable thread counts, with eviction
 #
-benchmarks="RandomSequenceCacheBenchmark NeverHitBenchmark";
+benchmarks="NeverHitBenchmark MultiRandomAccessBenchmark";
 for impl in $COMPLETE; do
   for benchmark in $benchmarks; do
     for threads in 1 2 4; do
@@ -159,7 +171,7 @@ for impl in $COMPLETE; do
       fn="$TARGET/result-$runid";
       echo;
       echo "## $runid";
-      $java -jar $JAR $benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER \
+      taskset -c `cpuList $threads` $java -jar $JAR $benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER \
            -t $threads -p cacheFactory=org.cache2k.benchmark.$impl \
            -rf json -rff "$fn.json" \
            2>&1 | tee $fn.out | filterProgress
@@ -200,7 +212,7 @@ result=$TARGET/data.json
 # merge all results into single json file
 # A sequence of the lines "]", "[", "]" will be ignored, there may be an empty json file, if a run fails
 # A sequence of the lines "]", "[" will be replaced with ","
-at $TARGET/result-*.json | awk '/^]/ { f=1; g=0; next; } f && /^\[/ { g=1; f=0; next; } g { print "  ,"; g=0; } { print; } END { print "]"; }' > $result
+cat $TARGET/result-*.json | awk '/^]/ { f=1; g=0; next; } f && /^\[/ { g=1; f=0; next; } g { print "  ,"; g=0; } { print; } END { print "]"; }' > $result
 
 fi
 

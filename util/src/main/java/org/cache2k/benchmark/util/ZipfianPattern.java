@@ -59,10 +59,10 @@ import java.util.Random;
  * item space, then use ScrambledZipfianPattern instead.
  *
  * Be aware: initializing this generator may take a long time if there are lots of items to choose from (e.g. over a minute
- * for 100 million objects). This is because certain mathematical values need to be computed to properly generate a zipfian skew, and one of those
- * values (zeta) is a sum sequence from 1 to n, where n is the itemcount. Note that if you increase the number of items in the set, we can compute
- * a new zeta incrementally, so it should be fast unless you have added millions of items. However, if you decrease the number of items, we recompute
- * zeta from scratch, so this can take a long time.
+ * for 100 million objects). This is because certain mathematical values need to be computed to properly generate a zipfian
+ * skew, and one of those values (zeta) is a sum sequence from 1 to n, where n is the itemcount. Note that if you increase
+ * the number of items in the set, we can compute a new zeta incrementally, so it should be fast unless you have added
+ * millions of items. However, if you decrease the number of items, we recompute zeta from scratch, so this can take a long time.
  *
  * The algorithm used here is from "Quickly Generating Billion-Record Synthetic Databases", Jim Gray et al, SIGMOD 1994.
  */

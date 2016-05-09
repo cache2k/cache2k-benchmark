@@ -22,22 +22,19 @@ package org.cache2k.benchmark.thirdparty;
  * #L%
  */
 
-import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.PersistenceConfiguration;
-import net.sf.ehcache.constructs.blocking.CacheEntryFactory;
-import net.sf.ehcache.constructs.blocking.SelfPopulatingCache;
 import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 
 /**
- * EHCache2 using the self populating cache.
+ * Factory for EHCache2
  *
- * @author Jens Wilke; created: 2013-12-08
+ * @author Jens Wilke
  */
 public class EhCache2Factory extends BenchmarkCacheFactory {
 

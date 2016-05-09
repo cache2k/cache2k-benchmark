@@ -25,17 +25,15 @@ package org.cache2k.benchmark.thirdparty;
 import org.cache2k.benchmark.BenchmarkCollection;
 
 /**
- * Benchmarks with Caffeine. The caffeine parameter {@code initialCapacity(maxSize)} is
- * set, so the eviction algorithm will start its work right at the beginning of a trace.
+ * Benchmarks with Caffeine. No special setting for the eviction algorithm.
  *
  * @author Jens Wilke
  */
-public class CaffeineBenchmark extends BenchmarkCollection {
+public class CaffeineRegularBenchmark extends BenchmarkCollection {
 
   {
     factory = new CaffeineCacheFactory()
-      .sameThreadEviction(true)
-      .fullEvictionCapacity(true);
+      .sameThreadEviction(true);
   }
 
 }
