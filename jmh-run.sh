@@ -48,6 +48,17 @@ OPTIONS="$BENCHMARK_DILIGENT";
 
 unset no3pty;
 unset dry;
+unset backends;
+
+usage() {
+  echo "Usage: $0 options"
+  echo "--quick              Run smoke test only, not the full benchmark"
+  echo "--perfasm"
+  echo "--perfnorm"
+  echo "--no3pty             Do not test 3rd-party backends"
+  echo "--backends backends  Test the given backends, e.g. 'thirdparty.TCache1Factory Cache2kFactory"
+  echo "--dry                Log the command lines to execute, but do not run test"
+}
 
 processCommandLine() {
   while true; do
@@ -56,8 +67,9 @@ processCommandLine() {
       --perfasm) OPTIONS="$BENCHMARK_PERFASM";;
       --perfnorm) OPTIONS="$BENCHMARK_PERFNORM";;
       --no3pty) no3pty=true;;
+      --backends) backends="$2"; shift; ;;
       --dry) dry=true;;
-      -*) echo "unknown option: $1"; exit 1;;
+      -*) echo "unknown option: $1"; usage; exit 1;;
       *) break;;
     esac
     shift 1;
@@ -118,7 +130,9 @@ COMPLETE="Cache2kFactory"
 TARGET="target/jmh-result";
 test -d $TARGET || mkdir -p $TARGET;
 
-if test -z "$no3pty"; then
+if test -n "$backends"; then
+COMPLETE="$backends";
+elif test -z "$no3pty"; then
 COMPLETE="$COMPLETE thirdparty.CaffeineCacheFactory thirdparty.GuavaCacheFactory thirdparty.EhCache2Factory";
 fi
 
