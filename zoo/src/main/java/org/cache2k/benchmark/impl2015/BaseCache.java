@@ -1637,7 +1637,6 @@ public abstract class BaseCache<E extends Entry, K, T> implements Cache<K,T> {
               public void run() {
                 long _previousNextRefreshTime;
                 synchronized (e) {
-
                   if (e.isRemovedFromReplacementList() || e.isRemovedState() || e.isFetchInProgress()) {
                     return;
                   }
