@@ -12,10 +12,20 @@
     <name>headissue GmbH, Munich</name>
     <url>http://headissue.com</url>
   </organization>
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/headissue/cache2k-benchmark/issues</url>
+  </issueManagement>
+  <licenses>
+    <license>
+      <name>Apache 2</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+    </license>
+  </licenses>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cache2k-version>0.27-BETA</cache2k-version>
+    <cache2k-version>0.27-SNAPSHOT</cache2k-version>
   </properties>
 
   <modules>
@@ -122,7 +132,7 @@
           <artifactId>license-maven-plugin</artifactId>
           <version>1.5</version>
           <configuration>
-            <licenseName>gpl_v3</licenseName>
+            <licenseName>apache_v2</licenseName>
           </configuration>
         </plugin>
       </plugins>
