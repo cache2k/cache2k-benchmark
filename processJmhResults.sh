@@ -342,6 +342,13 @@ json | \
 plot $f "${name} / Throughput" "ops/s"
 }
 process() {
+
+# merge all results into single json file
+result=$RESULT/data.json
+# A sequence of the lines "]", "[", "]" will be ignored, there may be an empty json file, if a run fails
+# A sequence of the lines "]", "[" will be replaced with ","
+cat $RESULT/result-*.json | awk '/^]/ { f=1; g=0; next; } f && /^\[/ { g=1; f=0; next; } g { print "  ,"; g=0; } { print; } END { print "]"; }' > $result
+
 f=$RESULT/populateParallelOnceCache2k.dat
 (
 echo "threads-size cache2k cache2k+expiry ConcurrentHashMap";
