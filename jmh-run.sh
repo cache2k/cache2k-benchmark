@@ -16,7 +16,9 @@
 set -e;
 # set -x;
 
-test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx2G";
+# http://mechanical-sympathy.blogspot.de/2011/11/biased-locking-osr-and-benchmarking-fun.html
+# http://www.oracle.com/technetwork/tutorials/tutorials-1876574.html
+test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx2G -XX:+UseG1GC -XX:+UseBiasedLocking -XX:+UseCompressedOops";
 
 # -wi warmup iterations
 # -w warmup time
@@ -30,6 +32,7 @@ test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 2 -wi 3 -w 5s -
 # Tinker benchmark options to do profiling and add assembler code output (linux only).
 # Needs additional disassembly library to display assembler code
 # see: http://psy-lob-saw.blogspot.de/2013/01/java-print-assembly.html
+# and, see: https://wiki.openjdk.java.net/display/HotSpot/PrintAssembly
 # download from: https://kenai.com/projects/base-hsdis/downloads
 # install with e.g.: mv ~/Downloads/linux-hsdis-amd64.so jdk1.8.0_45/jre/lib/amd64/hsdis-amd64.so.
 # For profiling only do one fork, but more measurement iterations
@@ -46,6 +49,7 @@ PERF_NORM_OPTIONS="-prof perfnorm:useDefaultStat=true"
 
 OPTIONS="$BENCHMARK_DILIGENT";
 
+unset cache2k;
 unset no3pty;
 unset dry;
 unset backends;
@@ -67,6 +71,7 @@ processCommandLine() {
       --perfasm) OPTIONS="$BENCHMARK_PERFASM";;
       --perfnorm) OPTIONS="$BENCHMARK_PERFNORM";;
       --no3pty) no3pty=true;;
+      --cache2k) cache2k=true;;
       --backends) backends="$2"; shift; ;;
       --dry) dry=true;;
       -*) echo "unknown option: $1"; usage; exit 1;;
@@ -118,11 +123,19 @@ fi
 
 JAR="jmh-suite/target/benchmarks.jar";
 
-# Implementations with no eviction (actually not a cache) and not thread safe
-SINGLE_THREADED="HashMapFactory"
+unset SINGLE_THREADED;
+unset NO_EVICTION;
 
-# Implementations with no eviction (actually not a cache) and thread safe
-NO_EVICTION="ConcurrentHashMapFactory"
+# add tests of JDK internal stuff (useful as base line reference), if not cache22k only is requested.
+if test -z "$cache2k"; then
+
+  # Implementations with no eviction (actually not a cache) and not thread safe
+  SINGLE_THREADED="HashMapFactory"
+
+  # Implementations with no eviction (actually not a cache) and thread safe
+  NO_EVICTION="ConcurrentHashMapFactory"
+
+fi
 
 # Implementations with complete caching features
 COMPLETE="Cache2kFactory"
@@ -131,9 +144,9 @@ TARGET="target/jmh-result";
 test -d $TARGET || mkdir -p $TARGET;
 
 if test -n "$backends"; then
-COMPLETE="$backends";
+  COMPLETE="$backends";
 elif test -z "$no3pty"; then
-COMPLETE="$COMPLETE thirdparty.CaffeineCacheFactory thirdparty.GuavaCacheFactory thirdparty.EhCache2Factory";
+  COMPLETE="$COMPLETE thirdparty.CaffeineCacheFactory thirdparty.GuavaCacheFactory thirdparty.EhCache2Factory";
 fi
 
 startTimer;
@@ -150,6 +163,17 @@ elif [ "$1" = 4 ]; then
 fi
 }
 
+limitCores() {
+if test -n "$dry"; then
+  shift;
+  "$@";
+  return;
+fi
+local cnt=$1;
+shift;
+taskset -c `cpuList $cnt` "$@";
+}
+
 #
 # Multi threaded with variable thread counts, no eviction needed
 #
@@ -161,7 +185,7 @@ for impl in $NO_EVICTION $COMPLETE; do
       fn="$TARGET/result-$runid";
       echo;
       echo "## $runid";
-      taskset -c `cpuList $threads` $java -jar $JAR $benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER \
+      limitCores $threads $java -jar $JAR $benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER \
            -t $threads -p cacheFactory=org.cache2k.benchmark.$impl \
            -rf json -rff "$fn.json" \
            2>&1 | tee $fn.out | filterProgress
@@ -185,7 +209,7 @@ for impl in $COMPLETE; do
       fn="$TARGET/result-$runid";
       echo;
       echo "## $runid";
-      taskset -c `cpuList $threads` $java -jar $JAR $benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER \
+      limitCores $threads $java -jar $JAR $benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER \
            -t $threads -p cacheFactory=org.cache2k.benchmark.$impl \
            -rf json -rff "$fn.json" \
            2>&1 | tee $fn.out | filterProgress
