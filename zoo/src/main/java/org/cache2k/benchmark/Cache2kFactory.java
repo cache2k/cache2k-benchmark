@@ -24,8 +24,6 @@ package org.cache2k.benchmark;
 
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
-import org.cache2k.CacheBuilder;
-import org.cache2k.integration.CacheLoader;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,21 +34,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Cache2kFactory extends BenchmarkCacheFactory {
 
   AtomicInteger counter = new AtomicInteger();
+  boolean disableStatistics = true;
 
   @Override
   public BenchmarkCache<Integer, Integer> create(final int _maxElements) {
-    CacheBuilder<Integer, Integer> b =
-    CacheBuilder.newCache(Integer.class, Integer.class)
+    Cache2kBuilder<Integer, Integer> b =
+    new Cache2kBuilder<Integer, Integer>(){}
       .name("testCache-" + counter.incrementAndGet())
-      .expiryDuration(withExpiry ? 5 * 60 : Integer.MAX_VALUE, TimeUnit.SECONDS)
       .entryCapacity(_maxElements)
-      .refreshAhead(false);
+      .refreshAhead(false)
+      .strictEviction(true);
     if (withExpiry) {
-      b.expiryDuration(5 * 60, TimeUnit.SECONDS);
+      b.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
     } else {
       b.eternal(true);
     }
-
+    if (disableStatistics) {
+      b.disableStatistics(true);
+    }
     final Cache<Integer, Integer> c = b.build();
     return new BenchmarkCache<Integer, Integer>() {
 
