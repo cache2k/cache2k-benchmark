@@ -23,6 +23,7 @@ s/org.cache2k.benchmark.thirdparty.EhCache2Factory/EhCache2/
 s/org.cache2k.benchmark.thirdparty.CaffeineCacheFactory/Caffeine/
 s/org.cache2k.benchmark.thirdparty.GuavaCacheFactory/Guava/
 s/org.cache2k.benchmark.Cache2kFactory/cache2k/
+s/org.cache2k.benchmark.thirdparty.TCache1Factory/tCache/
 EOF
 `
 sed "$script";
@@ -270,7 +271,7 @@ plotEffectiveHitrate() {
 name="$1";
 f=$RESULT/${name}EffectiveHitrate.dat
 (
-echo "threads cache2k Caffeine Guava EhCache2";
+echo "threads cache2k Caffeine Guava EhCache2 tCache";
 json | \
     jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.hitRate, .params.cacheFactory, .[\"secondaryMetrics\"][\"+misc.hitCount\"][\"score\"] * 100 / .[\"secondaryMetrics\"][\"+misc.opCount\"][\"score\"]] | @csv"  | \
     sort | tr -d '"' | \
@@ -279,6 +280,7 @@ json | \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
           "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
+          "org.cache2k.benchmark.thirdparty.TCache1Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -289,7 +291,7 @@ plotMemUsed() {
 name="$1";
 f=$RESULT/${name}MemUsed.dat
 (
-echo "threads cache2k Caffeine Guava EhCache2";
+echo "threads cache2k Caffeine Guava EhCache2 tCache";
 json | \
     jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.hitRate, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used.after\"][\"score\"] ] | @csv"  | \
     sort | tr -d '"' | scaleBytesToMegaBytes | \
@@ -298,6 +300,7 @@ json | \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
           "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
+          "org.cache2k.benchmark.thirdparty.TCache1Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -308,7 +311,7 @@ plotMemUsedSettled() {
 name="$1";
 f=$RESULT/${name}MemUsedSettled.dat
 (
-echo "threads cache2k Caffeine Guava EhCache2";
+echo "threads cache2k Caffeine Guava EhCache2 tCache";
 json | \
     jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.hitRate, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used.settled\"][\"score\"] ] | @csv"  | \
     sort | tr -d '"' | scaleBytesToMegaBytes | \
@@ -317,6 +320,7 @@ json | \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
           "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
+          "org.cache2k.benchmark.thirdparty.TCache1Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -327,7 +331,7 @@ plotOps() {
 name="$1";
 f=$RESULT/${name}.dat
 (
-echo "threads cache2k Caffeine Guava EhCache2";
+echo "threads cache2k Caffeine Guava EhCache2 tCache";
 json | \
     jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.hitRate, .params.cacheFactory, .primaryMetric.score ] | @csv" | \
     sort | tr -d '"' | \
@@ -336,6 +340,7 @@ json | \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
           "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
+          "org.cache2k.benchmark.thirdparty.TCache1Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -364,7 +369,7 @@ plot $f "PopulateParallelOnceBenchmark multiple threads" "runtime in seconds" "t
 
 f=$RESULT/populateParallelOnce.dat
 (
-echo "threads-size CHM cache2k Caffeine Guava EHCache2";
+echo "threads-size CHM cache2k Caffeine Guava EHCache2 tCache";
 json | \
     jq -r '.[] |  select (.benchmark | contains ("PopulateParallelOnceBenchmark") ) | [ (.threads | tostring) + "-" + .params.size, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
     sort | tr -d '"' | \
@@ -374,6 +379,7 @@ json | \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
           "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
+          "org.cache2k.benchmark.thirdparty.TCache1Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -382,7 +388,7 @@ plot $f "PopulateParallelOnceBenchmark multiple threads" "runtime in seconds" "t
 for threads in 1 2 4; do
 f=$RESULT/populateParallelOnce-$threads.dat
 (
-echo "size CHM cache2k Caffeine Guava EHCache2";
+echo "size CHM cache2k Caffeine Guava EHCache2 tCache";
 json | \
     jq -r ".[] |  select (.benchmark | contains (\"PopulateParallelOnceBenchmark\") ) | select (.threads == $threads ) | [ .params.size, .params.cacheFactory, .primaryMetric.score ] | @csv"  | \
     sort | tr -d '"' | \
@@ -392,6 +398,7 @@ json | \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
           "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
+          "org.cache2k.benchmark.thirdparty.TCache1Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -400,7 +407,7 @@ done
 
 f=$RESULT/populateParallelOnce-memory.dat
 (
-echo "size CHM cache2k Caffeine Guava EhCache2";
+echo "size CHM cache2k Caffeine Guava EhCache2 tCache";
 json | \
     jq -r ".[] |  select (.benchmark | contains (\"PopulateParallelOnceBenchmark\") ) | select (.threads == 1 ) | [ .params.size, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used.after\"][\"score\"] ] | @csv"  | \
     sort | tr -d '"' | scaleBytesToMegaBytes | \
@@ -410,6 +417,7 @@ json | \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
           "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
+          "org.cache2k.benchmark.thirdparty.TCache1Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -417,7 +425,7 @@ plot $f "PopulateParallelOnceBenchmark heap size after forced GC" "MB" "cache si
 
 f=$RESULT/readOnly.dat
 (
-echo "threads-size CHM cache2k Caffeine Guava EhCache2";
+echo "threads-size CHM cache2k Caffeine Guava EhCache2 tCache";
 json | \
     jq -r '.[] |  select (.benchmark | contains ("ReadOnlyBenchmark") ) | [ (.threads | tostring) + "-" + .params.hitRate, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
     sort | tr -d '"' | \
@@ -427,6 +435,7 @@ json | \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
           "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
+          "org.cache2k.benchmark.thirdparty.TCache1Factory" \
           | sort | \
     stripEmpty
 ) > $f
@@ -434,7 +443,7 @@ plot $f "ReadOnlyBenchmark (threads-hitRate)" "ops/s"
 
 f=$RESULT/combinedReadWrite.dat
 (
-echo "threads-size CHM cache2k Caffeine Guava EhCache2";
+echo "threads-size CHM cache2k Caffeine Guava EhCache2 tCache";
 json | \
     jq -r '.[] |  select (.benchmark | contains ("CombinedReadWriteBenchmark") ) | [ .benchmark, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
     sed 's/org.cache2k.benchmark.jmh.suite.noEviction.asymmetrical.CombinedReadWriteBenchmark.//' | \
@@ -445,6 +454,7 @@ json | \
           "org.cache2k.benchmark.thirdparty.CaffeineCacheFactory" \
           "org.cache2k.benchmark.thirdparty.GuavaCacheFactory" \
           "org.cache2k.benchmark.thirdparty.EhCache2Factory" \
+          "org.cache2k.benchmark.thirdparty.TCache1Factory" \
           | sort | \
     stripEmpty
 ) > $f
