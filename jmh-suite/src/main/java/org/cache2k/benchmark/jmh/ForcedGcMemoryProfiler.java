@@ -30,9 +30,17 @@ import org.openjdk.jmh.results.AggregationPolicy;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.Result;
 
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
+import java.io.PrintStream;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -53,6 +61,9 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
   static long totalMemory;
   static long gcTimeMillis;
 
+  static boolean virtualMachineLoaded;
+  static Object virtualMachine;
+
   /**
    * Called from the benchmark when the objects are still referenced to record the
    * used memory. This enforces a full garbage collection.
@@ -71,6 +82,9 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
         m2 = getUsedMemory();
       } while (m2 < usedMemorySettled);
       gcTimeMillis = System.currentTimeMillis() - t0;
+      System.err.println();
+      System.err.println("Heap histogram after memory settled: ");
+      printHeapHisto(System.out, 30);
     }
   }
 
@@ -126,6 +140,108 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       cnt += bean.getCollectionCount();
     }
     return cnt;
+  }
+
+  private static void printHeapHisto(PrintStream out, int _maxLines) {
+    Object obj = getJvmVirtualMachine();
+    if (obj == null) {
+      return;
+    }
+    try {
+      Method heapHistoMethod = obj.getClass().getMethod("heapHisto", Object[].class);
+      InputStream in = (InputStream) heapHistoMethod.invoke(obj, new Object[] { new Object[] { "-all" } });
+      LineNumberReader r = new LineNumberReader(new InputStreamReader(in));
+      String s;
+      while ((s = r.readLine()) != null) {
+        out.println(s);
+        if (r.getLineNumber() > _maxLines) {
+          break;
+        }
+      }
+      r.close();
+      in.close();
+    } catch (Exception ex) {
+      System.err.println("ForcedGcMemoryProfiler: error attaching");
+      ex.printStackTrace();
+    }
+  }
+
+  private static boolean attachingTried;
+  private static Object attachedVm;
+
+  /**
+   * Attach to our virtual machine via the attach API and return the
+   * instance of type {@code com.sun.tools.attach.VirtualMachine}
+   */
+  private static synchronized Object getJvmVirtualMachine() {
+    if (attachingTried) {
+      return attachedVm;
+    }
+    attachingTried = true;
+    Class<?> vmClass = findAttachVmClass();
+    Integer pid = getProcessId();
+    if (vmClass != null && pid != null) {
+      try {
+        Method m = vmClass.getMethod("attach", String.class);
+        attachedVm = m.invoke(vmClass, Integer.toString(pid));
+      } catch (Throwable ex) {
+        System.err.println("ForcedGcMemoryProfiler: error attaching via attach API");
+        ex.printStackTrace();
+        return null;
+      }
+    }
+    return attachedVm;
+  }
+
+  /**
+   * Loads java VirtualMachine, expects that tools.jar is reachable via JAVA_HOME environment
+   * variable.
+   */
+  private static Class<?> findAttachVmClass() {
+    final String virtualMachineClassName = "com.sun.tools.attach.VirtualMachine";
+    try {
+      return Class.forName(virtualMachineClassName);
+    } catch (ClassNotFoundException ignore) {
+    }
+    String _javaHome = System.getenv("JAVA_HOME");
+    if (_javaHome == null) {
+      System.err.println("ForcedGcMemoryProfiler: tools.jar missing? Add JAVA_HOME.");
+      return null;
+    }
+    File f = new File(new File(_javaHome, "lib"), "tools.jar");
+    if (!f.exists()) {
+      System.err.println("ForcedGcMemoryProfiler: tools.jar not found in JAVA_HOME/lib/tools.jar.");
+      return null;
+    }
+    try {
+      final URL url = f.toURI().toURL();
+      ClassLoader cl = URLClassLoader.newInstance(new URL[]{url});
+      return Class.forName(virtualMachineClassName, true, cl);
+    } catch (Exception ex) {
+      System.err.println("ForcedGcMemoryProfiler: Cannot load " + virtualMachineClassName + " from " + f);
+      ex.printStackTrace();
+      return null;
+    }
+  }
+
+  /**
+   * Hack to obtain process ID. Should work on Unix/Linux and Windows.
+   */
+  private static Integer getProcessId() {
+    try {
+      java.lang.management.RuntimeMXBean _runtimeMXBean =
+        java.lang.management.ManagementFactory.getRuntimeMXBean();
+      java.lang.reflect.Field jvm = _runtimeMXBean.getClass().getDeclaredField("jvm");
+      jvm.setAccessible(true);
+      sun.management.VMManagement mgm = (sun.management.VMManagement) jvm.get(_runtimeMXBean);
+      java.lang.reflect.Method _method = mgm.getClass().getDeclaredMethod("getProcessId");
+      _method.setAccessible(true);
+      return (Integer) _method.invoke(mgm);
+    } catch (Exception ex) {
+      System.err.println("ForcedGcMemoryProfiler: error obtaining PID");
+      ex.printStackTrace();
+    }
+    return null;
   }
 
   @Override
