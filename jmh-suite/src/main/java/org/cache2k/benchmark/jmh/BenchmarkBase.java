@@ -64,6 +64,7 @@ public class BenchmarkBase {
     if (getsDestroyed != null) {
       System.out.println();
       System.out.println(getsDestroyed.getStatistics());
+      System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
       getsDestroyed.destroy();
       getsDestroyed = null;
     }
