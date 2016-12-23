@@ -45,10 +45,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 @State(Scope.Benchmark)
 public class MultiRandomAccessBenchmark extends BenchmarkBase {
 
-  public static final int ENTRY_COUNT = 100 * 1000;
-  public static final int PATTERN_COUNT = 1000 * 1000;
+  public static final int ENTRY_COUNT = 100_000;
+  public static final int PATTERN_COUNT = 2_000_000;
 
-  @Param({"1", "20", "50", "80"})
+  @Param({"30", "50", "80", "90", "95"})
   public int hitRate = 0;
 
   /**
