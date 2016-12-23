@@ -18,7 +18,9 @@ set -e;
 
 # http://mechanical-sympathy.blogspot.de/2011/11/biased-locking-osr-and-benchmarking-fun.html
 # http://www.oracle.com/technetwork/tutorials/tutorials-1876574.html
-test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx2G -XX:+UseG1GC -XX:+UseBiasedLocking -XX:+UseCompressedOops";
+# test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx2G -XX:+UseG1GC -XX:+UseBiasedLocking -XX:+UseCompressedOops";
+
+test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx2G -XX:+UseBiasedLocking -XX:+UseCompressedOops";
 
 # -wi warmup iterations
 # -w warmup time
@@ -163,7 +165,7 @@ elif [ "$1" = 4 ]; then
 fi
 }
 
-limitCores() {
+limitCoresViaTaskSet() {
 if test -n "$dry"; then
   shift;
   "$@";
@@ -172,6 +174,12 @@ fi
 local cnt=$1;
 shift;
 taskset -c `cpuList $cnt` "$@";
+}
+
+limitCores() {
+./limitCoreCount.sh $1;
+shift;
+"$@";
 }
 
 #
@@ -243,15 +251,5 @@ for impl in $NO_EVICTION $COMPLETE; do
     fi
   done
 done
-
-if test -z "$dry"; then
-
-result=$TARGET/data.json
-# merge all results into single json file
-# A sequence of the lines "]", "[", "]" will be ignored, there may be an empty json file, if a run fails
-# A sequence of the lines "]", "[" will be replaced with ","
-cat $TARGET/result-*.json | awk '/^]/ { f=1; g=0; next; } f && /^\[/ { g=1; f=0; next; } g { print "  ,"; g=0; } { print; } END { print "]"; }' > $result
-
-fi
 
 stopTimer;
