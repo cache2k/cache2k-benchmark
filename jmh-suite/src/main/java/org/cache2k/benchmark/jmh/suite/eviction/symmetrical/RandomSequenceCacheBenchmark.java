@@ -44,8 +44,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @State(Scope.Benchmark)
 public class RandomSequenceCacheBenchmark extends BenchmarkBase {
 
-  public static final int ENTRY_COUNT = 100 * 1000;
-  public static final int PATTERN_COUNT = 1000 * 1000;
+  public static final int ENTRY_COUNT = 100_000;
+  public static final int PATTERN_COUNT = 1_000_000;
 
   @Param({"20", "50", "80"})
   public int hitRate = 0;
