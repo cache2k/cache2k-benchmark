@@ -443,7 +443,7 @@ plot $f "CombinedReadWrite" "ops/s"
 
 
 # RandomSequenceCacheBenchmark NeverHitBenchmark RandomAccessLongSequenceBenchmark MultiRandomAccessBenchmark GeneratedRandomSequenceBenchmark
-for I in NeverHitBenchmark GeneratedRandomSequenceBenchmark; do
+for I in NeverHitBenchmark MultiRandomAccessBenchmark GeneratedRandomSequenceBenchmark; do
   plotOps $I;
   plotMemUsed $I;
   plotMemUsedSettled $I;
