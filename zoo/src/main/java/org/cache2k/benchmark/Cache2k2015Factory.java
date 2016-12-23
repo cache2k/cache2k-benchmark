@@ -73,20 +73,13 @@ public class Cache2k2015Factory extends BenchmarkCacheFactory {
       }
 
       @Override
-      public void destroy() {
+      public void close() {
         c.destroy();
       }
 
       @Override
-      public String getStatistics() {
+      public String toString() {
         return c.toString();
-      }
-
-      @Override
-      public void checkIntegrity() {
-        if (c instanceof BaseCache) {
-          ((BaseCache) c).checkIntegrity();
-        }
       }
 
       @Override

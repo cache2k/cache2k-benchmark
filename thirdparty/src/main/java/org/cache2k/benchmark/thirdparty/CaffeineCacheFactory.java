@@ -21,10 +21,13 @@ package org.cache2k.benchmark.thirdparty;
  */
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.CacheLoader;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
+import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.LoadingBenchmarkCache;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -53,11 +56,26 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
     MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
     c.size = _maxElements;
-    createCache(_maxElements, c);
+    c.cache = createCache(_maxElements).build();
     return c;
   }
 
-  private void createCache(final int _maxElements, final MyBenchmarkCacheAdapter _adapter) {
+  @Override
+  public <K, V> LoadingBenchmarkCache<K, V> createLoadingCache(
+    final Class<K> _keyType, final Class<V> _valueType,
+    final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
+    MyLoadingBenchmarkCache c = new MyLoadingBenchmarkCache();
+    c.size = _maxElements;
+    c.cache = createCache(_maxElements).build(new CacheLoader<K, V>() {
+      @Override
+      public V load(final K key) throws Exception {
+        return _source.load(key);
+      }
+    });
+    return c;
+  }
+
+  private Caffeine createCache(final int _maxElements) {
     Caffeine b = Caffeine.newBuilder().maximumSize(_maxElements);
     if (sameThreadEviction) {
       b.executor(Runnable::run);
@@ -68,7 +86,7 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
     if (withExpiry) {
       b.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
     }
-    _adapter.cache = b.build();
+    return b;
   }
 
   static class MyBenchmarkCacheAdapter extends BenchmarkCache<Integer, Integer> {
@@ -92,12 +110,44 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public void destroy() {
+    public void close() {
       cache.cleanUp();
     }
 
     @Override
-    public String getStatistics() {
+    public String toString() {
+      return cache.toString();
+    }
+
+  }
+
+  static class MyLoadingBenchmarkCache<K, V> extends LoadingBenchmarkCache<K, V> {
+
+    int size;
+    LoadingCache<K, V> cache;
+
+    @Override
+    public int getCacheSize() {
+      return size;
+    }
+
+    @Override
+    public V get(final K key) {
+      return cache.get(key);
+    }
+
+    @Override
+    public void put(final K key, final V value) {
+      cache.put(key, value);
+    }
+
+    @Override
+    public void close() {
+      cache.cleanUp();
+    }
+
+    @Override
+    public String toString() {
       return cache.toString();
     }
 

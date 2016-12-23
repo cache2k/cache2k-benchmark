@@ -48,7 +48,7 @@ public class ConcurrentHashMapFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public void destroy() {
+    public void close() {
       map = null;
     }
 
@@ -68,7 +68,7 @@ public class ConcurrentHashMapFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public String getStatistics() {
+    public String toString() {
       return "mapimpl=" + map.getClass().getName();
     }
   }

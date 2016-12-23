@@ -20,14 +20,19 @@ package org.cache2k.benchmark.thirdparty;
  * #L%
  */
 
+import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.PersistenceConfiguration;
+import net.sf.ehcache.constructs.blocking.CacheEntryFactory;
+import net.sf.ehcache.constructs.blocking.SelfPopulatingCache;
 import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
+import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.LoadingBenchmarkCache;
 
 /**
  * Factory for EHCache2
@@ -42,7 +47,30 @@ public class EhCache2Factory extends BenchmarkCacheFactory {
 
   @Override
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
-    return new MyBenchmarkCache(createCacheConfiguration(_maxElements));
+    MyBenchmarkCache c = new MyBenchmarkCache();
+    c.cache = new Cache(createCacheConfiguration(_maxElements));
+    getManager().addCache(c.cache);
+    c.size = _maxElements;
+    return c;
+  }
+
+  @Override
+  public <K, V> LoadingBenchmarkCache<K, V> createLoadingCache(
+    final Class<K> _keyType, final Class<V> _valueType,
+    final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
+    MyLoadingBenchmarkCache c = new MyLoadingBenchmarkCache();
+    Ehcache ehc = new Cache(createCacheConfiguration(_maxElements));
+    getManager().addCache(ehc);
+    c.cache = new SelfPopulatingCache(ehc,
+      Runtime.getRuntime().availableProcessors() * 2,
+      new CacheEntryFactory() {
+      @Override
+      public Object createEntry(final Object key) throws Exception {
+        return _source.load((K) key);
+      }
+    });
+    c.size = _maxElements;
+    return c;
   }
 
   protected CacheManager getManager() {
@@ -73,18 +101,12 @@ public class EhCache2Factory extends BenchmarkCacheFactory {
 
   class MyBenchmarkCache extends BenchmarkCache<Integer, Integer> {
 
-    CacheConfiguration config;
+    int size;
     Ehcache cache;
-
-    MyBenchmarkCache(CacheConfiguration v) {
-      this.config = v;
-      Ehcache _testCache = cache = new net.sf.ehcache.Cache(v);
-      getManager().addCache(_testCache);
-    }
 
     @Override
     public int getCacheSize() {
-      return (int) config.getMaxEntriesLocalHeap();
+      return size;
     }
 
     @Override
@@ -102,7 +124,38 @@ public class EhCache2Factory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public void destroy() {
+    public void close() {
+      CacheManager.getInstance().removeCache("testCache");
+    }
+
+  }
+
+  class MyLoadingBenchmarkCache<K, V> extends LoadingBenchmarkCache<K, V> {
+
+    int size;
+    Ehcache cache;
+
+    @Override
+    public int getCacheSize() {
+      return size;
+    }
+
+    @Override
+    public V get(final K key) {
+      Element e = cache.get(key);
+      if (e != null) {
+        return (V) e.getObjectValue();
+      }
+      return null;
+    }
+
+    @Override
+    public void put(final K key, final V value) {
+      cache.put(new Element(key, value));
+    }
+
+    @Override
+    public void close() {
       CacheManager.getInstance().removeCache("testCache");
     }
 

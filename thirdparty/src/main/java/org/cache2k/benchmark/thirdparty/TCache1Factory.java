@@ -92,12 +92,12 @@ public class TCache1Factory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public void destroy() {
+    public void close() {
       factory.destroyCache(cache.id());
     }
 
     @Override
-    public String getStatistics() {
+    public String toString() {
       return cache.statistics().toString();
     }
 

@@ -61,7 +61,7 @@ public class OptBenchmark extends RandomCacheBenchmark {
     }
 
     @Override
-    public void destroy() {
+    public void close() {
 
     }
 

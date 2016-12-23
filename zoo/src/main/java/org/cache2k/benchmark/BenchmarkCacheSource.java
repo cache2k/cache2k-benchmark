@@ -21,23 +21,10 @@ package org.cache2k.benchmark;
  */
 
 /**
- * @author Jens Wilke; created: 2013-12-08
+ * @author Jens Wilke
  */
-public abstract class BenchmarkCacheFactory {
+public abstract class BenchmarkCacheSource<K,V> {
 
-  protected boolean withExpiry;
-
-  public abstract BenchmarkCache<Integer, Integer> create(int _maxElements);
-
-  public <K,V> LoadingBenchmarkCache<K, V> createLoadingCache(
-    Class<K> _keyType, Class<V> _valueType,
-    int _maxElements, BenchmarkCacheSource<K,V> _source) {
-    throw new UnsupportedOperationException();
-  }
-
-  public BenchmarkCacheFactory withExpiry(boolean v) {
-    withExpiry = v;
-    return this;
-  }
+  public abstract V load(K key);
 
 }

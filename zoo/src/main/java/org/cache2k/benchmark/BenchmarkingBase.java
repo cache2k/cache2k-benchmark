@@ -54,7 +54,7 @@ public class BenchmarkingBase {
 
   public void destroyCache() {
     if (cache != null) {
-      cache.destroy();
+      cache.close();
       cache = null;
     }
   }
@@ -89,7 +89,7 @@ public class BenchmarkingBase {
     c = freshCache(t, _cacheSize);
     long _missCount = runBenchmark(c, t);
     logHitRate(c, t, _missCount);
-    c.destroy();
+    c.close();
     return
       ((t.getTraceLength() - (int) _missCount) * 10000 + t.getTraceLength() / 2) / t.getTraceLength();
   }
@@ -104,8 +104,7 @@ public class BenchmarkingBase {
     onlyOneResult.add(_testName);
     long _usedMem = -1;
     saveHitRate(_testName, c.getCacheSize(), _trace, _optHitRate,_optHitCount, _missCount, _usedMem);
-    c.checkIntegrity();
-    String _cacheStatistics = c.getStatistics();
+    String _cacheStatistics = c.toString();
     System.out.println(_cacheStatistics);
     System.out.flush();
   }

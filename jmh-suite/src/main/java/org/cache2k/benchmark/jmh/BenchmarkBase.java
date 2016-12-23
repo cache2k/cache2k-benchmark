@@ -29,6 +29,8 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 
+import java.io.Closeable;
+
 /**
  * Base for all JMH cache benchmarks, controlling the cache lifecycle and
  * recording memory usage.
@@ -38,7 +40,7 @@ import org.openjdk.jmh.annotations.TearDown;
 @State(Scope.Benchmark)
 public class BenchmarkBase {
 
-  protected BenchmarkCache getsDestroyed;
+  protected Closeable getsDestroyed;
 
   @Param("DEFAULT")
   public String cacheFactory;
@@ -61,9 +63,9 @@ public class BenchmarkBase {
     ForcedGcMemoryProfiler.recordUsedMemory();
     if (getsDestroyed != null) {
       System.out.println();
-      System.out.println(getsDestroyed.getStatistics());
+      System.out.println(getsDestroyed);
       System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
-      getsDestroyed.destroy();
+      getsDestroyed.close();
       getsDestroyed = null;
     }
   }

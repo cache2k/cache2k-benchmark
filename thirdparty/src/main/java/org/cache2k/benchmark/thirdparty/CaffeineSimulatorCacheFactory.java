@@ -87,12 +87,12 @@ public class CaffeineSimulatorCacheFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public void destroy() {
+    public void close() {
       policy.finished();
     }
 
     @Override
-    public String getStatistics() {
+    public String toString() {
       return policy.getClass().getSimpleName() + ", " + policy + ", stats=" + policy.stats();
     }
 

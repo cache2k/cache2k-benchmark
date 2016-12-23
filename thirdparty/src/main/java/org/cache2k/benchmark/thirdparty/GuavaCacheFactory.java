@@ -26,10 +26,10 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
+import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.LoadingBenchmarkCache;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Jens Wilke; created: 2013-12-08
@@ -38,19 +38,45 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
 
   @Override
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
-    MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
+    MyBenchmarkCache c = new MyBenchmarkCache();
     c.size = _maxElements;
+    CacheBuilder cb = builder(_maxElements);
+    c.cache = cb.build();
+    return c;
+  }
+
+  @Override
+  public <K, V> LoadingBenchmarkCache<K, V> createLoadingCache(
+    final Class<K> _keyType, final Class<V> _valueType,
+    final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
+    MyLoadingBenchmarkCache c = new MyLoadingBenchmarkCache();
+    c.size = _maxElements;
+    CacheBuilder cb = builder(_maxElements);
+    c.cache = cb.build(new CacheLoader<K, V>() {
+      @Override
+      public V load(final K key) throws Exception {
+        return _source.load(key);
+      }
+    });
+    return c;
+  }
+
+  private CacheBuilder builder(final int _maxElements) {
     CacheBuilder cb =
       CacheBuilder.newBuilder()
         .maximumSize(_maxElements);
     if (withExpiry) {
       cb.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
     }
-    c.cache = cb.build();
-    return c;
+    if (Runtime.getRuntime().availableProcessors() > 4) {
+      cb.concurrencyLevel(Runtime.getRuntime().availableProcessors());
+    } else {
+      cb.concurrencyLevel(4);
+    }
+    return cb;
   }
 
-  static class MyBenchmarkCacheAdapter extends BenchmarkCache<Integer, Integer> {
+  static class MyBenchmarkCache extends BenchmarkCache<Integer, Integer> {
 
     int size;
     Cache<Integer, Integer> cache;
@@ -71,7 +97,38 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public void destroy() {
+    public void close() {
+      cache.cleanUp();
+    }
+
+  }
+
+  static class MyLoadingBenchmarkCache<K, V> extends LoadingBenchmarkCache<K, V> {
+
+    int size;
+    LoadingCache<K, V> cache;
+
+    @Override
+    public int getCacheSize() {
+      return size;
+    }
+
+    @Override
+    public V get(final K key) {
+      try {
+        return cache.get(key);
+      } catch (Exception ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+
+    @Override
+    public void put(final K key, final V value) {
+      cache.put(key, value);
+    }
+
+    @Override
+    public void close() {
       cache.cleanUp();
     }
 

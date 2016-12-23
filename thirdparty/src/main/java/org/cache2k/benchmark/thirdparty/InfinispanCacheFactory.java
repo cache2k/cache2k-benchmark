@@ -95,7 +95,7 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public void destroy() {
+    public void close() {
       cache.getCacheManager().removeCache(CACHE_NAME);
     }
 
@@ -105,7 +105,7 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public String getStatistics() {
+    public String toString() {
       return cache.toString() + ": size=" + cache.size();
     }
 

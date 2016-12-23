@@ -22,6 +22,7 @@ package org.cache2k.benchmark;
 
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
+import org.cache2k.integration.CacheLoader;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,21 +37,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
 
   @Override
   public BenchmarkCache<Integer, Integer> create(final int _maxElements) {
-    Cache2kBuilder<Integer, Integer> b =
-    new Cache2kBuilder<Integer, Integer>(){}
-      .name("testCache-" + counter.incrementAndGet())
-      .entryCapacity(_maxElements)
-      .refreshAhead(false)
-      .strictEviction(true);
-    if (withExpiry) {
-      b.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
-    } else {
-      b.eternal(true);
-    }
-    if (disableStatistics) {
-      b.disableStatistics(true);
-    }
-    final Cache<Integer, Integer> c = b.build();
+    final Cache<Integer, Integer> c = createInternal(Integer.class, Integer.class, _maxElements, null);
     return new BenchmarkCache<Integer, Integer>() {
 
       @Override
@@ -69,18 +56,13 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
       }
 
       @Override
-      public void destroy() {
+      public void close() {
         c.destroy();
       }
 
       @Override
-      public String getStatistics() {
+      public String toString() {
         return c.toString();
-      }
-
-      @Override
-      public void checkIntegrity() {
-        c.toString();
       }
 
       @Override
@@ -89,6 +71,68 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
       }
     };
 
+  }
+
+  @Override
+  public <K, V> LoadingBenchmarkCache<K, V> createLoadingCache(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
+    final Cache<K, V> c = createInternal(_keyType, _valueType, _maxElements, _source);
+    return new LoadingBenchmarkCache<K, V>() {
+      @Override
+      public V get(final K key) {
+        return c.get(key);
+      }
+
+      @Override
+      public void put(final K key, final V value) {
+        c.put(key, value);
+      }
+
+      @Override
+      public String toString() {
+        return c.toString();
+      }
+
+      @Override
+      public Object getOriginalCache() {
+        return c;
+      }
+
+      @Override
+      public void close() {
+        c.close();
+      }
+
+      @Override
+      public int getCacheSize() {
+        return _maxElements;
+      }
+    };
+  }
+
+  <K,V> Cache<K, V> createInternal(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
+    Cache2kBuilder<K, V> b =
+      Cache2kBuilder.of(_keyType, _valueType)
+        .name("testCache-" + counter.incrementAndGet())
+        .entryCapacity(_maxElements)
+        .refreshAhead(false)
+        .strictEviction(true);
+    if (withExpiry) {
+      b.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
+    } else {
+      b.eternal(true);
+    }
+    if (disableStatistics) {
+      b.disableStatistics(true);
+    }
+    if (_source != null) {
+      b.loader(new CacheLoader<K, V>() {
+        @Override
+        public V load(final K key) throws Exception {
+          return _source.load(key);
+        }
+      });
+    }
+    return b.build();
   }
 
 }

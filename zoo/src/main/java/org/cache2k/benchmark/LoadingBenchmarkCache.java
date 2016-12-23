@@ -27,12 +27,12 @@ import java.io.Closeable;
  *
  * @author Jens Wilke; created: 2013-06-15
  */
-public abstract class BenchmarkCache<K, T> implements Closeable {
+public abstract class LoadingBenchmarkCache<K, T> implements Closeable {
 
   /**
-   * Return the element that is present in the cache. The cache source will not be called in turn.
+   * Return the element that is present in the cache or invoke the loader.
    */
-  public T getIfPresent(K key) {
+  public T get(K key) {
     throw new UnsupportedOperationException();
   }
 

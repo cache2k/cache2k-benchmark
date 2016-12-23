@@ -74,12 +74,12 @@ public class EhCache3Factory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public void destroy() {
+    public void close() {
       CacheManager.getInstance().removeCache("testCache");
     }
 
     @Override
-    public String getStatistics() {
+    public String toString() {
       return cache.toString();
     }
 
