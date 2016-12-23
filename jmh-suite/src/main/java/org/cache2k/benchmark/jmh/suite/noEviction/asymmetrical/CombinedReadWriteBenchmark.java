@@ -29,8 +29,8 @@ import org.openjdk.jmh.annotations.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Three benchmarks. "ro" doing reads only in 8 threads, "rw" doing reads and writes
- * in 6 and 2 threads, "wo" doing writes in 8 threads. The cache is populated in advance
+ * Three benchmarks. "ro" doing reads only in 16 threads, "rw" doing reads and writes
+ * in 8 and 4 threads, "wo" doing writes in 8 threads. The cache is populated in advance
  * with the test data set. No eviction and no inserts happen during the benchmark time.
  * The test data size is 11k, the cache size 32k.
  *
@@ -64,22 +64,22 @@ public class CombinedReadWriteBenchmark extends BenchmarkBase {
     }
   }
 
-  @Benchmark @Group("readOnly") @GroupThreads(8) @BenchmarkMode(Mode.Throughput)
+  @Benchmark @Group("readOnly") @GroupThreads(4) @BenchmarkMode(Mode.Throughput)
   public Integer readOnly(ThreadState threadState) {
     return cache.getIfPresent(ints[threadState.index++ & MASK]);
   }
 
-  @Benchmark @Group("writeOnly") @GroupThreads(8) @BenchmarkMode(Mode.Throughput)
+  @Benchmark @Group("writeOnly") @GroupThreads(4) @BenchmarkMode(Mode.Throughput)
   public void writeOnly(ThreadState threadState) {
     cache.put(ints[threadState.index++ & MASK], 0);
   }
 
-  @Benchmark @Group("readWrite") @GroupThreads(6) @BenchmarkMode(Mode.Throughput)
+  @Benchmark @Group("readWrite") @GroupThreads(3) @BenchmarkMode(Mode.Throughput)
   public Integer readWrite_get(ThreadState threadState) {
     return cache.getIfPresent(ints[threadState.index++ & MASK]);
   }
 
-  @Benchmark @Group("readWrite") @GroupThreads(2) @BenchmarkMode(Mode.Throughput)
+  @Benchmark @Group("readWrite") @GroupThreads(1) @BenchmarkMode(Mode.Throughput)
   public void readWrite_put(ThreadState threadState) {
     cache.put(ints[threadState.index++ & MASK], 0);
   }
