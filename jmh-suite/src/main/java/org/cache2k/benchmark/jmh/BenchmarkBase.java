@@ -2,7 +2,7 @@ package org.cache2k.benchmark.jmh;
 
 /*
  * #%L
- * Cache benchmark suite based on JMH.
+ * Benchmarks: JMH suite.
  * %%
  * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%

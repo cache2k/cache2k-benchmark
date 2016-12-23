@@ -2,7 +2,7 @@ package org.cache2k.benchmark.util;
 
 /*
  * #%L
- * util
+ * Benchmarks: utilities
  * %%
  * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%

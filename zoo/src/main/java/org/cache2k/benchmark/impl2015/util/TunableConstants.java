@@ -2,7 +2,7 @@ package org.cache2k.benchmark.impl2015.util;
 
 /*
  * #%L
- * zoo
+ * Benchmarks: implementation variants
  * %%
  * Copyright (C) 2013 - 2016 headissue GmbH, Munich
  * %%

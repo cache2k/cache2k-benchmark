@@ -4,15 +4,15 @@
 
     <parent>
       <groupId>org.cache2k.benchmark</groupId>
-      <artifactId>parent</artifactId>
+      <artifactId>cache2k-benchmark-parent</artifactId>
       <version>0.22-SNAPSHOT</version>
     </parent>
 
-    <artifactId>jmh-benchmark</artifactId>
+    <artifactId>jmh-suite</artifactId>
     <version>0.22-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>Cache benchmark suite based on JMH.</name>
+    <name>Benchmarks: JMH suite.</name>
 
     <prerequisites>
         <maven>3.0</maven>

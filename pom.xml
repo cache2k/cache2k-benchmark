@@ -3,8 +3,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.cache2k.benchmark</groupId>
-  <artifactId>parent</artifactId>
+  <artifactId>cache2k-benchmark-parent</artifactId>
   <version>0.22-SNAPSHOT</version>
+  <name>Benchmarks: parent</name>
+
   <description>Benchmarking stuff for caches, not only useful for cache2k</description>
   <packaging>pom</packaging>
   <inceptionYear>2013</inceptionYear>
@@ -25,7 +27,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cache2k-version>0.27-SNAPSHOT</cache2k-version>
+    <cache2k-version>1.0.0.CR1</cache2k-version>
   </properties>
 
   <modules>

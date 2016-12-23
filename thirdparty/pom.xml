@@ -4,17 +4,17 @@
 
   <parent>
     <groupId>org.cache2k.benchmark</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>cache2k-benchmark-parent</artifactId>
     <version>0.22-SNAPSHOT</version>
   </parent>
 
   <artifactId>thirdparty</artifactId>
   <version>0.22-SNAPSHOT</version>
 
-  <description>Benchmarks on third party cache products</description>
+  <name>Benchmarks: third party products.</name>
 
   <properties>
-    <caffeine.version>2.3.0</caffeine.version>
+    <caffeine.version>2.3.5</caffeine.version>
   </properties>
 
   <dependencies>
@@ -31,12 +31,12 @@
     <dependency>
       <groupId>net.sf.ehcache.internal</groupId>
       <artifactId>ehcache-core</artifactId>
-      <version>2.10.1</version>
+      <version>2.10.3</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>19.0</version>
+      <version>20.0</version>
     </dependency>
     <dependency>
       <groupId>org.infinispan</groupId>
@@ -63,6 +63,18 @@
         </exclusion>
         <exclusion>
           <groupId>com.github.brianfrankcooper.ycsb</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.elasticsearch</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fabahaba</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.ehcache</groupId>
           <artifactId>*</artifactId>
         </exclusion>
       </exclusions>

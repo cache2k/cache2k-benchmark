@@ -4,14 +4,14 @@
 
   <parent>
     <groupId>org.cache2k.benchmark</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>cache2k-benchmark-parent</artifactId>
     <version>0.22-SNAPSHOT</version>
   </parent>
 
   <artifactId>zoo</artifactId>
   <version>0.22-SNAPSHOT</version>
 
-  <description>Benchmarks a zoo of different cache2k cache implementations.</description>
+  <name>Benchmarks: implementation variants</name>
 
   <dependencies>
     <dependency>
