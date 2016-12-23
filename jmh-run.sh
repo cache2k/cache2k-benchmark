@@ -212,7 +212,7 @@ done
 #
 # Multi threaded with variable thread counts, with eviction
 #
-benchmarks="NeverHitBenchmark MultiRandomAccessBenchmark GeneratedRandomSequenceBenchmark";
+benchmarks="NeverHitBenchmark MultiRandomAccessBenchmark GeneratedRandomSequenceBenchmark ZipfianLoadingSequenceBenchmark";
 for impl in $COMPLETE; do
   for benchmark in $benchmarks; do
     for threads in 1 2 4; do
