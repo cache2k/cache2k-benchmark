@@ -57,7 +57,7 @@ public class CombinedReadWriteBenchmark extends BenchmarkBase {
   public void setup() throws Exception {
     getsDestroyed = cache = getFactory().create(SIZE * 2);
     ints = new Integer[SIZE];
-    AccessPattern _pattern = new ScrambledZipfianPattern(ITEMS);
+    AccessPattern _pattern = new ScrambledZipfianPattern(1802, ITEMS);
     for (int i = 0; i < SIZE; i++) {
       ints[i] = _pattern.next();
       cache.put(ints[i], i);

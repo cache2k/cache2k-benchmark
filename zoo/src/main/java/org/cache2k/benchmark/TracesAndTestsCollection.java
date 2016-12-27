@@ -360,7 +360,7 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   public static final int TRACE_LENGTH = 3 * 1000 * 1000;
 
   static final AccessTrace zipf900Trace =
-    new AccessTrace(new ZipfianPattern(900), TRACE_LENGTH);
+    new AccessTrace(new ZipfianPattern(1802, 900), TRACE_LENGTH);
 
   @Test
   public void benchmarkZipf900_50() throws Exception {
@@ -390,7 +390,7 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   public static final int ZIPF10K_TRACE_LENGTH = 10 * 1000 * 1000;
 
   static final AccessTrace zipf10kTrace =
-    new AccessTrace(new ZipfianPattern(10000), ZIPF10K_TRACE_LENGTH);
+    new AccessTrace(new ZipfianPattern(1802,10000), ZIPF10K_TRACE_LENGTH);
 
 
   @Test

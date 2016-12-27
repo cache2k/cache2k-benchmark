@@ -20,7 +20,6 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
  * #L%
  */
 
-import it.unimi.dsi.util.XorShift1024StarRandomGenerator;
 import org.cache2k.benchmark.BenchmarkCacheSource;
 import org.cache2k.benchmark.LoadingBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
@@ -40,9 +39,7 @@ import org.openjdk.jmh.results.AggregationPolicy;
 import java.util.Random;
 import java.util.concurrent.atomic.LongAdder;
 
-import static org.cache2k.benchmark.jmh.MiscResultRecorderProfiler.addCounterResult;
-import static org.cache2k.benchmark.jmh.MiscResultRecorderProfiler.getCounterResult;
-import static org.cache2k.benchmark.jmh.MiscResultRecorderProfiler.setResult;
+import static org.cache2k.benchmark.jmh.MiscResultRecorderProfiler.*;
 
 /**
  * Penetrate loading cache with a Zipfian pattern with distribution sizes
@@ -55,37 +52,28 @@ import static org.cache2k.benchmark.jmh.MiscResultRecorderProfiler.setResult;
  * @author Jens Wilke
  */
 @State(Scope.Benchmark)
-public class ZipfianLoadingSequenceBenchmark extends BenchmarkBase {
+public class ZipfianDirectSequenceLoadingBenchmark extends BenchmarkBase {
 
   public static final int ENTRY_COUNT = 100_000;
-  public static final int PATTERN_COUNT = 25_000_000;
-
-  public static final int MAX_FACTOR = 80;
-  public static final int INTEGER_SPACE_COUNT = MAX_FACTOR * ENTRY_COUNT;
 
   @Param({"10", "20", "40", "80"})
   public int factor = 0;
 
-  /**
-   * Precomputed zipfian pattern
-   */
-  private int[] zipfianPattern;
-
   private final DataSource source = new DataSource();
 
-  /**
-   * Precompute the set of the needed integer objects.
-   */
-  private Integer[] keySpace;
-
   /** Use thread safe RPNG to give each thread state another seed. */
-  private final static Random offsetSeed = new Random(1802);
+  final Random offsetSeed = new Random(1802);
 
   @State(Scope.Thread)
   public static class ThreadState {
 
-    XorShift1024StarRandomGenerator randomGenerator = new XorShift1024StarRandomGenerator(offsetSeed.nextLong());
+    ZipfianPattern pattern;
     long operationCount = 0;
+
+    @Setup(Level.Iteration)
+    public void setup(ZipfianDirectSequenceLoadingBenchmark _benchmark) {
+      pattern = new ZipfianPattern(_benchmark.offsetSeed.nextLong(), ENTRY_COUNT * _benchmark.factor);
+    }
 
     @TearDown(Level.Iteration)
     public void tearDown() {
@@ -100,15 +88,6 @@ public class ZipfianLoadingSequenceBenchmark extends BenchmarkBase {
   @Setup(Level.Iteration)
   public void setup() throws Exception {
     getsDestroyed = cache = getFactory().createLoadingCache(Integer.class, Integer.class, ENTRY_COUNT, source);
-    keySpace = new Integer[INTEGER_SPACE_COUNT];
-    for (int i = 0; i < INTEGER_SPACE_COUNT; i++) {
-      keySpace[i] = i;
-    }
-    ZipfianPattern _generator = new ZipfianPattern(1802, ENTRY_COUNT * factor);
-    zipfianPattern = new int[PATTERN_COUNT];
-    for (int i = 0; i < PATTERN_COUNT; i++) {
-      zipfianPattern[i] = _generator.next();
-    }
   }
 
   @TearDown(Level.Iteration)
@@ -124,10 +103,8 @@ public class ZipfianLoadingSequenceBenchmark extends BenchmarkBase {
   @Benchmark @BenchmarkMode(Mode.Throughput)
   public long operation(ThreadState threadState) {
     threadState.operationCount++;
-    int[] _zipfianPattern = zipfianPattern;
-    Integer k = keySpace[_zipfianPattern[threadState.randomGenerator.nextInt(_zipfianPattern.length)]];
-    Integer v = cache.get(k);
-    return k + v;
+    Integer v = cache.get(threadState.pattern.next());
+    return v;
   }
 
   static class DataSource extends BenchmarkCacheSource<Integer, Integer> {

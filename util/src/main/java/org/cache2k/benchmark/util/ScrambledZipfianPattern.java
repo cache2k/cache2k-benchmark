@@ -64,8 +64,8 @@ public class ScrambledZipfianPattern extends AbstractEternalAccessPattern {
    * Create a zipfian generator for the specified number of items.
    * @param _items The number of items in the distribution.
    */
-  public ScrambledZipfianPattern(long _items) {
-    this(0,_items-1);
+  public ScrambledZipfianPattern(long _randomSeed, long _items) {
+    this(_randomSeed, 0,_items-1);
   }
 
   /**
@@ -73,8 +73,8 @@ public class ScrambledZipfianPattern extends AbstractEternalAccessPattern {
    * @param min The smallest integer to generate in the sequence.
    * @param max The largest integer to generate in the sequence.
    */
-  public ScrambledZipfianPattern(long min, long max) {
-    this(min, max, ZipfianPattern.ZIPFIAN_CONSTANT);
+  public ScrambledZipfianPattern(long _randomSeed, long min, long max) {
+    this(_randomSeed, min, max, ZipfianPattern.ZIPFIAN_CONSTANT);
   }
 
   /**
@@ -97,14 +97,14 @@ public class ScrambledZipfianPattern extends AbstractEternalAccessPattern {
    * @param max The largest integer to generate in the sequence.
    * @param _zipfianconstant The zipfian constant to use.
    */
-  public ScrambledZipfianPattern(long min, long max, double _zipfianconstant) {
+  public ScrambledZipfianPattern(long _randomSeed, long min, long max, double _zipfianconstant) {
     this.min = min;
     this.max = max;
     itemcount = this.max - this.min +1;
     if (_zipfianconstant == USED_ZIPFIAN_CONSTANT) {
-      gen = new ZipfianPattern(0, ITEM_COUNT,_zipfianconstant,ZETAN);
+      gen = new ZipfianPattern(_randomSeed, 0, ITEM_COUNT,_zipfianconstant,ZETAN);
     } else {
-      gen = new ZipfianPattern(0, ITEM_COUNT,_zipfianconstant);
+      gen = new ZipfianPattern(_randomSeed, 0, ITEM_COUNT,_zipfianconstant);
     }
   }
 

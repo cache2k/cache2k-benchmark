@@ -44,7 +44,7 @@ package org.cache2k.benchmark.util;
  * LICENSE file.
  */
 
-import java.util.Random;
+import it.unimi.dsi.util.XorShift1024StarRandomGenerator;
 
 /**
  * A generator of a zipfian distribution. It produces a sequence of items, such that some items are more popular than others, according
@@ -89,22 +89,7 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
    */
   double alpha,zetan,eta,theta,zeta2theta;
 
-  /**
-   * The number of items used to compute zetan the last time.
-   */
-  long countforzeta;
-
-  /**
-   * Flag to prevent problems. If you increase the number of items the zipfian generator is allowed to choose from, this code will incrementally compute a new zeta
-   * value for the larger itemcount. However, if you decrease the number of items, the code computes zeta from scratch; this is expensive for large itemsets.
-   * Usually this is not intentional; e.g. one thread thinks the number of items is 1001 and calls "nextLong()" with that item count; then another thread who thinks the
-   * number of items is 1000 calls nextLong() with itemcount=1000 triggering the expensive recomputation. (It is expensive for 100 million items, not really for 1000 items.) Why
-   * did the second thread think there were only 1000 items? maybe it read the item count before the first thread incremented it. So this flag allows you to say if you really do
-   * want that recomputation. If true, then the code will recompute zeta if the itemcount goes down. If false, the code will assume itemcount only goes up, and never recompute.
-   */
-  boolean allowitemcountdecrease = false;
-
-  Random random = new Random(1802);
+  XorShift1024StarRandomGenerator randomGenerator;
 
   /******************************* Constructors **************************************/
 
@@ -112,8 +97,8 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
    * Create a zipfian generator for the specified number of items.
    * @param _items The number of items in the distribution.
    */
-  public ZipfianPattern(long _items) {
-    this(0,_items-1);
+  public ZipfianPattern(long _randomSeed, long _items) {
+    this(_randomSeed, 0,_items-1);
   }
 
   /**
@@ -121,8 +106,8 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
    * @param _min The smallest integer to generate in the sequence.
    * @param _max The largest integer to generate in the sequence.
    */
-  public ZipfianPattern(long _min, long _max) {
-    this(_min,_max,ZIPFIAN_CONSTANT);
+  public ZipfianPattern(long _randomSeed, long _min, long _max) {
+    this(_randomSeed, _min, _max, ZIPFIAN_CONSTANT);
   }
 
   /**
@@ -131,8 +116,8 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
    * @param _items The number of items in the distribution.
    * @param _zipfianconstant The zipfian constant to use.
    */
-  public ZipfianPattern(long _items, double _zipfianconstant) {
-    this(0,_items-1,_zipfianconstant);
+  public ZipfianPattern(long _randomSeed, long _items, double _zipfianconstant) {
+    this(_randomSeed, 0, _items-1,_zipfianconstant);
   }
 
   /**
@@ -141,8 +126,8 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
    * @param max The largest integer to generate in the sequence.
    * @param _zipfianconstant The zipfian constant to use.
    */
-  public ZipfianPattern(long min, long max, double _zipfianconstant) {
-    this(min,max,_zipfianconstant,zetastatic(max-min+1,_zipfianconstant));
+  public ZipfianPattern(long _randomSeed, long min, long max, double _zipfianconstant) {
+    this(_randomSeed, min, max, _zipfianconstant, zetastatic(max - min + 1 , _zipfianconstant));
   }
 
   /**
@@ -153,8 +138,8 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
    * @param _zipfianconstant The zipfian constant to use.
    * @param _zetan The precomputed zeta constant.
    */
-  public ZipfianPattern(long min, long max, double _zipfianconstant, double _zetan) {
-    items = max-min+1;
+  public ZipfianPattern(long _randomSeed, long min, long max, double _zipfianconstant, double _zetan) {
+    items = max - min + 1;
     base = min;
     zipfianconstant = _zipfianconstant;
 
@@ -162,12 +147,11 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
 
     zeta2theta = zeta(2,theta);
 
-    alpha = 1.0/(1.0-theta);
+    alpha = 1.0 / (1.0 - theta);
     zetan = _zetan;
-    countforzeta = items;
-    eta = (1-Math.pow(2.0/items,1-theta))/(1-zeta2theta/zetan);
 
-    nextInt();
+    eta = (1 - Math.pow(2.0/items,1-theta))/(1-zeta2theta/zetan);
+    randomGenerator = new XorShift1024StarRandomGenerator(_randomSeed);
   }
 
   /**************************************************************************/
@@ -180,7 +164,6 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
    * @param theta The zipfian constant.
    */
   double zeta(long n, double theta) {
-    countforzeta=n;
     return zetastatic(n,theta);
   }
 
@@ -198,21 +181,6 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
    * Compute the zeta constant needed for the distribution. Do this incrementally for a distribution that
    * has n items now but used to have st items. Use the zipfian constant theta. Remember the new value of
    * n so that if we change the itemcount, we'll know to recompute zeta.
-   *
-   * @param st The number of items used to compute the last initialsum
-   * @param n The number of items to compute zeta over.
-   * @param theta The zipfian constant.
-   * @param initialsum The value of zeta we are computing incrementally from.
-   */
-  double zeta(long st, long n, double theta, double initialsum) {
-    countforzeta=n;
-    return zetastatic(st,n,theta,initialsum);
-  }
-
-  /**
-   * Compute the zeta constant needed for the distribution. Do this incrementally for a distribution that
-   * has n items now but used to have st items. Use the zipfian constant theta. Remember the new value of
-   * n so that if we change the itemcount, we'll know to recompute zeta.
    * @param st The number of items used to compute the last initialsum
    * @param n The number of items to compute zeta over.
    * @param theta The zipfian constant.
@@ -221,7 +189,6 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
   static double zetastatic(long st, long n, double theta, double initialsum) {
     double sum = initialsum;
     for (long i=st; i<n; i++) {
-
       sum+=1/(Math.pow(i+1,theta));
     }
 
@@ -231,56 +198,20 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
   /****************************************************************************************/
 
   /**
-   * Generate the next item. this distribution will be skewed toward lower integers; e.g. 0 will
-   * be the most popular, 1 the next most popular, etc.
-   * @param itemcount The number of items in the distribution.
-   * @return The next item in the sequence.
-   */
-  int nextInt(int itemcount) {
-    return (int)nextLong(itemcount);
-  }
-
-  /**
    * Generate the next item as a long.
    *
-   * @param itemcount The number of items in the distribution.
    * @return The next item in the sequence.
    */
-  long nextLong(long itemcount)  {
-
-    if (itemcount != countforzeta)  {
-
-      synchronized(this) {
-        if (itemcount>countforzeta)
-        {
-
-          zetan=zeta(countforzeta,itemcount,theta,zetan);
-          eta=(1-Math.pow(2.0/items,1-theta))/(1-zeta2theta/zetan);
-        }
-        else if ( (itemcount<countforzeta) && (allowitemcountdecrease) ) {
-
-          System.err.println("WARNING: Recomputing Zipfian distribtion. This is slow and should be avoided. (itemcount="+itemcount+" countforzeta="+countforzeta+")");
-
-          zetan=zeta(itemcount,theta);
-          eta=(1-Math.pow(2.0/items,1-theta))/(1-zeta2theta/zetan);
-        }
-      }
-    }
-
-    double u = random.nextDouble();
+  long nextLong()  {
+    double u = randomGenerator.nextDouble();
     double uz = u * zetan;
-
-    if (uz < 1.0)
-    {
+    if (uz < 1.0) {
       return base;
     }
-
-    if (uz< 1.0 + Math.pow(0.5,theta))
-    {
+    if (uz< 1.0 + Math.pow(0.5,theta)) {
       return base + 1;
     }
-
-    return base + (long)((itemcount) * Math.pow(eta*u - eta + 1, alpha));
+    return base + (long)((items) * Math.pow(eta*u - eta + 1, alpha));
   }
 
   /**
@@ -297,10 +228,6 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
    * by the 2nd, etc. (Or, if min != 0, the min-th item is the most popular, the min+1th item the next most popular, etc.) If you want the
    * popular items scattered throughout the item space, use ScrambledZipfianPattern instead.
    */
-  long nextLong() {
-    return nextLong(items);
-  }
-
   @Override
   public int next() {
     return nextInt();

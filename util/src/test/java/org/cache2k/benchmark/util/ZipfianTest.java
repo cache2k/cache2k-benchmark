@@ -33,7 +33,7 @@ public class ZipfianTest {
 
   @Test
   public void test() {
-    ScrambledZipfianPattern g = new ScrambledZipfianPattern(900);
+    ScrambledZipfianPattern g = new ScrambledZipfianPattern(123, 900);
     Set<Long> uniqueVals = new HashSet<>();
     for (int i = 0; i < 10000; i++) {
       uniqueVals.add(g.nextLong());
