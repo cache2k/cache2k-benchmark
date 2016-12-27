@@ -253,7 +253,7 @@ gnuplot "${in}-notitle.plot";
 extractMemoryThreadsHitRate() {
 local query=`cat << EOF
 .[] |  select (.benchmark | contains ("$1") ) |
-  [ (.threads | tostring) + "-" + .params.hitRate, .params.cacheFactory,
+  [ (.threads | tostring) + "-" + .params.$2, .params.cacheFactory,
     .["secondaryMetrics"]["+forced-gc-mem.used.settled"]["score"],
     .["secondaryMetrics"]["+forced-gc-mem.used.after"]["score"],
     .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"]["score"],
@@ -268,13 +268,14 @@ json | \
 }
 
 plotMemoryGraphs() {
+read param;
 read title;
 read benchmark;
 while read key description; do
   f=$RESULT/${benchmark}Memory$key.dat
   (
     echo "threads usedHeap/settled usedHeap/fin usedHeap/max() totalHeap allocRate(MB/s)";
-    extractMemoryThreadsHitRate $benchmark | grep "^$key" | sed 's/^[^,]*,\(.*\)/\1/' | cacheShortNames | tr , " "
+    extractMemoryThreadsHitRate $benchmark $param | grep "^$key" | sed 's/^[^,]*,\(.*\)/\1/' | cacheShortNames | tr , " "
   ) > $f
   plot $f "$title\n$description" "MB" "cache"
 done
@@ -282,11 +283,12 @@ done
 
 plotEffectiveHitrate() {
 name="$1";
+param="$2";
 f=$RESULT/${name}EffectiveHitrate.dat
 (
 echo "threads $CACHE_LABEL_LIST";
 json | \
-    jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.hitRate, .params.cacheFactory, .[\"secondaryMetrics\"][\"+misc.hitCount\"][\"score\"] * 100 / .[\"secondaryMetrics\"][\"+misc.opCount\"][\"score\"]] | @csv"  | \
+    jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.$param, .params.cacheFactory, 100 - .[\"secondaryMetrics\"][\"+misc.missCount\"][\"score\"] * 100 / .[\"secondaryMetrics\"][\"+misc.opCount\"][\"score\"]] | @csv"  | \
     sort | tr -d '"' | \
     pivot $CACHE_FACTORY_LIST \
           | sort | \
@@ -339,6 +341,22 @@ json | \
 ) > $f
 plot $f "${name} / Throughput" "ops/s"
 }
+
+plotOpsPercent() {
+name="$1";
+f=$RESULT/${name}.dat
+(
+echo "threads $CACHE_LABEL_LIST";
+json | \
+    jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.percent, .params.cacheFactory, .primaryMetric.score ] | @csv" | \
+    sort | tr -d '"' | \
+    pivot  $CACHE_FACTORY_LIST \
+          | sort | \
+    stripEmpty
+) > $f
+plot $f "${name} / Throughput" "ops/s"
+}
+
 
 # not yet used
 withExpiry() {
@@ -441,17 +459,24 @@ json | \
 plot $f "CombinedReadWrite" "ops/s"
 
 
-
 # RandomSequenceCacheBenchmark NeverHitBenchmark RandomAccessLongSequenceBenchmark MultiRandomAccessBenchmark GeneratedRandomSequenceBenchmark
-for I in NeverHitBenchmark MultiRandomAccessBenchmark GeneratedRandomSequenceBenchmark; do
+for I in GeneratedRandomSequenceBenchmark; do
   plotOps $I;
   plotMemUsed $I;
   plotMemUsedSettled $I;
-  plotEffectiveHitrate $I;
+  plotEffectiveHitrate $I hitRate;
+done
+
+for I in ZipfianLoadingSequenceBenchmark; do
+  plotOpsPercent $I;
+  plotMemUsed $I;
+  plotMemUsedSettled $I;
+  plotEffectiveHitrate $I percent;
 done
 
 (
 cat << EOF
+hitRate
 GeneratedRandomSequenceBenchmark / Memory
 GeneratedRandomSequenceBenchmark
 4-80 (at 4 threads, 80% hit rate)
@@ -459,10 +484,21 @@ GeneratedRandomSequenceBenchmark
 EOF
 ) | plotMemoryGraphs
 
+(
+cat << EOF
+percent
+ZipfianLoadingSequenceBenchmark / Memory
+ZipfianLoadingSequenceBenchmark
+4-2000 (at 4 threads, factor 20)
+4-8000 (at 4 threads, factor 80)
+EOF
+) | plotMemoryGraphs
+
 
 if false; then
 (
 cat << EOF
+hitRate
 MultiRandomAccessBenchmark / Memory
 MultiRandomAccessBenchmark
 4-80 (at 4 threads, 80% hit rate)
@@ -472,6 +508,7 @@ EOF
 
 (
 cat << EOF
+hitRate
 NeverHitBenchmark / Memory
 NeverHitBenchmark
 1 (at one thread)
