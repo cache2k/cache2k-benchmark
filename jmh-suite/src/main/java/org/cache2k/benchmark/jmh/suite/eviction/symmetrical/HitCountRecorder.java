@@ -48,6 +48,9 @@ public class HitCountRecorder {
     addCounterResult(
       "opCount", hitCount + missCount, "op", AggregationPolicy.AVG
     );
+    double _missCount = getCounterResult("missCount");
+    double _operations = getCounterResult("opCount");
+    setResult("hitrate", 100.0 - _missCount * 100.0 / _operations, "percent", AggregationPolicy.AVG);
   }
 
 }
