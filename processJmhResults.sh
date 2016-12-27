@@ -72,13 +72,12 @@ fi
 # Scale the score down to megabytes with 2 digit precision.
 #
 scaleBytesToMegaBytes() {
-awk -F, '{ printf ("%s,%s,%.2f\n", $1, $2, $3/1024/1024); }'
+awk -F, 'BEGIN { scale=1000*1000; } { printf ("%s,%s,%.2f\n", $1, $2, $3/scale); }'
 }
 
 scaleBytesToMegaBytes4MemAlloc() {
-awk -F, '{ printf ("%s,%s,%.2f,%.2f,%.2f,%.2f,%s\n", $1, $2, $3/1024/1024,$4/1024/1024,$5/1024/1024,$6/1024/1024,$7); }'
+awk -F, 'BEGIN { scale=1000*1000; } { printf ("%s,%s,%.2f,%.2f,%.2f,%.2f,%s\n", $1, $2, $3/scale,$4/scale,$5/scale,$6/scale,$7); }'
 }
-
 
 # pivot "<impl>,<impl2>,..."
 #
@@ -137,6 +136,59 @@ function flushRow() {
 EOF
 `
 
+# pivot4
+
+# Instead of pivoting only one score, this pivots 4 values. The score, error, lower and upper confidence.
+
+# Input format:
+
+# Params, Impl, Score, Error, Lower Confidence, Upper Confidence
+
+# "2-80","org.cache2k.benchmark.thirdparty.GuavaCacheFactory",1602500.3473090807,322572.59684567206,1279927.7504634087,1925072.9441547527
+# "3-10","org.cache2k.benchmark.thirdparty.GuavaCacheFactory",1934111.3466509539,11853.390790690266,1922257.9558602637,1945964.737441644
+#  "3-20","org.cache2k.benchmark.thirdparty.GuavaCacheFactory",1632899.76591479,9903.399664738625,1622996.3662500514,1642803.1655795288
+
+pivot4() {
+local cols="$1";
+shift;
+while [ "$1" != "" ]; do
+  cols="${cols},$1";
+  shift;
+done
+awk -v cols="$cols" "$pivot_With_Confidence_awk";
+}
+
+pivot_With_Confidence_awk=`cat <<"EOF"
+BEGIN { FS=",";
+  keysCnt = split(cols, colKeys, ",");
+}
+
+  row!=$1 { flushRow(); row=$1; for (i in data) delete data[i]; }
+  { data[$2]=$3;
+    error[$2]=$4;
+    lower[$2]=$5;
+    upper[$2]=$6;
+  }
+
+END { flushRow(); }
+
+function flushRow() {
+ if (row == "") return;
+ printf ("%s ", row);
+ for (k = 1; k <= keysCnt; k++) {
+   key=colKeys[k];
+   v=data[key];
+   # missing data points need to have a ?
+   if (v=="") {
+     printf ("0 0 0 0 ");
+   } else {
+     printf ("%s %s %s %s ", data[key], error[key], lower[key], upper[key]);
+   }
+ }
+ printf "\n";
+}
+EOF
+`
 
 
 # renameBenchmarks
@@ -165,86 +217,178 @@ maxYRange() {
 awk "$maxYRange_awk";
 }
 
-plot() {
+plotHistogramHeader() {
 local in="$1";
 local out="`dirname "$in"`/`basename "$in" .dat`.svg";
 local title="$2";
 local yTitle="$3";
 local xTitle="$4";
 local maxYRange=`maxYRange < "$in"`;
-echo "$out ....";
-(
 echo "set terminal svg"
-echo "set output '$out'"
 echo "set boxwidth 0.9 absolute";
-echo "set style fill solid 1.00 border lt -1";
+echo "set style fill solid 1.00 border -1";
 echo "set key outside right top vertical Right noreverse noenhanced autotitles nobox";
-echo "set style histogram clustered gap 2 title  offset character 0, 0, 0";
 echo "set datafile missing '-'";
 echo "set style data histograms";
+
 echo "set xtics border in scale 0,0 nomirror rotate by -45  offset character 0, 0, 0 autojustify";
-echo 'set xtics  norangelimit font "1"';
+echo 'set xtics norangelimit font "1"';
 echo "set xtics   ()"
+
 test -z "$xTitle" || echo "set xlabel '${xTitle}'";
 test -z "$yTitle" || echo "set ylabel '${yTitle}'";
+
+echo "set yrange [ 0.0 : $maxYRange ] noreverse nowriteback";
+
+echo "set format y '%.0s%c'"
+
+cat - << "EOF"
+# nomirror means do not put tics on the opposite side of the plot
+set xtics nomirror
+set ytics nomirror
+
+# On the Y axis put a major tick every 5
+# set ytics 1000000
+
+# Split in 5 for minor tics
+set mytics 5
+
+# Line style for axes
+# Define a line style (we're calling it 80) and set
+# lt = linetype to 0 (dashed line)
+# lc = linecolor to a gray defined by that number
+# set style line 80 lt 0 lc rgb "#111111"
+set style line 80 lt 1 lc rgbcolor "black"
+
+# Set the border using the linestyle 80 that we defined
+# 3 = 1 + 2 (1 = plot the bottom line and 2 = plot the left line)
+# back means the border should be behind anything else drawn
+set border 3 back ls 80
+
+# Line style for grid
+# Define a new linestyle (81)
+# linetype = 0 (dashed line)
+# linecolor = gray
+# lw = lineweight, make it half as wide as the axes lines
+set style line 82 lt 0 lc rgb "#808080" lw 0.5
+
+set style line 81 lt 19 lc rgb "#404040" lw 0.5
+
+# Draw the grid lines for both the major and minor tics
+# set grid xtics
+set grid ytics mytics ls 81, ls 82
+
+# Put the grid behind anything drawn and use the linestyle 81
+# set grid back ls 81
+EOF
+}
+
+highContrast() {
+# http://colorbrewer2.org/....
+cnt=1;
+colors="d7191c ffffbf fdae61 abdda4 2b83ba"
+for I in $colors; do
+  echo "set style line $cnt lt rgb \"#$I\"";
+  cnt=$(( $cnt + 1 ));
+done
+cnt=0;
+echo "set palette defined ( \\";
+for I in $colors; do
+ if [ $cnt -gt 0 ]; then echo ", \\"; fi
+ echo -n " $cnt '#$I'"
+ cnt=$(( $cnt + 1 ));
+done
+echo ")";
+echo "set palette maxcolors $cnt";
+}
+
+plotData() {
+echo "set style histogram clustered gap 2 title  offset character 0, 0, 0";
+local in="$1";
+echo  -n "plot '$in' using 2:xtic(1) ti col ls 1";
+cols=$(( `head -n 1 "$in" | wc -w` ));
+idx=3;
+while [ $idx -le $cols ]; do
+  echo -n ", '' u $idx ti col ls $(( $idx - 1 ))";
+  idx=$(( $idx + 1 ));
+done
+}
+
+plotDataWithConfidence() {
+echo "set style histogram errorbars gap 2 lw 0.5 title  offset character 0, 0, 0";
+local in="$1";
+local idx=2;
+local ls=1;
+echo  -n "plot '$in' using 2:4:5:xtic(1) ti col($idx) ls ${ls}";
+cols=$(( `head -n 1 "$in" | wc -w` ));
+# TODO: replace with plot for ....
+ls=$(( $ls + 1 ));
+idx=$(( $idx + 4 ));
+while [ $idx -lt $cols ]; do
+  echo -n ", '' u $idx:$(( idx + 2)):$(( idx + 3)) ti col($idx) ls ${ls}";
+  ls=$(( $ls + 1 ));
+  idx=$(( $idx + 4 ));
+done
+}
+
+
+plot() {
+local plot="plotData";
+while true; do
+  case "$1" in
+    --withConfidence) plot="plotDataWithConfidence";;
+    # --dir) RESULT="$2"; shift 1;;
+    -*) echo "unknown option: $1"; return 1;;
+    *) break;;
+  esac
+  shift 1;
+done
+local in="$1";
+local out="`dirname "$in"`/`basename "$in" .dat`.svg";
+local title="$2";
+local yTitle="$3";
+local xTitle="$4";
+local maxYRange=`maxYRange < "$in"`;
+
+if false; then
+echo "$out ....";
+(
+plotHistogramHeader "$in" "$title" "$yTitle" "$xTitle";
+echo "set output '$out'"
 # http://stackoverflow.com/questions/15549830/how-to-get-gnuplot-to-use-a-centered-multi-line-title-with-left-aligned-lines
 # the title is always centered over the graph, excluding the legend!
 # echo "set title '$title'";
 echo "set title \"$title\"";
-
-echo "set yrange [ 0.0 : $maxYRange ] noreverse nowriteback";
-# echo "i = 22";
-# echo "plot '$in' using 2:xtic(1) ti col, '' u 3 ti col, '' u 4 ti col";
-#if [ "`cat $in | wc -l`" -lt 3 ]; then
-#  echo  -n "plot '$in' using 2 ti col";
-#else
-  echo  -n "plot '$in' using 2:xtic(1) ti col";
-#fi
-cols=$(( `head -n 1 "$in" | wc -w` ));
-  idx=3;
-  while [ $idx -le $cols ]; do
-    echo -n ", '' u $idx ti col";
-    idx=$(( $idx + 1 ));
-  done
-  echo ""; 
+highContrast;
+$plot "$in";
 ) > "$in".plot
 gnuplot "$in".plot;
+fi
 
 # just a copy of above but leaving out the title for texts/blogs providing an image title
 local out="`dirname "$in"`/`basename "$in" .dat`-notitle.svg";
+echo "$out ....";
 (
-echo "set terminal svg"
+plotHistogramHeader "$in" "$title" "$xTitle" "$yTitle";
 echo "set output '$out'"
-echo "set boxwidth 0.9 absolute";
-echo "set style fill solid 1.00 border lt -1";
-echo "set key outside right top vertical Right noreverse noenhanced autotitles nobox";
-echo "set style histogram clustered gap 2 title  offset character 0, 0, 0";
-echo "set datafile missing '-'";
-echo "set style data histograms";
-echo "set xtics border in scale 0,0 nomirror rotate by -45  offset character 0, 0, 0 autojustify";
-echo 'set xtics  norangelimit font "1"';
-echo "set xtics   ()"
-test -z "$xTitle" || echo "set xlabel '${xTitle}'";
-test -z "$yTitle" || echo "set ylabel '${yTitle}'";
-echo "set yrange [ 0.0 : $maxYRange ] noreverse nowriteback";
-# echo "i = 22";
-# echo "plot '$in' using 2:xtic(1) ti col, '' u 3 ti col, '' u 4 ti col";
-#if [ "`cat $in | wc -l`" -lt 3 ]; then
-#  echo  -n "plot '$in' using 2 ti col";
-#else
-  echo  -n "plot '$in' using 2:xtic(1) ti col";
-#fi
-cols=$(( `head -n 1 "$in" | wc -w` ));
-  idx=3;
-  while [ $idx -le $cols ]; do
-    echo -n ", '' u $idx ti col";
-    idx=$(( $idx + 1 ));
-  done
-  echo "";
+highContrast;
+$plot "$in";
 ) > "${in}-notitle.plot"
 gnuplot "${in}-notitle.plot";
-}
 
+# just a copy of above but leaving out the title for texts/blogs providing an image title
+local out="`dirname "$in"`/`basename "$in" .dat`-notitle-print.svg";
+echo "$out ....";
+(
+plotHistogramHeader "$in" "$title" "$yTitle" "$xTitle";
+echo "set output '$out'"
+echo "set style fill pattern border"
+# highContrast;
+echo "set colorsequence podo"
+$plot "$in";
+) > "${in}-notitle-print.plot"
+gnuplot "${in}-notitle-print.plot";
+}
 
 # example:
 # 1-20,org.cache2k.benchmark.Cache2kFactory,0.00,65.72,993.08,614.8539540861144
@@ -254,17 +398,33 @@ extractMemoryThreadsHitRate() {
 local query=`cat << EOF
 .[] |  select (.benchmark | contains ("$1") ) |
   [ (.threads | tostring) + "-" + .params.$2, .params.cacheFactory,
-    .["secondaryMetrics"]["+forced-gc-mem.used.settled"]["score"],
-    .["secondaryMetrics"]["+forced-gc-mem.used.after"]["score"],
-    .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"]["score"],
-    .["secondaryMetrics"]["+forced-gc-mem.total"]["score"],
-    .["secondaryMetrics"]["+c2k.gc.alloc.rate"]["score"]
+    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].score,
+    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].scoreError,
+    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].scoreConfidence[0],
+    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].scoreConfidence[1],
+    .["secondaryMetrics"]["+forced-gc-mem.used.after"].score,
+    .["secondaryMetrics"]["+forced-gc-mem.used.after"].scoreError,
+    .["secondaryMetrics"]["+forced-gc-mem.used.after"].scoreConfidence[0],
+    .["secondaryMetrics"]["+forced-gc-mem.used.after"].scoreConfidence[1],
+    .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].score,
+    .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].scoreError,
+    .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].scoreConfidence[0],
+    .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].scoreConfidence[1],
+    .["secondaryMetrics"]["+forced-gc-mem.total"].score,
+    .["secondaryMetrics"]["+forced-gc-mem.total"].scoreError,
+    .["secondaryMetrics"]["+forced-gc-mem.total"].scoreConfidence[0],
+    .["secondaryMetrics"]["+forced-gc-mem.total"].scoreConfidence[1],
+    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].score * 1000 * 1000,
+    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreError* 1000 * 1000,
+    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreConfidence[0] * 1000 * 1000,
+    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreConfidence[1] * 1000 * 1000
   ] | @csv
 EOF
 `
 json | \
     jq -r "$query" | \
-    sort | tr -d '"' | scaleBytesToMegaBytes4MemAlloc
+    sort | tr -d '"'
+     # | scaleBytesToMegaBytes4x4MemAlloc
 }
 
 plotMemoryGraphs() {
@@ -274,24 +434,58 @@ read benchmark;
 while read key description; do
   f=$RESULT/${benchmark}Memory$key.dat
   (
-    echo "threads usedHeap/settled usedHeap/fin usedHeap/max() totalHeap allocRate(MB/s)";
+    echo "threads usedHeap/settled error lower upper usedHeap/fin error lower upper usedHeap/max() error lower upper totalHeap error lower upper allocRate(byte/s) error lower upper";
     extractMemoryThreadsHitRate $benchmark $param | grep "^$key" | sed 's/^[^,]*,\(.*\)/\1/' | cacheShortNames | tr , " "
   ) > $f
-  plot $f "$title\n$description" "MB" "cache"
+  plot --withConfidence $f "$title\n$description" "cache" "Bytes"
+done
+}
+
+plotMemoryGraphsSettled() {
+read param;
+read title;
+read benchmark;
+while read key description; do
+  f=$RESULT/${benchmark}MemorySettled$key.dat
+  (
+    echo "threads usedHeap/settled error lower upper";
+    extractMemoryThreadsHitRate $benchmark $param | grep "^$key" | sed 's/^[^,]*,\(.*\)/\1/' | cacheShortNames | tr , " "
+  ) > $f
+  plot --withConfidence $f "$title\n$description" "cache" "Bytes"
 done
 }
 
 plotEffectiveHitrate() {
 name="$1";
 param="$2";
+suffix="$3";
+filter="$4";
+local prods="$CACHE_FACTORY_LIST";
+if test -n "$suffix"; then
+f=$RESULT/${name}EffectiveHitrate-${suffix}.dat
+else
 f=$RESULT/${name}EffectiveHitrate.dat
+fi
+graphName=`basename $f .dat`;
 (
+# header4 "$prods";
 echo "threads $CACHE_LABEL_LIST";
+# TODO: we cannot calculate with confidences
+local query=`cat << EOF
+.[] |  select (.benchmark | contains ("${name}") ) |
+  [ (.threads | tostring) + "-" + .params.$param,
+     .params.cacheFactory,
+     100 - .["secondaryMetrics"]["+misc.missCount"].score * 100 / .["secondaryMetrics"]["+misc.opCount"]["score"],
+     0,
+     100 - .["secondaryMetrics"]["+misc.missCount"].scoreConfidence[0] * 100 / .["secondaryMetrics"]["+misc.opCount"].scoreConfidence[0],
+     100 - .["secondaryMetrics"]["+misc.missCount"].scoreConfidence[1] * 100 / .["secondaryMetrics"]["+misc.opCount"].scoreConfidence[1]
+  ] | @csv
+EOF
+`
 json | \
-    jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.$param, .params.cacheFactory, 100 - .[\"secondaryMetrics\"][\"+misc.missCount\"][\"score\"] * 100 / .[\"secondaryMetrics\"][\"+misc.opCount\"][\"score\"]] | @csv"  | \
+    jq -r "$query"  | \
     sort | tr -d '"' | \
-    pivot $CACHE_FACTORY_LIST \
-          | sort | \
+    pivot $prods | sort | grep "$filter" | \
     stripEmpty
 ) > $f
 plot $f "${name} / Effective Hit Rate" "effective hitrate" "threads - hit rate"
@@ -299,11 +493,13 @@ plot $f "${name} / Effective Hit Rate" "effective hitrate" "threads - hit rate"
 
 plotMemUsed() {
 name="$1";
+param="$2";
 f=$RESULT/${name}MemUsed.dat
+graphName=`basename $f .dat`;
 (
 echo "threads $CACHE_LABEL_LIST";
 json | \
-    jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.hitRate, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used.after\"][\"score\"] ] | @csv"  | \
+    jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.$param, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used.after\"][\"score\"] ] | @csv"  | \
     sort | tr -d '"' | scaleBytesToMegaBytes | \
     pivot $CACHE_FACTORY_LIST \
           | sort | \
@@ -314,11 +510,13 @@ plot $f "${name} / Used Heap Memory" "MB" "threads - hit rate"
 
 plotMemUsedSettled() {
 name="$1";
+param="$2";
 f=$RESULT/${name}MemUsedSettled.dat
+graphName=`basename $f .dat`;
 (
 echo "threads $CACHE_LABEL_LIST";
 json | \
-    jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.hitRate, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used.settled\"][\"score\"] ] | @csv"  | \
+    jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.$param, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used.settled\"][\"score\"] ] | @csv"  | \
     sort | tr -d '"' | scaleBytesToMegaBytes | \
     pivot $CACHE_FACTORY_LIST \
           | sort | \
@@ -327,36 +525,40 @@ json | \
 plot $f "${name} / Used Heap Memory" "MB" "threads - hit rate"
 }
 
+header4() {
+local I;
+local n;
+echo -n "param ";
+for I in $@; do
+  n="`echo $I | cacheShortNames`";
+  echo -n "$n error lowerConvidence upperConvidence ";
+done
+echo "";
+}
+
+# plot main score, typically through put in operations per second.
 plotOps() {
 name="$1";
+param="$2";
+suffix="$3";
+filter="$4";
+local prods="$CACHE_FACTORY_LIST";
+if test -n "$suffix"; then
+f=$RESULT/${name}-${suffix}.dat
+else
 f=$RESULT/${name}.dat
+fi
+graphName=`basename $f .dat`;
 (
-echo "threads $CACHE_LABEL_LIST";
+header4 "$prods";
 json | \
-    jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.hitRate, .params.cacheFactory, .primaryMetric.score ] | @csv" | \
+    jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.$param, .params.cacheFactory, .primaryMetric.score, .primaryMetric.scoreError, .primaryMetric.scoreConfidence[0], .primaryMetric.scoreConfidence[1]  ] | @csv" | \
     sort | tr -d '"' | \
-    pivot  $CACHE_FACTORY_LIST \
-          | sort | \
+    pivot4 $prods | sort | grep "$filter" | \
     stripEmpty
 ) > $f
-plot $f "${name} / Throughput" "ops/s"
+plot --withConfidence $f "${name} / Throughput" "ops/s" "threads-$param"
 }
-
-plotOpsPercent() {
-name="$1";
-f=$RESULT/${name}.dat
-(
-echo "threads $CACHE_LABEL_LIST";
-json | \
-    jq -r ".[] |  select (.benchmark | contains (\"${name}\") ) | [ (.threads | tostring) + \"-\" + .params.percent, .params.cacheFactory, .primaryMetric.score ] | @csv" | \
-    sort | tr -d '"' | \
-    pivot  $CACHE_FACTORY_LIST \
-          | sort | \
-    stripEmpty
-) > $f
-plot $f "${name} / Throughput" "ops/s"
-}
-
 
 # not yet used
 withExpiry() {
@@ -376,124 +578,214 @@ plot $f "PopulateParallelOnceBenchmark multiple threads" "runtime in seconds" "t
 
 }
 
-process() {
+noBenchmark() {
+local I;
+for I in $RESULT/result-*"$1"*.json; do
+  if test -f $I; then
+    return 1;
+  fi
+done
+return 0;
+}
 
 # merge all results into single json file
+bigJson() {
 result=$RESULT/data.json
 # A sequence of the lines "]", "[", "]" will be ignored, there may be an empty json file, if a run fails
 # A sequence of the lines "]", "[" will be replaced with ","
 cat $RESULT/result-*.json | awk '/^]/ { f=1; g=0; next; } f && /^\[/ { g=1; f=0; next; } g { print "  ,"; g=0; } { print; } END { print "]"; }' > $result
+}
 
-
-f=$RESULT/populateParallelOnce.dat
+typesetPlainMarkDown() {
 (
-echo "threads-size CHM $CACHE_LABEL_LIST";
-json | \
-    jq -r '.[] |  select (.benchmark | contains ("PopulateParallelOnceBenchmark") ) | [ (.threads | tostring) + "-" + .params.size, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
-    sort | tr -d '"' | \
-    pivot \
-          "org.cache2k.benchmark.ConcurrentHashMapFactory" \
-            $CACHE_FACTORY_LIST \
-          | sort | \
-    stripEmpty
-) > $f
-plot $f "PopulateParallelOnceBenchmark multiple threads" "runtime in seconds" "threads - cache size (entries)"
+echo "![]($1-notitle.svg)"
+echo "*$2 ([Alternative image]($1-notitle-print.svg), [Data file]($1.dat))*"
+echo;
+) >> $RESULT/typeset-plain.md
+}
 
-for threads in 1 2 4; do
-f=$RESULT/populateParallelOnce-$threads.dat
+typesetAsciiDoc() {
 (
-echo "size CHM $CACHE_LABEL_LIST";
-json | \
-    jq -r ".[] |  select (.benchmark | contains (\"PopulateParallelOnceBenchmark\") ) | select (.threads == $threads ) | [ .params.size, .params.cacheFactory, .primaryMetric.score ] | @csv"  | \
-    sort | tr -d '"' | \
-    pivot \
-          "org.cache2k.benchmark.ConcurrentHashMapFactory" \
-           $CACHE_FACTORY_LIST \
-          | sort | \
-    stripEmpty
-) > $f
-plot $f "PopulateParallelOnceBenchmark $threads threads" "runtime in seconds" "cache size (entries)"
+echo ".$2";
+echo "image::$1-notitle.svg[link=\"$1-notitle.svg\"]"
+echo;
+echo "link:$1-notitle-print.svg[Alternative image], link:$1.dat[Data file]"
+echo;
+
+echo "link:$1-notitle.svg[Color image], link:$1-notitle-print.svg[Alternative image], link:$1.dat[Data file]"
+echo;
+) >> $RESULT/typeset.adoc
+}
+
+cleanTypesetting() {
+echo -n > $RESULT/typeset-plain.md
+echo -n > $RESULT/typeset.adoc
+}
+
+graph() {
+typesetPlainMarkDown "$1" "$2";
+typesetAsciiDoc "$1" "$2";
+}
+
+process() {
+
+bigJson;
+cleanTypesetting;
+
+noBenchmark PopulateParallelOnceBenchmark || {
+
+    f=$RESULT/populateParallelOnce.dat
+    (
+    echo "threads-size CHM $CACHE_LABEL_LIST";
+    json | \
+        jq -r '.[] |  select (.benchmark | contains ("PopulateParallelOnceBenchmark") ) | [ (.threads | tostring) + "-" + .params.size, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
+        sort | tr -d '"' | \
+        pivot \
+              "org.cache2k.benchmark.ConcurrentHashMapFactory" \
+                $CACHE_FACTORY_LIST \
+              | sort | \
+        stripEmpty
+    ) > $f
+    plot $f "PopulateParallelOnceBenchmark multiple threads" "runtime in seconds" "threads - cache size (entries)"
+
+    for threads in 1 2 4; do
+    f=$RESULT/populateParallelOnce-$threads.dat
+    (
+    echo "size CHM $CACHE_LABEL_LIST";
+    json | \
+        jq -r ".[] |  select (.benchmark | contains (\"PopulateParallelOnceBenchmark\") ) | select (.threads == $threads ) | [ .params.size, .params.cacheFactory, .primaryMetric.score ] | @csv"  | \
+        sort | tr -d '"' | \
+        pivot \
+              "org.cache2k.benchmark.ConcurrentHashMapFactory" \
+               $CACHE_FACTORY_LIST \
+              | sort | \
+        stripEmpty
+    ) > $f
+    plot $f "PopulateParallelOnceBenchmark $threads threads" "runtime in seconds" "cache size (entries)"
+    done
+
+    f=$RESULT/populateParallelOnce-memory.dat
+    (
+    echo "size CHM $CACHE_LABEL_LIST";
+    json | \
+        jq -r ".[] |  select (.benchmark | contains (\"PopulateParallelOnceBenchmark\") ) | select (.threads == 1 ) | [ .params.size, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used.after\"][\"score\"] ] | @csv"  | \
+        sort | tr -d '"' | scaleBytesToMegaBytes | \
+        pivot \
+              "org.cache2k.benchmark.ConcurrentHashMapFactory" \
+               $CACHE_FACTORY_LIST \
+              | sort | \
+        stripEmpty
+    ) > $f
+    plot $f "PopulateParallelOnceBenchmark heap size after forced GC" "MB" "cache size (entries)"
+
+}
+
+noBenchmark ReadOnlyBenchmark || {
+    f=$RESULT/readOnly.dat
+    (
+    echo "threads-size CHM $CACHE_LABEL_LIST";
+    json | \
+        jq -r '.[] |  select (.benchmark | contains ("ReadOnlyBenchmark") ) | [ (.threads | tostring) + "-" + .params.hitRate, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
+        sort | tr -d '"' | \
+        pivot \
+              "org.cache2k.benchmark.ConcurrentHashMapFactory" \
+              $CACHE_FACTORY_LIST \
+              | sort | \
+        stripEmpty
+    ) > $f
+    plot $f "ReadOnlyBenchmark (threads-hitRate)" "ops/s"
+
+    f=$RESULT/combinedReadWrite.dat
+    (
+    echo "threads-size CHM $CACHE_LABEL_LIST";
+    json | \
+        jq -r '.[] |  select (.benchmark | contains ("CombinedReadWriteBenchmark") ) | [ .benchmark, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
+        sed 's/org.cache2k.benchmark.jmh.suite.noEviction.asymmetrical.CombinedReadWriteBenchmark.//' | \
+        sort | tr -d '"' | \
+        pivot \
+              "org.cache2k.benchmark.ConcurrentHashMapFactory" \
+              $CACHE_FACTORY_LIST \
+              | sort | \
+        stripEmpty
+    ) > $f
+    plot $f "CombinedReadWrite" "ops/s"
+}
+
+benchmarks="RandomSequenceCacheBenchmark NeverHitBenchmark RandomAccessLongSequenceBenchmark MultiRandomAccessBenchmark GeneratedRandomSequenceBenchmark"
+for I in $benchmarks; do
+  noBenchmark $I || {
+      plotOps $I hitRate;
+      graph "$graphName" "$I, operations per second (complete)";
+
+      plotOps $I hitRate "strip" "^.*-50 .*\|^.*-95 .*";
+      graph "$graphName" "$I, operations per second";
+
+#      plotMemUsed $I hitRate;
+#      plotMemUsedSettled $I hitRate;
+      plotEffectiveHitrate $I hitRate;
+      graph "$graphName" "$I, effective hitrate by target hitrate (complete)";
+      plotEffectiveHitrate $I hitRate "strip" "^.*-50 .*\|^.*-95 .*";
+      graph "$graphName" "$I, effective hitrate by target hitrate";
+  }
 done
 
-f=$RESULT/populateParallelOnce-memory.dat
-(
-echo "size CHM $CACHE_LABEL_LIST";
-json | \
-    jq -r ".[] |  select (.benchmark | contains (\"PopulateParallelOnceBenchmark\") ) | select (.threads == 1 ) | [ .params.size, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used.after\"][\"score\"] ] | @csv"  | \
-    sort | tr -d '"' | scaleBytesToMegaBytes | \
-    pivot \
-          "org.cache2k.benchmark.ConcurrentHashMapFactory" \
-           $CACHE_FACTORY_LIST \
-          | sort | \
-    stripEmpty
-) > $f
-plot $f "PopulateParallelOnceBenchmark heap size after forced GC" "MB" "cache size (entries)"
-
-f=$RESULT/readOnly.dat
-(
-echo "threads-size CHM $CACHE_LABEL_LIST";
-json | \
-    jq -r '.[] |  select (.benchmark | contains ("ReadOnlyBenchmark") ) | [ (.threads | tostring) + "-" + .params.hitRate, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
-    sort | tr -d '"' | \
-    pivot \
-          "org.cache2k.benchmark.ConcurrentHashMapFactory" \
-          $CACHE_FACTORY_LIST \
-          | sort | \
-    stripEmpty
-) > $f
-plot $f "ReadOnlyBenchmark (threads-hitRate)" "ops/s"
-
-f=$RESULT/combinedReadWrite.dat
-(
-echo "threads-size CHM $CACHE_LABEL_LIST";
-json | \
-    jq -r '.[] |  select (.benchmark | contains ("CombinedReadWriteBenchmark") ) | [ .benchmark, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
-    sed 's/org.cache2k.benchmark.jmh.suite.noEviction.asymmetrical.CombinedReadWriteBenchmark.//' | \
-    sort | tr -d '"' | \
-    pivot \
-          "org.cache2k.benchmark.ConcurrentHashMapFactory" \
-          $CACHE_FACTORY_LIST \
-          | sort | \
-    stripEmpty
-) > $f
-plot $f "CombinedReadWrite" "ops/s"
-
-
-# RandomSequenceCacheBenchmark NeverHitBenchmark RandomAccessLongSequenceBenchmark MultiRandomAccessBenchmark GeneratedRandomSequenceBenchmark
-for I in GeneratedRandomSequenceBenchmark; do
-  plotOps $I;
-  plotMemUsed $I;
-  plotMemUsedSettled $I;
-  plotEffectiveHitrate $I hitRate;
+benchmarks="ZipfianLoadingSequenceBenchmark"
+for I in $benchmarks; do
+  noBenchmark $I || {
+      plotOps $I factor;
+      graph "$graphName" "$I, operations per second by Zipfian distribution factor (complete)";
+      plotOps $I factor "strip" "^.*-10 .*\|^.*-80 .*";
+      graph "$graphName" "$I, operations per second by Zipfian distribution factor";
+#      plotMemUsed $I factor;
+#      plotMemUsedSettled $I factor;
+      plotEffectiveHitrate $I factor;
+      graph "$graphName" "$I, Effective hitrate by Zipfian distribution factor (complete)";
+      plotEffectiveHitrate $I factor "strip" "^.*-10 .*\|^.*-80 .*";
+      graph "$graphName" "$I, Effective hitrate by Zipfian distribution factor";
+  }
 done
 
-for I in ZipfianLoadingSequenceBenchmark; do
-  plotOpsPercent $I;
-  plotMemUsed $I;
-  plotMemUsedSettled $I;
-  plotEffectiveHitrate $I percent;
-done
-
-(
-cat << EOF
+name=GeneratedRandomSequenceBenchmark
+noBenchmark $name || {
+spec="`cat << EOF
 hitRate
-GeneratedRandomSequenceBenchmark / Memory
-GeneratedRandomSequenceBenchmark
+$name / Memory
+$name
+4-95 (at 4 threads, 95% hit rate)
 4-80 (at 4 threads, 80% hit rate)
 4-50 (at 4 threads, 50% hit rate)
 EOF
-) | plotMemoryGraphs
+`"
+echo "$spec" | plotMemoryGraphsSettled
+graph "${name}MemorySettled4-95" "$name, used heap at end of benchmark after settling, 4 threads and 95% hit rate"
+graph "${name}MemorySettled4-80" "$name, used heap at end of benchmark after settling, 4 threads and 80% hit rate"
+graph "${name}MemorySettled4-50" "$name, used heap at and of benchmark after settling, 4 threads and 50% hit rate"
+echo "$spec" | plotMemoryGraphs
+graph "${name}Memory4-95" "$name, memory statistics at 4 threads and 95% hit rate"
+graph "${name}Memory4-80" "$name, memory statistics at 4 threads and 80% hit rate"
+graph "${name}Memory4-50" "$name, memory statistics at 4 threads and 50% hit rate"
+}
 
-(
-cat << EOF
-percent
-ZipfianLoadingSequenceBenchmark / Memory
-ZipfianLoadingSequenceBenchmark
-4-2000 (at 4 threads, factor 20)
-4-8000 (at 4 threads, factor 80)
+name=ZipfianLoadingSequenceBenchmark
+noBenchmark $name || {
+spec="`cat << EOF
+factor
+$name / Memory
+$name
+4-20 (at 4 threads, factor 20)
+4-40 (at 4 threads, factor 40)
+4-80 (at 4 threads, factor 80)
 EOF
-) | plotMemoryGraphs
-
+`"
+echo "$spec" | plotMemoryGraphsSettled
+graph "${name}MemorySettled4-20" "$name, used heap at end of benchmark after settling, 4 threads and factor 20"
+graph "${name}MemorySettled4-40" "$name, used heap at end of benchmark after settling, 4 threads and factor 40"
+graph "${name}MemorySettled4-80" "$name, used heap at and of benchmark after settling, 4 threads and factor 80"
+echo "$spec" | plotMemoryGraphs
+graph "${name}Memory4-20" "$name, memory statistics at 4 threads and factor 20"
+graph "${name}Memory4-40" "$name, memory statistics at 4 threads and factor 40"
+graph "${name}Memory4-80" "$name, memory statistics at 4 threads and factor 80"
+}
 
 if false; then
 (
@@ -517,6 +809,39 @@ EOF
 
 fi
 
+(
+cd $RESULT;
+pandoc -o typeset-plain-markdown.html typeset-plain.md
+echo $RESULT/typeset-plain-markdown.html
+asciidoctor -o typeset-adoc.html typeset.adoc
+echo $RESULT/typeset-adoc.html
+)
+
+}
+
+doZipfianLoadingSequenceBenchmark() {
+benchmarks="ZipfianLoadingSequenceBenchmark"
+for I in $benchmarks; do
+  noBenchmark $I || {
+      plotOps $I factor;
+      plotOps $I factor "stripFactors" "^.*-10 .*\|^.*-80 .*";
+      plotMemUsed $I factor;
+      plotMemUsedSettled $I factor;
+      plotEffectiveHitrate $I factor;
+  }
+done
+noBenchmark ZipfianLoadingSequenceBenchmark || {
+(
+cat << EOF
+factor
+ZipfianLoadingSequenceBenchmark / Memory
+ZipfianLoadingSequenceBenchmark
+4-20 (at 4 threads, factor 20)
+4-40 (at 4 threads, factor 40)
+4-80 (at 4 threads, factor 80)
+EOF
+) | plotMemoryGraphsSettled
+}
 }
 
 processCommandLine "$@";
