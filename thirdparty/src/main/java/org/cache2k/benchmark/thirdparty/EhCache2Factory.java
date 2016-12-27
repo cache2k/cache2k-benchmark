@@ -61,13 +61,15 @@ public class EhCache2Factory extends BenchmarkCacheFactory {
     MyLoadingBenchmarkCache c = new MyLoadingBenchmarkCache();
     Ehcache ehc = new Cache(createCacheConfiguration(_maxElements));
     getManager().addCache(ehc);
+    int _stripes = Runtime.getRuntime().availableProcessors();
+    _stripes =  1 << (32 - Integer.numberOfLeadingZeros(_stripes - 1));
     c.cache = new SelfPopulatingCache(ehc,
-      Runtime.getRuntime().availableProcessors() * 2,
+      _stripes,
       new CacheEntryFactory() {
-      @Override
-      public Object createEntry(final Object key) throws Exception {
-        return _source.load((K) key);
-      }
+        @Override
+        public Object createEntry(final Object key) throws Exception {
+          return _source.load((K) key);
+        }
     });
     c.size = _maxElements;
     return c;
