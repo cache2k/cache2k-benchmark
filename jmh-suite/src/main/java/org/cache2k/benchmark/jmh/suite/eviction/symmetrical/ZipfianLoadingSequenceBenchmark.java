@@ -33,6 +33,7 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.results.AggregationPolicy;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -55,8 +56,8 @@ public class ZipfianLoadingSequenceBenchmark extends BenchmarkBase {
 
   private static final AtomicInteger offsetCount = new AtomicInteger();
 
-  @Param({"100", "500", "2000"})
-  public int percent = 0;
+  @Param({"10", "20", "40", "80"})
+  public int factor = 0;
 
   private Integer[] pattern;
 
@@ -78,7 +79,7 @@ public class ZipfianLoadingSequenceBenchmark extends BenchmarkBase {
   @Setup(Level.Iteration)
   public void setup() throws Exception {
     getsDestroyed = cache = getFactory().createLoadingCache(Integer.class, Integer.class, ENTRY_COUNT, source);
-    ZipfianPattern _generator = new ZipfianPattern(ENTRY_COUNT * percent / 100);
+    ZipfianPattern _generator = new ZipfianPattern(ENTRY_COUNT * factor);
     pattern = new Integer[PATTERN_COUNT];
     for (int i = 0; i < PATTERN_COUNT; i++) {
       pattern[i] = _generator.next();
@@ -103,11 +104,17 @@ public class ZipfianLoadingSequenceBenchmark extends BenchmarkBase {
 
     LongAdder missCount = new LongAdder();
 
+    /**
+     * The loader increments the miss counter and  burns CPU via JMH's blackhole
+     * to have a relevant miss penalty.
+     */
     @Override
     public Integer load(final Integer key) {
       missCount.increment();
-      return punishMiss(key);
+      Blackhole.consumeCPU(1000);
+      return key * 2 + 11;
     }
+
   }
 
   private static final double SLEEP_RAND = 10 / 1000.0;
@@ -120,11 +127,6 @@ public class ZipfianLoadingSequenceBenchmark extends BenchmarkBase {
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private static int punishMiss(final long num) {
-    final double cubed = Math.pow(num, 3);
-    return (int) Math.cbrt(cubed);
   }
 
 }
