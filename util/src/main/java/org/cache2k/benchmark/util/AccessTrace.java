@@ -322,7 +322,10 @@ public class AccessTrace implements Iterable<Integer> {
   }
 
   public String toString() {
-    return Arrays.toString(getTrace());
+    return String.format("AccessTrace(length=%d, values=%d, maxHitRate=%.2f)",
+      getTraceLength(),
+      getValueCount(),
+      getRandomHitRate(getValueCount()).getFactor() * 100);
   }
 
   private static int[] prepareTrace(AccessPattern p, int _maxSize) throws Exception {
