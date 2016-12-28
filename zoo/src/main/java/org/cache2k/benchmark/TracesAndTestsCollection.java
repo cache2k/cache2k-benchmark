@@ -26,6 +26,8 @@ import org.cache2k.benchmark.traces.CacheAccessTraceGlimpse;
 import org.cache2k.benchmark.traces.CacheAccessTraceMulti2;
 import org.cache2k.benchmark.traces.CacheAccessTraceOltp;
 import org.cache2k.benchmark.traces.CacheAccessTraceOrmAccessNight;
+import org.cache2k.benchmark.traces.CacheAccessTraceScarabProds;
+import org.cache2k.benchmark.traces.CacheAccessTraceScarabRecs;
 import org.cache2k.benchmark.traces.CacheAccessTraceSprite;
 import org.cache2k.benchmark.traces.CacheAccessTraceUmassFinancial1;
 import org.cache2k.benchmark.traces.CacheAccessTraceUmassFinancial2;
@@ -357,6 +359,46 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
     runBenchmark(CacheAccessTraceOrmAccessBusy.getInstance(), 20000);
   }
 
+  @Test
+  public void benchmarkScarabRecs_25000() throws Exception {
+    runBenchmark(CacheAccessTraceScarabRecs.getInstance(), 25000);
+  }
+
+  @Test
+  public void benchmarkScarabRecs_50000() throws Exception {
+    runBenchmark(CacheAccessTraceScarabRecs.getInstance(), 50000);
+  }
+
+  @Test
+  public void benchmarkScarabRecs_75000() throws Exception {
+    runBenchmark(CacheAccessTraceScarabRecs.getInstance(), 75000);
+  }
+
+  @Test
+  public void benchmarkScarabRecs_100000() throws Exception {
+    runBenchmark(CacheAccessTraceScarabRecs.getInstance(), 100000);
+  }
+
+  @Test
+  public void benchmarkScarabProds_25000() throws Exception {
+    runBenchmark(CacheAccessTraceScarabProds.getInstance(), 25000);
+  }
+
+  @Test
+  public void benchmarkScarabProds_50000() throws Exception {
+    runBenchmark(CacheAccessTraceScarabProds.getInstance(), 50000);
+  }
+
+  @Test
+  public void benchmarkScarabProds_75000() throws Exception {
+    runBenchmark(CacheAccessTraceScarabProds.getInstance(), 75000);
+  }
+
+  @Test
+  public void benchmarkScarabProds_100000() throws Exception {
+    runBenchmark(CacheAccessTraceScarabProds.getInstance(), 100000);
+  }
+
   public static final int TRACE_LENGTH = 3 * 1000 * 1000;
 
   static final AccessTrace zipf900Trace =
@@ -458,4 +500,5 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   public void benchmarkTotalRandom1000_800() {
     runBenchmark(BenchmarkCollection.randomTrace1000, 800);
   }
+
 }

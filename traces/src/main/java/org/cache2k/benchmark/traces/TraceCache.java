@@ -24,6 +24,7 @@ package org.cache2k.benchmark.traces;
 
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.cache2k.benchmark.util.AccessTrace;
+import org.tukaani.xz.XZInputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,6 +50,8 @@ class TraceCache {
         InputStream _inputForTrace;
         if (_fileName.endsWith(".bz2")) {
           _inputForTrace = new BZip2CompressorInputStream(_resourceInput);
+        } else if (_fileName.endsWith(".xz")) {
+          _inputForTrace = new XZInputStream(_resourceInput);
         } else {
           _inputForTrace = new GZIPInputStream(_resourceInput);
         }
