@@ -34,25 +34,24 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.Blackhole;
-import org.openjdk.jmh.results.AggregationPolicy;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 
-import static org.cache2k.benchmark.jmh.MiscResultRecorderProfiler.addCounterResult;
-
 /**
  * @author Jens Wilke
  */
-public class LoopingPrecomputedZipfianSequenceLoadingBenchmark extends BenchmarkBase {
+public class ZipfianLoopingSequenceLoadingBenchmark extends BenchmarkBase {
 
-  public static final int ENTRY_COUNT = 100_000;
   public static final int PATTERN_COUNT = 2_000_000;
 
   private static final AtomicInteger offsetCount = new AtomicInteger();
 
   @Param({"10", "80"})
   public int factor = 0;
+
+  @Param({"100000"})
+  public int entryCount = 100_000;
 
   private Integer[] pattern;
 
@@ -63,9 +62,7 @@ public class LoopingPrecomputedZipfianSequenceLoadingBenchmark extends Benchmark
     long index = PATTERN_COUNT / 16 * offsetCount.getAndIncrement();
     @TearDown
     public void tearDown() {
-      addCounterResult(
-        "opCount", index, "op", AggregationPolicy.AVG
-      );
+      HitCountRecorder.recordOpCount(index);
     }
   }
 
@@ -73,8 +70,8 @@ public class LoopingPrecomputedZipfianSequenceLoadingBenchmark extends Benchmark
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    getsDestroyed = cache = getFactory().createLoadingCache(Integer.class, Integer.class, ENTRY_COUNT, source);
-    ZipfianPattern _generator = new ZipfianPattern(1802, ENTRY_COUNT * factor);
+    getsDestroyed = cache = getFactory().createLoadingCache(Integer.class, Integer.class, entryCount, source);
+    ZipfianPattern _generator = new ZipfianPattern(1802, entryCount * factor);
     pattern = new Integer[PATTERN_COUNT];
     for (int i = 0; i < PATTERN_COUNT; i++) {
       pattern[i] = _generator.next();
@@ -83,9 +80,7 @@ public class LoopingPrecomputedZipfianSequenceLoadingBenchmark extends Benchmark
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    addCounterResult(
-      "missCount", source.missCount.longValue(), "miss", AggregationPolicy.AVG
-    );
+    HitCountRecorder.recordMissCount(source.missCount.longValue());
   }
 
   @Benchmark

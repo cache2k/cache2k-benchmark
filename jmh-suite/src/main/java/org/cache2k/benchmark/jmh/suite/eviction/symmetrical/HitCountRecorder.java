@@ -29,6 +29,13 @@ import org.openjdk.jmh.results.AggregationPolicy;
 import static org.cache2k.benchmark.jmh.MiscResultRecorderProfiler.*;
 
 /**
+ * Thread state that counts hit, miss and total operations and adds the results to
+ * the recorded metrics.
+ *
+ * <p>Its expected that the miss counter is incremented always. The hit counter
+ * or the operations counter (total number of operations) may be incremented
+ * alternatively.
+ *
  * @author Jens Wilke
  */
 @State(Scope.Thread)
@@ -38,23 +45,56 @@ public class HitCountRecorder {
 
   public long hitCount;
   public long missCount;
+  public long opCount;
 
   @TearDown(Level.Iteration)
   public void tearDown() {
     synchronized (LOCK) {
+      if (hitCount > 0) {
+        addCounterResult(
+          "hitCount", hitCount, "hit", AggregationPolicy.AVG
+        );
+      }
+      if (missCount > 0) {
+        addCounterResult(
+          "missCount", missCount, "miss", AggregationPolicy.AVG
+        );
+      }
+      if (opCount == 0) {
+        opCount = hitCount + missCount;
+      }
       addCounterResult(
-        "hitCount", hitCount, "hit", AggregationPolicy.AVG
+        "opCount", opCount, "op", AggregationPolicy.AVG
       );
-      addCounterResult(
-        "missCount", missCount, "miss", AggregationPolicy.AVG
-      );
-      addCounterResult(
-        "opCount", hitCount + missCount, "op", AggregationPolicy.AVG
-      );
-      double _missCount = getCounterResult("missCount");
-      double _operations = getCounterResult("opCount");
-      setResult("hitrate", 100.0 - _missCount * 100.0 / _operations, "percent", AggregationPolicy.AVG);
+      updateHitrate();
     }
+  }
+
+  public static void recordOpCount(long _opCount) {
+    synchronized (LOCK) {
+      addCounterResult(
+        "opCount", _opCount, "op", AggregationPolicy.AVG
+      );
+      updateHitrate();
+    }
+  }
+
+  public static void recordMissCount(long _missCount) {
+    synchronized (LOCK) {
+      addCounterResult(
+        "missCount", _missCount, "op", AggregationPolicy.AVG
+      );
+      updateHitrate();
+    }
+  }
+
+  private static void updateHitrate() {
+    double _missCountSum = getCounterResult("missCount");
+    double _opCountSum = getCounterResult("opCount");
+    if (_opCountSum == 0.0) {
+      return;
+    }
+    setResult("hitrate", 100.0 - _missCountSum * 100.0 / _opCountSum, "percent", AggregationPolicy.AVG);
   }
 
 }

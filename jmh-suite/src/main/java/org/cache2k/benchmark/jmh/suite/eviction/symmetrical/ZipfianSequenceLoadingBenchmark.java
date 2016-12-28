@@ -34,12 +34,9 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.Blackhole;
-import org.openjdk.jmh.results.AggregationPolicy;
 
 import java.util.Random;
 import java.util.concurrent.atomic.LongAdder;
-
-import static org.cache2k.benchmark.jmh.MiscResultRecorderProfiler.*;
 
 /**
  * Penetrate loading cache with a Zipfian pattern with distribution sizes
@@ -57,7 +54,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @Param({"10", "80"})
   public int factor = 0;
 
-  @Param({"100000", "1000000", "10000000"})
+  @Param({"100000"})
   public int entryCount = 100_000;
 
   private final DataSource source = new DataSource();
@@ -69,19 +66,12 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   public static class ThreadState {
 
     ZipfianPattern pattern;
-    long operationCount = 0;
 
     @Setup(Level.Iteration)
     public void setup(ZipfianSequenceLoadingBenchmark _benchmark) {
       pattern = new ZipfianPattern(_benchmark.offsetSeed.nextLong(), _benchmark.entryCount * _benchmark.factor);
     }
 
-    @TearDown(Level.Iteration)
-    public void tearDown() {
-      addCounterResult(
-        "opCount", operationCount, "op", AggregationPolicy.AVG
-      );
-    }
   }
 
   LoadingBenchmarkCache<Integer, Integer> cache;
@@ -93,17 +83,12 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    addCounterResult(
-      "missCount", source.missCount.longValue(), "miss", AggregationPolicy.AVG
-    );
-    double _missCount = getCounterResult("missCount");
-    double _operations = getCounterResult("opCount");
-    setResult("hitrate", 100.0 - _missCount * 100.0 / _operations, "percent", AggregationPolicy.AVG);
+    HitCountRecorder.recordMissCount(source.missCount.longValue());
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
-  public long operation(ThreadState threadState) {
-    threadState.operationCount++;
+  public long operation(ThreadState threadState, HitCountRecorder rec) {
+    rec.opCount++;
     Integer v = cache.get(threadState.pattern.next());
     return v;
   }
