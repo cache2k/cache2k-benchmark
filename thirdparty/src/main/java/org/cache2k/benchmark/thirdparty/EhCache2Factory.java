@@ -61,8 +61,8 @@ public class EhCache2Factory extends BenchmarkCacheFactory {
     MyLoadingBenchmarkCache c = new MyLoadingBenchmarkCache();
     Ehcache ehc = new Cache(createCacheConfiguration(_maxElements));
     getManager().addCache(ehc);
-    int _stripes = Runtime.getRuntime().availableProcessors();
-    _stripes =  1 << (32 - Integer.numberOfLeadingZeros(_stripes - 1));
+    int _cpus = Runtime.getRuntime().availableProcessors();
+    int _stripes = cpuCount2StripeCount(_cpus * 2);
     c.cache = new SelfPopulatingCache(ehc,
       _stripes,
       new CacheEntryFactory() {
@@ -73,6 +73,13 @@ public class EhCache2Factory extends BenchmarkCacheFactory {
     });
     c.size = _maxElements;
     return c;
+  }
+
+  /**
+   * use identical stripe value to the processor count. round up to next power of two.
+   */
+  static int cpuCount2StripeCount(final int _cpus) {
+    return 1 << (32 - Integer.numberOfLeadingZeros(_cpus - 1));
   }
 
   protected CacheManager getManager() {
