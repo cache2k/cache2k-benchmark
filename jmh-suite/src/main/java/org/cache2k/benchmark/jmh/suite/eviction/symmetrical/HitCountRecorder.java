@@ -34,23 +34,27 @@ import static org.cache2k.benchmark.jmh.MiscResultRecorderProfiler.*;
 @State(Scope.Thread)
 public class HitCountRecorder {
 
+  private static final Object LOCK = new Object();
+
   public long hitCount;
   public long missCount;
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    addCounterResult(
-      "hitCount", hitCount, "hit", AggregationPolicy.AVG
-    );
-    addCounterResult(
-      "missCount", missCount, "miss", AggregationPolicy.AVG
-    );
-    addCounterResult(
-      "opCount", hitCount + missCount, "op", AggregationPolicy.AVG
-    );
-    double _missCount = getCounterResult("missCount");
-    double _operations = getCounterResult("opCount");
-    setResult("hitrate", 100.0 - _missCount * 100.0 / _operations, "percent", AggregationPolicy.AVG);
+    synchronized (LOCK) {
+      addCounterResult(
+        "hitCount", hitCount, "hit", AggregationPolicy.AVG
+      );
+      addCounterResult(
+        "missCount", missCount, "miss", AggregationPolicy.AVG
+      );
+      addCounterResult(
+        "opCount", hitCount + missCount, "op", AggregationPolicy.AVG
+      );
+      double _missCount = getCounterResult("missCount");
+      double _operations = getCounterResult("opCount");
+      setResult("hitrate", 100.0 - _missCount * 100.0 / _operations, "percent", AggregationPolicy.AVG);
+    }
   }
 
 }

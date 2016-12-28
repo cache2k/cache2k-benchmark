@@ -52,12 +52,13 @@ import static org.cache2k.benchmark.jmh.MiscResultRecorderProfiler.*;
  * @author Jens Wilke
  */
 @State(Scope.Benchmark)
-public class ZipfianDirectSequenceLoadingBenchmark extends BenchmarkBase {
+public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
-  public static final int ENTRY_COUNT = 100_000;
-
-  @Param({"10", "20", "40", "80"})
+  @Param({"10", "80"})
   public int factor = 0;
+
+  @Param({"100000", "1000000", "10000000"})
+  public int entryCount = 100_000;
 
   private final DataSource source = new DataSource();
 
@@ -71,8 +72,8 @@ public class ZipfianDirectSequenceLoadingBenchmark extends BenchmarkBase {
     long operationCount = 0;
 
     @Setup(Level.Iteration)
-    public void setup(ZipfianDirectSequenceLoadingBenchmark _benchmark) {
-      pattern = new ZipfianPattern(_benchmark.offsetSeed.nextLong(), ENTRY_COUNT * _benchmark.factor);
+    public void setup(ZipfianSequenceLoadingBenchmark _benchmark) {
+      pattern = new ZipfianPattern(_benchmark.offsetSeed.nextLong(), _benchmark.entryCount * _benchmark.factor);
     }
 
     @TearDown(Level.Iteration)
@@ -87,7 +88,7 @@ public class ZipfianDirectSequenceLoadingBenchmark extends BenchmarkBase {
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    getsDestroyed = cache = getFactory().createLoadingCache(Integer.class, Integer.class, ENTRY_COUNT, source);
+    getsDestroyed = cache = getFactory().createLoadingCache(Integer.class, Integer.class, entryCount, source);
   }
 
   @TearDown(Level.Iteration)

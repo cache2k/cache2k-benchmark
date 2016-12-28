@@ -41,20 +41,18 @@ import java.util.Random;
  * @author Jens Wilke
  */
 @State(Scope.Benchmark)
-public class GeneratedRandomSequenceBenchmark extends BenchmarkBase {
+public class RandomSequenceBenchmark extends BenchmarkBase {
 
-  public static final int ENTRY_COUNT = 100_000;
-  public static final int MINI_PERCENT_HITRATE = 30;
-  public static final int INTEGER_SPACE_COUNT = 100 * ENTRY_COUNT / (MINI_PERCENT_HITRATE - 1);
-
-  @Param({"30", "50", "80", "90", "95"})
+  @Param({"50", "80", "95"})
   public int hitRate = 0;
+
+  @Param({"100000"})
+  public int entryCount = 100_000;
 
   /** Use thread safe RPNG to give each thread state another seed. */
   private final static Random offsetSeed = new Random(1802);
 
   private int range;
-  private Integer[] keySpace;
 
   @State(Scope.Thread)
   public static class ThreadState {
@@ -65,17 +63,13 @@ public class GeneratedRandomSequenceBenchmark extends BenchmarkBase {
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    getsDestroyed = cache = getFactory().create(ENTRY_COUNT);
-    range = (int) (ENTRY_COUNT * (100D / hitRate));
-    keySpace = new Integer[INTEGER_SPACE_COUNT];
-    for (int i = 0; i < INTEGER_SPACE_COUNT; i++) {
-      keySpace[i] = i;
-    }
+    getsDestroyed = cache = getFactory().create(entryCount);
+    range = (int) (entryCount * (100D / hitRate));
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
   public long operation(ThreadState threadState, HitCountRecorder rec) {
-    Integer k = keySpace[threadState.generator.nextInt(range)];
+    Integer k = threadState.generator.nextInt(range);
     Integer v = cache.getIfPresent(k);
     if (v == null) {
       cache.put(k, k);
