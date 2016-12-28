@@ -46,6 +46,9 @@ package org.cache2k.benchmark.util;
 
 import it.unimi.dsi.util.XorShift1024StarRandomGenerator;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * A generator of a zipfian distribution. It produces a sequence of items, such that some items are more popular than others, according
  * to a zipfian distribution. When you construct an instance of this class, you specify the number of items in the set to draw from, either
@@ -67,7 +70,7 @@ import it.unimi.dsi.util.XorShift1024StarRandomGenerator;
 @SuppressWarnings("unused")
 public class ZipfianPattern extends AbstractEternalAccessPattern {
 
-  public static final double ZIPFIAN_CONSTANT=0.99;
+  public static final double ZIPFIAN_CONSTANT = 0.99;
 
   /**
    * Number of items.
@@ -127,7 +130,7 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
    * @param _zipfianconstant The zipfian constant to use.
    */
   public ZipfianPattern(long _randomSeed, long min, long max, double _zipfianconstant) {
-    this(_randomSeed, min, max, _zipfianconstant, zetastatic(max - min + 1 , _zipfianconstant));
+    this(_randomSeed, min, max, _zipfianconstant, zeta(max - min + 1 , _zipfianconstant));
   }
 
   /**
@@ -156,43 +159,43 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
 
   /**************************************************************************/
 
+  final static Map<String, Double> zetaStaticMap = new HashMap<>();
+
   /**
-   * Compute the zeta constant needed for the distribution. Do this from scratch for a distribution with n items, using the
-   * zipfian constant theta. Remember the value of n, so if we change the itemcount, we can recompute zeta.
+   * Precomputed zeta constants to save setup time.
+   */
+  static {
+    zetaStaticMap.put("2|0.99", 1.5034777750283594);
+    zetaStaticMap.put("1000000|0.99", 15.391849746037371);
+    zetaStaticMap.put("8000000|0.99", 17.80436406783243);
+    zetaStaticMap.put("10000000|0.99", 18.066242574968303);
+    zetaStaticMap.put("80000000|0.99", 20.534952035464187);
+    zetaStaticMap.put("100000000|0.99", 20.80293049002014);
+    zetaStaticMap.put("800000000|0.99", 23.329143628120455);
+  }
+
+  /**
+   * Compute the zeta constant needed for the distribution. Remember computed constants
+   * in a hash map, since we may initialize the same pattern in multiple threads.
    *
    * @param n The number of items to compute zeta over.
    * @param theta The zipfian constant.
    */
-  double zeta(long n, double theta) {
-    return zetastatic(n,theta);
-  }
-
-  /**
-   * Compute the zeta constant needed for the distribution. Do this from scratch for a distribution with n items, using the
-   * zipfian constant theta. This is a static version of the function which will not remember n.
-   * @param n The number of items to compute zeta over.
-   * @param theta The zipfian constant.
-   */
-  static double zetastatic(long n, double theta) {
-    return zetastatic(0,n,theta,0);
-  }
-
-  /**
-   * Compute the zeta constant needed for the distribution. Do this incrementally for a distribution that
-   * has n items now but used to have st items. Use the zipfian constant theta. Remember the new value of
-   * n so that if we change the itemcount, we'll know to recompute zeta.
-   * @param st The number of items used to compute the last initialsum
-   * @param n The number of items to compute zeta over.
-   * @param theta The zipfian constant.
-   * @param initialsum The value of zeta we are computing incrementally from.
-   */
-  static double zetastatic(long st, long n, double theta, double initialsum) {
-    double sum = initialsum;
-    for (long i=st; i<n; i++) {
-      sum+=1/(Math.pow(i+1,theta));
+  static double zeta(long n, double theta) {
+    synchronized (zetaStaticMap) {
+      String k = n + "|" + theta;
+      Double d = zetaStaticMap.get(k);
+      if (d != null) {
+        return d;
+      }
+      double sum = 0;
+      for (long i = 0; i < n; i++) {
+        sum += 1 / (Math.pow(i + 1, theta));
+      }
+      zetaStaticMap.put(k, sum);
+      System.out.println("new zeta constant: " + k + " -> " + sum);
+      return sum;
     }
-
-    return sum;
   }
 
   /****************************************************************************************/
