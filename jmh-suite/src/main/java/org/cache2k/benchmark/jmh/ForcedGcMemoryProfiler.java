@@ -29,10 +29,13 @@ import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.Result;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
@@ -58,9 +61,6 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
   static long usedMemorySettled;
   static long totalMemory;
   static long gcTimeMillis;
-
-  static boolean virtualMachineLoaded;
-  static Object virtualMachine;
 
   /**
    * Called from the benchmark when the objects are still referenced to record the
@@ -242,17 +242,49 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
     return null;
   }
 
+  /**
+   * Parse the linux {@code /proc/self/status} and add everything prefixed with "Vm" as metric to
+   * the profiling result.
+   */
+  private static void addLinuxVmStats(List<ProfilerResult> l) {
+    try {
+      LineNumberReader r = new LineNumberReader(new InputStreamReader(new FileInputStream("/proc/self/status")));
+      String _line;
+      while ((_line = r.readLine()) != null) {
+        if (!_line.startsWith("Vm")) {
+          continue;
+        }
+        String[] sa = _line.split("\\s+");
+        if (sa.length != 3) {
+          throw new IOException("Format error: 3 elements expected");
+        }
+        if (!sa[2].equals("kB")) {
+          throw new IOException("Format error: unit kB expected, was: " + sa[2]);
+        }
+        String _name = sa[0].substring(0, sa[0].length() - 1);
+        l.add(
+          new ProfilerResult("+forced-gc-mem.used." + _name, (double) Long.parseLong(sa[1]), "kB", AggregationPolicy.AVG)
+        );
+      }
+    } catch (IOException ex) {
+      throw new UncheckedIOException(ex);
+    }
+  }
+
   @Override
   public Collection<? extends Result> afterIteration(final BenchmarkParams benchmarkParams, final IterationParams iterationParams, final IterationResult result) {
     if (usedMemory == 0) {
       return Collections.emptyList();
     }
-    return Arrays.asList(
+    List<ProfilerResult> l = new ArrayList<>();
+    addLinuxVmStats(l);
+    l.addAll(Arrays.asList(
       new ProfilerResult("+forced-gc-mem.used.settled", (double) usedMemorySettled, "bytes", AggregationPolicy.AVG),
       new ProfilerResult("+forced-gc-mem.used.after", (double) usedMemory, "bytes", AggregationPolicy.AVG),
       new ProfilerResult("+forced-gc-mem.total", (double) totalMemory, "bytes", AggregationPolicy.AVG),
       new ProfilerResult("+forced-gc-mem.gcTimeMillis", (double) gcTimeMillis, "ms", AggregationPolicy.AVG)
-    );
+    ));
+    return l;
   }
 
   @Override
