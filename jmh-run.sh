@@ -102,11 +102,12 @@ echo "Total runtime $(( $t - $START_TIME ))s";
 dryEcho() {
   echo -n "java";
   for i in "$@"; do
-    if [[ $i =~ [[:space:]] ]]; then
-      echo -n ' "'"$i"'"'
-    else
-      echo -n " $i";
-    fi
+    #if [[ $i =~ [[:space:]] ]]; then
+    #  echo -n ' "'"$i"'"'
+    #else
+    #  echo -n " $i";
+    #fi
+    printf " %q" "$i";
   done
   echo;
 }
@@ -214,7 +215,7 @@ done
 # Multi threaded with variable thread counts, with eviction
 #
 # benchmarks="NeverHitBenchmark MultiRandomAccessBenchmark GeneratedRandomSequenceBenchmark ZipfianLoadingSequenceBenchmark";
-benchmarks="RandomSequenceBenchmark ZipfianSequenceLoadingBenchmark LoopingPrecomputedZipfianSequenceLoadingBenchmark";
+benchmarks="RandomSequenceBenchmark ZipfianSequenceLoadingBenchmark ZipfianLoopingSequenceLoadingBenchmark";
 for impl in $COMPLETE; do
   for benchmark in $benchmarks; do
     for threads in 1 2 3 4; do
