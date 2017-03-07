@@ -75,7 +75,7 @@ public class MiscResultRecorderProfiler implements InternalProfiler {
    */
   public static void setResult(String key, double _result, String _unit, AggregationPolicy _aggregationPolicy) {
     results.put(key,
-      new ProfilerResult(SECONDARY_RESULT_PREFIX + key,_result, _unit, _aggregationPolicy));
+      new ProfilerResult(SECONDARY_RESULT_PREFIX + key, _result, _unit, _aggregationPolicy));
   }
 
   @Override

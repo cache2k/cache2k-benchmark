@@ -20,7 +20,6 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
  * #L%
  */
 
-import org.cache2k.benchmark.BenchmarkCacheSource;
 import org.cache2k.benchmark.LoadingBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.util.ZipfianPattern;
@@ -33,15 +32,24 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
-import org.openjdk.jmh.infra.Blackhole;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.LongAdder;
 
 /**
+ * Benchmark of a loading cache with penalty on a zipfian sequence.
+ *
+ * <p>Pattern is precomputed and Integer objects are created. This yields about 5M op/s
+ * for Caffeine. Problems: Memory consumption makes it hard to determine the real occupied
+ * memory, loops in threads may can follow closely leading to a higher hit rate.
+ *
+ * <p>As improvement {@link ZipfianHoppingPrecomputedSequenceLoadingBenchmark} is but
+ * still needs memory for the pattern.
+ *
  * @author Jens Wilke
+ * @see ZipfianHoppingPrecomputedSequenceLoadingBenchmark
+ * @see ZipfianSequenceLoadingBenchmark
  */
-public class ZipfianLoopingSequenceLoadingBenchmark extends BenchmarkBase {
+public class ZipfianLoopingPrecomputedSequenceLoadingBenchmark extends BenchmarkBase {
 
   public static final int PATTERN_COUNT = 2_000_000;
 
@@ -55,7 +63,7 @@ public class ZipfianLoopingSequenceLoadingBenchmark extends BenchmarkBase {
 
   private Integer[] pattern;
 
-  private final ZipfianLoadingSequenceBenchmark.DataSource source = new ZipfianLoadingSequenceBenchmark.DataSource();
+  private final ZipfianSequenceLoadingBenchmark.DataSource source = new ZipfianSequenceLoadingBenchmark.DataSource();
 
   @State(Scope.Thread)
   public static class ThreadState {
@@ -91,23 +99,6 @@ public class ZipfianLoopingSequenceLoadingBenchmark extends BenchmarkBase {
     Integer k = pattern[(int) (threadState.index++ % PATTERN_COUNT)];
     Integer v = cache.get(k);
     return k + v;
-  }
-
-  static class DataSource extends BenchmarkCacheSource<Integer, Integer> {
-
-    LongAdder missCount = new LongAdder();
-
-    /**
-     * The loader increments the miss counter and  burns CPU via JMH's blackhole
-     * to have a relevant miss penalty.
-     */
-    @Override
-    public Integer load(final Integer key) {
-      missCount.increment();
-      Blackhole.consumeCPU(1000);
-      return key * 2 + 11;
-    }
-
   }
 
 }
