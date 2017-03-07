@@ -59,8 +59,10 @@ public class ZipfianLoopingSequenceLoadingBenchmark extends BenchmarkBase {
 
   @State(Scope.Thread)
   public static class ThreadState {
+
     long index = PATTERN_COUNT / 16 * offsetCount.getAndIncrement();
-    @TearDown
+
+    @TearDown(Level.Iteration)
     public void tearDown() {
       HitCountRecorder.recordOpCount(index);
     }
