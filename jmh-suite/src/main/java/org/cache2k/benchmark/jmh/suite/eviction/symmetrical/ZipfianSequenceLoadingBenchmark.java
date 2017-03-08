@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.LongAdder;
 @State(Scope.Benchmark)
 public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
-  @Param({"10", "80"})
+  @Param({"10"})
   public int factor = 0;
 
   @Param({"100000"})

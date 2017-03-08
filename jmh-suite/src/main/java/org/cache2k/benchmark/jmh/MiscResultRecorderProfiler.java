@@ -74,8 +74,14 @@ public class MiscResultRecorderProfiler implements InternalProfiler {
    * Insert the counter value as secondary result. An existing counter value is replaced.
    */
   public static void setResult(String key, double _result, String _unit, AggregationPolicy _aggregationPolicy) {
-    results.put(key,
-      new ProfilerResult(SECONDARY_RESULT_PREFIX + key, _result, _unit, _aggregationPolicy));
+    setResult(new ProfilerResult(SECONDARY_RESULT_PREFIX + key, _result, _unit, _aggregationPolicy));
+  }
+
+  /**
+   * Add result to the JMH result data. If called multiple times with the same label only the last one will be added.
+   */
+  public static void setResult(ProfilerResult r) {
+    results.put(r.getLabel(), r);
   }
 
   @Override

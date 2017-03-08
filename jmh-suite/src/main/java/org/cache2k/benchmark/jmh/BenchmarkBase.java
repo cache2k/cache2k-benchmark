@@ -20,9 +20,9 @@ package org.cache2k.benchmark.jmh;
  * #L%
  */
 
-import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.Cache2kFactory;
+import org.cache2k.benchmark.jmh.suite.eviction.symmetrical.Cache2kMetricsRecorder;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
@@ -63,8 +63,10 @@ public class BenchmarkBase {
     ForcedGcMemoryProfiler.recordUsedMemory();
     if (getsDestroyed != null) {
       System.out.println();
-      System.out.println(getsDestroyed);
+      String _statString = getsDestroyed.toString();
+      System.out.println(_statString);
       System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
+      Cache2kMetricsRecorder.recordStats(_statString);
       getsDestroyed.close();
       getsDestroyed = null;
     }
