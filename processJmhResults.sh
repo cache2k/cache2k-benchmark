@@ -39,7 +39,9 @@ org.cache2k.benchmark.thirdparty.EhCache2Factory";
 
 # for TCache we need to add:
 # "org.cache2k.benchmark.thirdparty.TCache1Factory";
-          
+
+CACHE_FACTORY_LIST=org.cache2k.benchmark.thirdparty.CaffeineCacheFactory
+
 CACHE_LABEL_LIST=`echo $CACHE_FACTORY_LIST | cacheShortNames`;
 
 processCommandLine() {
@@ -287,6 +289,8 @@ highContrast() {
 # http://colorbrewer2.org/....
 cnt=1;
 colors="d7191c ffffbf fdae61 abdda4 2b83ba 1b7837"
+colors="aaaabf fdae61 abdda4 2b83ba 1b7837"
+
 for I in $colors; do
   echo "set style line $cnt lt rgb \"#$I\"";
   cnt=$(( $cnt + 1 ));
@@ -349,6 +353,11 @@ local title="$2";
 local yTitle="$3";
 local xTitle="$4";
 local maxYRange=`maxYRange < "$in"`;
+
+if [ "`cat $in | wc -l`" -eq 1 ]; then
+  echo "No data, skipping: $in";
+  return;
+fi
 
 if false; then
 echo "$out ....";
@@ -417,11 +426,11 @@ local query=`cat << EOF
     .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].score * 1000,
     .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreError * 1000,
     .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreConfidence[0] * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreConfidence[1] * 1000
+    .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreConfidence[1] * 1000,
     .["secondaryMetrics"]["+c2k.gc.alloc.rate"].score * 1000 * 1000,
     .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreError* 1000 * 1000,
     .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreConfidence[0] * 1000 * 1000,
-    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreConfidence[1] * 1000 * 1000,
+    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreConfidence[1] * 1000 * 1000
   ] | @csv
 EOF
 `
@@ -860,9 +869,9 @@ echo $RESULT/typeset-adoc.html
 
 }
 
-doZipfianSequenceLoadingBenchmark() {
+doZipfian() {
 bigJson;
-benchmarks="ZipfianSequenceLoadingBenchmark"
+benchmarks="ZipfianSequenceLoadingBenchmark ZipfianLoopingPrecomputedSequenceLoadingBenchmark ZipfianHoppingPrecomputedSequenceLoadingBenchmark"
 for I in $benchmarks; do
   noBenchmark $I || {
       plotOps $I factor;
@@ -873,12 +882,13 @@ for I in $benchmarks; do
       plotEffectiveHitrate $I factor;
   }
 done
-noBenchmark ZipfianSequenceLoadingBenchmark || {
+I=ZipfianSequenceLoadingBenchmark;
+noBenchmark $I || {
 (
 cat << EOF
 factor
-ZipfianSequenceLoadingBenchmark / Memory
-ZipfianSequenceLoadingBenchmark
+$I / Memory
+$I
 4-1E5-10 (at 4 threads, factor 10)
 4-1E5-80 (at 4 threads, factor 80)
 4-1E6-10 (at 4 threads, factor 10)

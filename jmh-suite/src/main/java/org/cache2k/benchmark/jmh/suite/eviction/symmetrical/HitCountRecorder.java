@@ -89,9 +89,9 @@ public class HitCountRecorder {
   }
 
   private static void updateHitrate() {
-    double _missCountSum = getCounterResult("missCount");
-    double _opCountSum = getCounterResult("opCount");
-    if (_opCountSum == 0.0) {
+    long _missCountSum = getCounterResult("missCount");
+    long _opCountSum = getCounterResult("opCount");
+    if (_opCountSum == 0L) {
       return;
     }
     setResult("hitrate", 100.0 - _missCountSum * 100.0 / _opCountSum, "percent", AggregationPolicy.AVG);
