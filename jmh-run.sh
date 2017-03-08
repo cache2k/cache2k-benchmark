@@ -20,7 +20,7 @@ set -e;
 # http://www.oracle.com/technetwork/tutorials/tutorials-1876574.html
 # test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx2G -XX:+UseG1GC -XX:+UseBiasedLocking -XX:+UseCompressedOops";
 
-test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:+UseBiasedLocking";
+test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:+UseG1GC -XX:+UseBiasedLocking";
 
 # -wi warmup iterations
 # -w warmup time
@@ -218,7 +218,7 @@ done
 # benchmarks="RandomSequenceBenchmark ZipfianSequenceLoadingBenchmark ZipfianLoopingSequenceLoadingBenchmark";
 # benchmarks="ZipfianLoopingPrecomputedSequenceLoadingBenchmark ZipfianHoppingPrecomputedSequenceLoadingBenchmark";
 # benchmarks="RandomSequenceBenchmark";
-benchmarks="ZipfianSequenceLoadingBenchmark";
+benchmarks="ZipfianSequenceLoadingBenchmark RandomSequenceBenchmark";
 for impl in $COMPLETE; do
   for benchmark in $benchmarks; do
     for threads in 1 4 8; do
