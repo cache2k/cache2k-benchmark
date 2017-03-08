@@ -285,25 +285,36 @@ set grid ytics mytics ls 81, ls 82
 EOF
 }
 
-highContrast() {
-# http://colorbrewer2.org/....
-cnt=1;
-colors="d7191c ffffbf fdae61 abdda4 2b83ba 1b7837"
-# colors="aaaabf fdae61 abdda4 2b83ba 1b7837"
-
+colorScheme() {
+local cnt=1;
+local colors="$@";
 for I in $colors; do
-  echo "set style line $cnt lt rgb \"#$I\"";
+  echo "set style line $cnt lt rgb \"$I\"";
   cnt=$(( $cnt + 1 ));
 done
 cnt=0;
 echo "set palette defined ( \\";
 for I in $colors; do
  if [ $cnt -gt 0 ]; then echo ", \\"; fi
- echo -n " $cnt '#$I'"
+ echo -n " $cnt '$I'"
  cnt=$(( $cnt + 1 ));
 done
 echo ")";
 echo "set palette maxcolors $cnt";
+}
+
+highContrast() {
+# http://colorbrewer2.org/....
+colorScheme "#d7191c #ffffbf #fdae61 #abdda4 #2b83ba #1b7837"
+# colors="aaaabf fdae61 abdda4 2b83ba 1b7837"
+}
+
+memoryColors() {
+colorScheme "#a6cee3 #1f78b4 #b2df8a #33a02c #fb9a99 #e31a1c #fdbf6f #ff7f00"
+}
+
+printColors() {
+colorScheme "#1b9e77 #d95f02 #7570b3 #e7298a #66a61e #e6ab02 #a6761d #666666";
 }
 
 plotData() {
@@ -338,8 +349,10 @@ done
 
 plot() {
 local plot="plotData";
+local colorScheme="highContrast";
 while true; do
   case "$1" in
+    --withColors) colorScheme="$2"; shift 1;;
     --withConfidence) plot="plotDataWithConfidence";;
     # --dir) RESULT="$2"; shift 1;;
     -*) echo "unknown option: $1"; return 1;;
@@ -368,7 +381,7 @@ echo "set output '$out'"
 # the title is always centered over the graph, excluding the legend!
 # echo "set title '$title'";
 echo "set title \"$title\"";
-highContrast;
+$colorScheme;
 $plot "$in";
 ) > "$in".plot
 gnuplot "$in".plot;
@@ -380,7 +393,7 @@ echo "$out ....";
 (
 plotHistogramHeader "$in" "$title" "$xTitle" "$yTitle";
 echo "set output '$out'"
-highContrast;
+$colorScheme;
 $plot "$in";
 ) > "${in}-notitle.plot"
 gnuplot "${in}-notitle.plot";
@@ -392,7 +405,7 @@ echo "$out ....";
 plotHistogramHeader "$in" "$title" "$yTitle" "$xTitle";
 echo "set output '$out'"
 echo "set style fill pattern border"
-# highContrast;
+# printColors;
 echo "set colorsequence podo"
 $plot "$in";
 ) > "${in}-notitle-print.plot"
@@ -423,6 +436,10 @@ local query=`cat << EOF
     .["secondaryMetrics"]["+forced-gc-mem.total"].scoreError,
     .["secondaryMetrics"]["+forced-gc-mem.total"].scoreConfidence[0],
     .["secondaryMetrics"]["+forced-gc-mem.total"].scoreConfidence[1],
+    .["secondaryMetrics"]["+forced-gc-mem.used.VmRSS"].score * 1000,
+    .["secondaryMetrics"]["+forced-gc-mem.used.VmRSS"].scoreError * 1000,
+    .["secondaryMetrics"]["+forced-gc-mem.used.VmRSS"].scoreConfidence[0] * 1000,
+    .["secondaryMetrics"]["+forced-gc-mem.used.VmRSS"].scoreConfidence[1] * 1000,
     .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].score * 1000,
     .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreError * 1000,
     .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreConfidence[0] * 1000,
@@ -451,10 +468,10 @@ read benchmark;
 while read key description; do
   f=$RESULT/${benchmark}Memory$key.dat
   (
-    echo "threads usedHeap/settled error lower upper usedHeap/fin error lower upper usedHeap/max() error lower upper totalHeap error lower upper VmHWM error lower upper allocRate(byte/s) error lower upper";
+    echo "threads usedHeap/settled error lower upper usedHeap/fin error lower upper usedHeap/max() error lower upper totalHeap error lower upper VmRSS error lower upper VmHWM error lower upper allocRate(byte/s) error lower upper";
     extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues | grep "^$key" | stripFirstColumn | cacheShortNames
   ) > $f
-  plot --withConfidence $f "$title\n$description" "cache" "Bytes"
+  plot --withConfidence --withColors memoryColors $f "$title\n$description" "cache" "Bytes"
 done
 }
 
@@ -465,10 +482,24 @@ read benchmark;
 while read key description; do
   f=$RESULT/${benchmark}MemorySettled$key.dat
   (
-    echo "threads usedHeap/settled error lower upper";
+    echo "threads usedHeap/settled error lower upper usedHeap/fin error lower upper";
     extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues | grep "^$key" | stripFirstColumn | cacheShortNames
   ) > $f
-  plot --withConfidence $f "$title\n$description" "cache" "Bytes"
+  plot --withConfidence --withColors memoryColors $f "$title\n$description" "cache" "Bytes"
+done
+}
+
+plotMemoryGraphsHeap() {
+read param;
+read title;
+read benchmark;
+while read key description; do
+  f=$RESULT/${benchmark}MemoryHeap$key.dat
+  (
+    echo "threads usedHeap/settled error lower upper usedHeap/fin error lower upper usedHeap/max() error lower upper";
+    extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues | grep "^$key" | stripFirstColumn | cacheShortNames
+  ) > $f
+  plot --withConfidence --withColors memoryColors $f "$title\n$description" "cache" "Bytes"
 done
 }
 
@@ -553,7 +584,11 @@ done
 echo "";
 }
 
-shortenParamValues() {
+# shortenParamValuesWithE
+#
+# 8-100000-20 gets to: 8-1E5-20
+#
+shortenParamValuesWithE() {
 awk "$shorten_awk";
 }
 
@@ -564,7 +599,6 @@ shorten_awk=`cat <<"EOF"
   for (I in params) {
     val=params[I];
     if (val >= 1000) {
-      print "here";
       ex = 0;
       while (val % 10 == 0) {
         val /= 10;
@@ -583,6 +617,45 @@ shorten_awk=`cat <<"EOF"
 }
 EOF
 `
+
+shortenParamValues() {
+awk "$shorten_awk";
+}
+
+shorten_awk=`cat <<"EOF"
+{
+  cnt = split($1, params, "-");
+  out = "";
+  for (I in params) {
+    val=params[I];
+    if (val >= 1000) {
+      ex = 0;
+      while (val % 1000 == 0) {
+        val /= 1000;
+        ex += 3;
+      }
+      suffix = "E" ex;
+      if (ex == 3) {
+        suffix = "K";
+      } else if (ex == 6) {
+        suffix = "M";
+      } else if (ex == 8) {
+        suffix = "G";
+      }
+      val = val suffix;
+    }
+    if (out != "") {
+      out = out "-" val;
+    } else {
+      out = out val;
+    }
+  }
+  $1 = out;
+  print;
+}
+EOF
+`
+
 
 # plot main score, typically through put in operations per second.
 plotOps() {
@@ -779,7 +852,7 @@ for I in $benchmarks; do
   }
 done
 
-benchmarks="ZipfianLoadingSequenceBenchmark ZipfianDirectSequenceLoadingBenchmark"
+benchmarks="ZipfianSequenceLoadingBenchmark"
 for I in $benchmarks; do
   noBenchmark $I || {
       plotOps $I factor;
@@ -801,41 +874,58 @@ spec="`cat << EOF
 hitRate
 $name / Memory
 $name
-4-1E6-95 (at 4 threads, 95% hit rate)
-4-1E6-80 (at 4 threads, 80% hit rate)
-4-1E6-50 (at 4 threads, 50% hit rate)
+4-1M-95 (at 4 threads, 95% hit rate)
+4-1M-80 (at 4 threads, 80% hit rate)
+4-1M-50 (at 4 threads, 50% hit rate)
 EOF
 `"
 echo "$spec" | plotMemoryGraphsSettled
-graph "${name}MemorySettled4-95" "$name, used heap at end of benchmark after settling, 4 threads and 95% hit rate"
-graph "${name}MemorySettled4-80" "$name, used heap at end of benchmark after settling, 4 threads and 80% hit rate"
-graph "${name}MemorySettled4-50" "$name, used heap at and of benchmark after settling, 4 threads and 50% hit rate"
+echo "$spec" | plotMemoryGraphsHeap
 echo "$spec" | plotMemoryGraphs
-graph "${name}Memory4-95" "$name, memory statistics at 4 threads and 95% hit rate"
-graph "${name}Memory4-80" "$name, memory statistics at 4 threads and 80% hit rate"
-graph "${name}Memory4-50" "$name, memory statistics at 4 threads and 50% hit rate"
+percent="50 80 95";
+sizes="100K 1M 10M";
+threads="1 4 8";
+for factor in $factors; do
+  for size in $sizes; do
+    for thread in $threads; do
+      graph "${name}MemorySettled$thread-$size-$percent" "$name, used heap at end of benchmark and after settling, $thread threads, cache of $size entry capacity at $percent% hit rate"
+      graph "${name}MemoryHeap$thread-$size-$percent" "$name, used heap at end, after settling and after GC during run, $thread threads, cache of $size entry capacity at $percent% hit rate"
+      graph "${name}Memory$thread-$size-$percent" "$name, memory statistics, $thread threads, cache of $size entry capacity at $percent% hit rate"
+    done
+  done
+done
 }
 
-benchmarks="ZipfianLoadingSequenceBenchmark ZipfianDirectSequenceLoadingBenchmark"
+benchmarks="ZipfianSequenceLoadingBenchmark"
 for name in $benchmarks; do
 noBenchmark $name || {
 spec="`cat << EOF
 factor
 $name / Memory
 $name
-4-20 (at 4 threads, factor 20)
-4-40 (at 4 threads, factor 40)
-4-80 (at 4 threads, factor 80)
+1-1M-10 (at 1 threads, factor 10)
+4-1M-10 (at 4 threads, factor 10)
+8-1M-10 (at 8 threads, factor 10)
+1-100K-10 (at 1 threads, factor 10)
+4-100K-10 (at 4 threads, factor 10)
+8-100K-10 (at 8 threads, factor 10)
 EOF
 `"
 echo "$spec" | plotMemoryGraphsSettled
-graph "${name}MemorySettled4-20" "$name, used heap at end of benchmark after settling, 4 threads and factor 20"
-graph "${name}MemorySettled4-40" "$name, used heap at end of benchmark after settling, 4 threads and factor 40"
-graph "${name}MemorySettled4-80" "$name, used heap at and of benchmark after settling, 4 threads and factor 80"
+echo "$spec" | plotMemoryGraphsHeap
 echo "$spec" | plotMemoryGraphs
-graph "${name}Memory4-20" "$name, memory statistics at 4 threads and factor 20"
-graph "${name}Memory4-40" "$name, memory statistics at 4 threads and factor 40"
-graph "${name}Memory4-80" "$name, memory statistics at 4 threads and factor 80"
+factors="10";
+sizes="100K 1M";
+threads="1 4 8";
+for factor in $factors; do
+  for size in $sizes; do
+    for thread in $threads; do
+      graph "${name}MemorySettled$thread-$size-$factor" "$name, used heap at end of benchmark after settling, $thread threads, cache of $size entry capacity at Zipfian factor $factor"
+      graph "${name}MemoryHeap$thread-$size-$factor" "$name, used heap at end, after settling and after GC during run, $thread threads, cache of $size entry capacity at Zipfian factor $factor"
+      graph "${name}Memory$thread-$size-$factor" "$name, memory statistics, $thread threads, cache of $size entry capacity at Zipfian factor $factor"
+    done
+  done
+done
 }
 done
 
