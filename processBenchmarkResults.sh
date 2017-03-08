@@ -160,6 +160,29 @@ END {
 EOF
 `
 
+
+highContrast() {
+# http://colorbrewer2.org/....
+# quantitative 12 set with b/w bars mixed in
+cnt=1;
+colors="#a6cee3 #1f78b4 #b2df8a #33a02c #e31a1c #fb9a99 #fdbf6f #ff7f00 #cab2d6 #6a3d9a #888888 #ffff99 #b15928 #000000"
+
+for I in $colors; do
+  echo "set style line $cnt lt rgb \"$I\"";
+  cnt=$(( $cnt + 1 ));
+done
+cnt=0;
+echo "set palette defined ( \\";
+for I in $colors; do
+ if [ $cnt -gt 0 ]; then echo ", \\"; fi
+ echo -n " $cnt '$I'"
+ cnt=$(( $cnt + 1 ));
+done
+echo ")";
+echo "set palette maxcolors $cnt";
+}
+
+
 maxYRange() {
 awk "$maxYRange_awk";
 }
@@ -187,17 +210,18 @@ test -z "$xTitle" || echo "set xlabel '${xTitle}'";
 test -z "$yTitle" || echo "set ylabel '${yTitle}'";
 echo "set title '$title'";
 echo "set yrange [ 0.0 : $maxYRange ] noreverse nowriteback";
+highContrast;
 # echo "i = 22";
 # echo "plot '$in' using 2:xtic(1) ti col, '' u 3 ti col, '' u 4 ti col";
 #if [ "`cat $in | wc -l`" -lt 3 ]; then
 #  echo  -n "plot '$in' using 2 ti col";
 #else
-  echo  -n "plot '$in' using 2:xtic(1) ti col";
+  echo  -n "plot '$in' using 2:xtic(1) ti col ls 1";
 #fi
 cols=$(( `head -n 1 "$in" | wc -w` ));
   idx=3;
   while [ $idx -le $cols ]; do
-    echo -n ", '' u $idx ti col";
+    echo -n ", '' u $idx ti col ls $(( $idx - 1 ))";
     idx=$(( $idx + 1 ));
   done
   echo ""; 
@@ -222,7 +246,14 @@ rm -rf $RESULT/*.dat;
 rm -rf $RESULT/*.svg;
 rm -rf $RESULT/*.plot;
 
-header="Size OPT LRU S/LRU CLOCK Cache2k ARC CAR S/Lirs EHCache2 Guava Caffeine S/Mru S/Lfu S/WTLfu S/WTLfu90 RAND";
+traces="Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 Zipf10k TotalRandom1000 \
+       UmassWebSearch1 UmassFinancial1 UmassFinancial2 \
+       OrmAccessBusytime OrmAccessNight Glimpse ScarabRecs ScarabProds";
+
+# S/WTLfu S/WTLfu90
+header="Size OPT LRU S/LRU CLOCK Cache2k ARC CAR S/Lirs EHCache2 Guava Caffeine S/Mru S/Lfu RAND";
+#         org.cache2k.benchmark.thirdparty.CaffeineSimulatorWTinyLfuBenchmark \
+#        org.cache2k.benchmark.thirdparty.CaffeineSimulatorWTinyLfu90Benchmark \
 impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
 	org.cache2k.benchmark.LruCacheBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineSimulatorLruBenchmark \
@@ -236,12 +267,8 @@ impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineSimulatorMruBenchmark \
         org.cache2k.benchmark.thirdparty.CaffeineSimulatorLfuBenchmark \
-        org.cache2k.benchmark.thirdparty.CaffeineSimulatorWTinyLfuBenchmark \
-        org.cache2k.benchmark.thirdparty.CaffeineSimulatorWTinyLfu90Benchmark \
         org.cache2k.benchmark.RandomCacheBenchmark";
-for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 Zipf10k TotalRandom1000 \
-         UmassWebSearch1 UmassFinancial1 UmassFinancial2 \
-         OrmAccessBusytime OrmAccessNight Glimpse; do
+for I in $traces; do
   f=$RESULT/trace${I}hitrate.dat;
   (
   echo $header;
@@ -261,9 +288,7 @@ impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
        org.cache2k.benchmark.thirdparty.CaffeineBenchmark \
        org.cache2k.benchmark.Cache2kDefaultBenchmark \
        org.cache2k.benchmark.RandomCacheBenchmark";
-for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 Zipf10k TotalRandom1000 \
-         UmassWebSearch1 UmassFinancial1 UmassFinancial2 \
-         OrmAccessBusytime OrmAccessNight Glimpse; do
+for I in $traces; do
   f=$RESULT/trace${I}hitrateProducts.dat;
   (
   echo $header;
@@ -284,9 +309,7 @@ impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
        org.cache2k.benchmark.thirdparty.CaffeineRegularBenchmark \
        org.cache2k.benchmark.Cache2kDefaultBenchmark \
        org.cache2k.benchmark.RandomCacheBenchmark";
-for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 Zipf10k TotalRandom1000 \
-         UmassWebSearch1 UmassFinancial1 UmassFinancial2 \
-         OrmAccessBusytime OrmAccessNight Glimpse; do
+for I in $traces; do
   f=$RESULT/trace${I}hitrateProductsCaffeineRegular.dat;
   (
   echo $header;
@@ -298,8 +321,6 @@ for I in Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 Zipf10k TotalRandom1000 \
 done
 
 }
-
-
 
 processCommandLine "$@";
 
