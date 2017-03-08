@@ -40,7 +40,7 @@ org.cache2k.benchmark.thirdparty.EhCache2Factory";
 # for TCache we need to add:
 # "org.cache2k.benchmark.thirdparty.TCache1Factory";
 
-CACHE_FACTORY_LIST=org.cache2k.benchmark.thirdparty.CaffeineCacheFactory
+# CACHE_FACTORY_LIST=org.cache2k.benchmark.thirdparty.CaffeineCacheFactory
 
 CACHE_LABEL_LIST=`echo $CACHE_FACTORY_LIST | cacheShortNames`;
 
@@ -289,7 +289,7 @@ highContrast() {
 # http://colorbrewer2.org/....
 cnt=1;
 colors="d7191c ffffbf fdae61 abdda4 2b83ba 1b7837"
-colors="aaaabf fdae61 abdda4 2b83ba 1b7837"
+# colors="aaaabf fdae61 abdda4 2b83ba 1b7837"
 
 for I in $colors; do
   echo "set style line $cnt lt rgb \"#$I\"";
@@ -602,7 +602,7 @@ header4 "$prods";
 json | \
     jq -r ".[] |  select (.benchmark | contains (\".${name}\") ) | [ (.threads | tostring) + \"-\" + .params.entryCount + \"-\" + .params.$param, .params.cacheFactory, .primaryMetric.score, .primaryMetric.scoreError, .primaryMetric.scoreConfidence[0], .primaryMetric.scoreConfidence[1]  ] | @csv" | \
     sort | tr -d '"' | \
-    pivot4 $prods | shortenParamValues | sort | grep "$filter" | \
+    pivot4 $prods | sort -nt- | shortenParamValues | grep "$filter" | \
     stripEmpty
 ) > $f
 plot --withConfidence $f "${name} / Throughput" "threads-size-$param" "ops/s"
@@ -671,6 +671,7 @@ echo -n > $RESULT/typeset.adoc
 }
 
 graph() {
+test -f $RESULT/$1-notitle.svg || return 0;
 typesetPlainMarkDown "$1" "$2";
 typesetAsciiDoc "$1" "$2";
 }
@@ -759,21 +760,22 @@ noBenchmark ReadOnlyBenchmark || {
     plot $f "CombinedReadWrite" "ops/s"
 }
 
-benchmarks="RandomSequenceCacheBenchmark NeverHitBenchmark RandomAccessLongSequenceBenchmark MultiRandomAccessBenchmark GeneratedRandomSequenceBenchmark"
+benchmarks="RandomSequenceBenchmark NeverHitBenchmark RandomAccessLongSequenceBenchmark MultiRandomAccessBenchmark GeneratedRandomSequenceBenchmark"
 for I in $benchmarks; do
   noBenchmark $I || {
       plotOps $I hitRate;
       graph "$graphName" "$I, operations per second (complete)";
 
-      plotOps $I hitRate "strip" "^.*-50 .*\|^.*-95 .*";
+      # plotOps $I hitRate "strip" "^.*-50 .*\|^.*-95 .*";
       graph "$graphName" "$I, operations per second";
 
 #      plotMemUsed $I hitRate;
 #      plotMemUsedSettled $I hitRate;
-      plotEffectiveHitrate $I hitRate;
-      graph "$graphName" "$I, effective hitrate by target hitrate (complete)";
-      plotEffectiveHitrate $I hitRate "strip" "^.*-50 .*\|^.*-95 .*";
-      graph "$graphName" "$I, effective hitrate by target hitrate";
+      # plotEffectiveHitrate $I hitRate;
+      # graph "$graphName" "$I, effective hitrate by target hitrate (complete)";
+
+      # plotEffectiveHitrate $I hitRate "strip" "^.*-50 .*\|^.*-95 .*";
+      # graph "$graphName" "$I, effective hitrate by target hitrate";
   }
 done
 
@@ -793,15 +795,15 @@ for I in $benchmarks; do
   }
 done
 
-name=GeneratedRandomSequenceBenchmark
+name=RandomSequenceBenchmark
 noBenchmark $name || {
 spec="`cat << EOF
 hitRate
 $name / Memory
 $name
-4-95 (at 4 threads, 95% hit rate)
-4-80 (at 4 threads, 80% hit rate)
-4-50 (at 4 threads, 50% hit rate)
+4-1E6-95 (at 4 threads, 95% hit rate)
+4-1E6-80 (at 4 threads, 80% hit rate)
+4-1E6-50 (at 4 threads, 50% hit rate)
 EOF
 `"
 echo "$spec" | plotMemoryGraphsSettled

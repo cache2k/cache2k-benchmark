@@ -217,10 +217,11 @@ done
 # benchmarks="NeverHitBenchmark MultiRandomAccessBenchmark GeneratedRandomSequenceBenchmark ZipfianLoadingSequenceBenchmark";
 # benchmarks="RandomSequenceBenchmark ZipfianSequenceLoadingBenchmark ZipfianLoopingSequenceLoadingBenchmark";
 # benchmarks="ZipfianLoopingPrecomputedSequenceLoadingBenchmark ZipfianHoppingPrecomputedSequenceLoadingBenchmark";
-benchmarks="RandomSequenceBenchmark";
+# benchmarks="RandomSequenceBenchmark";
+benchmarks="ZipfianSequenceLoadingBenchmark";
 for impl in $COMPLETE; do
   for benchmark in $benchmarks; do
-    for threads in 1 4 8 16; do
+    for threads in 1 4 8; do
       runid="$impl-$benchmark-$threads";
       fn="$TARGET/result-$runid";
       echo;
