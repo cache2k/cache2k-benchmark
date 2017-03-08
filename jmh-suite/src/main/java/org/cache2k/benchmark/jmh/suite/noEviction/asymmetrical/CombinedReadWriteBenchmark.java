@@ -55,13 +55,18 @@ public class CombinedReadWriteBenchmark extends BenchmarkBase {
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    getsDestroyed = cache = getFactory().create(SIZE * 2);
+    cache = getFactory().create(SIZE * 2);
     ints = new Integer[SIZE];
     AccessPattern _pattern = new ScrambledZipfianPattern(1802, ITEMS);
     for (int i = 0; i < SIZE; i++) {
       ints[i] = _pattern.next();
       cache.put(ints[i], i);
     }
+  }
+
+  @TearDown(Level.Iteration)
+  public void tearDown() {
+    recordMemoryAndDestroy(cache);
   }
 
   @Benchmark @Group("readOnly") @GroupThreads(4) @BenchmarkMode(Mode.Throughput)

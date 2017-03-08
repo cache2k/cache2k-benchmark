@@ -82,13 +82,15 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    getsDestroyed = cache =
+    cache =
       getFactory().createLoadingCache(Integer.class, Integer.class, entryCount, source);
   }
 
   @TearDown(Level.Iteration)
   public void tearDown() {
     HitCountRecorder.recordMissCount(source.missCount.longValue());
+    recordMemoryAndDestroy(cache);
+    cache = null;
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

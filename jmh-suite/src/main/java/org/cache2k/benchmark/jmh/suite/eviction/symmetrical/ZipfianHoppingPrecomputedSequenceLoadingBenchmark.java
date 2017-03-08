@@ -84,7 +84,7 @@ public class ZipfianHoppingPrecomputedSequenceLoadingBenchmark extends Benchmark
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    getsDestroyed = cache = getFactory().createLoadingCache(Integer.class, Integer.class, entryCount, source);
+    cache = getFactory().createLoadingCache(Integer.class, Integer.class, entryCount, source);
     ZipfianPattern _generator = new ZipfianPattern(1802, entryCount * factor);
     pattern = new Integer[PATTERN_COUNT];
     for (int i = 0; i < PATTERN_COUNT; i++) {
@@ -95,6 +95,8 @@ public class ZipfianHoppingPrecomputedSequenceLoadingBenchmark extends Benchmark
   @TearDown(Level.Iteration)
   public void tearDown() {
     HitCountRecorder.recordMissCount(source.missCount.longValue());
+    recordMemoryAndDestroy(cache);
+    cache = null;
   }
 
   @Benchmark

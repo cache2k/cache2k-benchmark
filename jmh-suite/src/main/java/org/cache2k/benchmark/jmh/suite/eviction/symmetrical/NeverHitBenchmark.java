@@ -29,6 +29,7 @@ import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -54,7 +55,13 @@ public class NeverHitBenchmark extends BenchmarkBase {
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    getsDestroyed = cache = getFactory().create(ENTRY_COUNT);
+    cache = getFactory().create(ENTRY_COUNT);
+  }
+
+  @TearDown(Level.Iteration)
+  public void tearDown() {
+    recordMemoryAndDestroy(cache);
+    cache = null;
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

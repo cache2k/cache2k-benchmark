@@ -31,6 +31,7 @@ import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.BenchmarkParams;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,7 +51,12 @@ public class PopulateParallelOnceBenchmark extends BenchmarkBase {
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    getsDestroyed = cache = getFactory().create(size);
+    cache = getFactory().create(size);
+  }
+
+  @TearDown(Level.Iteration)
+  public void tearDown() {
+    recordMemoryAndDestroy(cache);
   }
 
   @AuxCounters @State(Scope.Thread)

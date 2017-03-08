@@ -23,13 +23,12 @@ package org.cache2k.benchmark.jmh;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.Cache2kFactory;
 import org.cache2k.benchmark.jmh.suite.eviction.symmetrical.Cache2kMetricsRecorder;
-import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.TearDown;
 
 import java.io.Closeable;
+import java.io.IOException;
 
 /**
  * Base for all JMH cache benchmarks, controlling the cache lifecycle and
@@ -39,8 +38,6 @@ import java.io.Closeable;
  */
 @State(Scope.Benchmark)
 public class BenchmarkBase {
-
-  protected Closeable getsDestroyed;
 
   @Param("DEFAULT")
   public String cacheFactory;
@@ -58,17 +55,18 @@ public class BenchmarkBase {
     }
   }
 
-  @TearDown(Level.Iteration)
-  public void tearDownBase() throws Exception {
+  public void recordMemoryAndDestroy(Closeable _closeable) {
     ForcedGcMemoryProfiler.recordUsedMemory();
-    if (getsDestroyed != null) {
+    if (_closeable != null) {
       System.out.println();
-      String _statString = getsDestroyed.toString();
+      String _statString = _closeable.toString();
       System.out.println(_statString);
       System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
       Cache2kMetricsRecorder.recordStats(_statString);
-      getsDestroyed.close();
-      getsDestroyed = null;
+      try {
+        _closeable.close();
+      } catch (IOException _ignore) {
+      }
     }
   }
 

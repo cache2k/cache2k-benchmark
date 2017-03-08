@@ -31,6 +31,7 @@ import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 
 import java.util.Random;
 
@@ -63,8 +64,14 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    getsDestroyed = cache = getFactory().create(entryCount);
+    cache = getFactory().create(entryCount);
     range = (int) (entryCount * (100D / hitRate));
+  }
+
+  @TearDown(Level.Iteration)
+  public void tearDown() {
+    recordMemoryAndDestroy(cache);
+    cache = null;
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

@@ -32,6 +32,7 @@ import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -58,18 +59,27 @@ public class PrecomputedRandomSequenceCacheBenchmark extends BenchmarkBase {
   }
 
   BenchmarkCache<Integer, Integer> cache;
-
   Integer[] ints;
 
-  @Setup(Level.Iteration)
-  public void setup() throws Exception {
-    getsDestroyed = cache = getFactory().create(ENTRY_COUNT);
+  @Setup(Level.Trial)
+  public void setupBenchmark() throws Exception {
     ints = new Integer[PATTERN_COUNT];
     AccessPattern _pattern =
       new RandomAccessPattern((int) (ENTRY_COUNT * (100D / hitRate)));
     for (int i = 0; i < PATTERN_COUNT; i++) {
       ints[i] = _pattern.next();
     }
+  }
+
+  @Setup(Level.Iteration)
+  public void setup() throws Exception {
+    cache = getFactory().create(ENTRY_COUNT);
+  }
+
+  @TearDown(Level.Iteration)
+  public void tearDown() {
+    recordMemoryAndDestroy(cache);
+    cache = null;
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

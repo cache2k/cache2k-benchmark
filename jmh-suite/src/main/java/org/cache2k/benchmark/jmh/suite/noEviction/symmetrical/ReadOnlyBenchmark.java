@@ -32,6 +32,7 @@ import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -64,7 +65,7 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    getsDestroyed = cache = getFactory().create(ENTRY_COUNT);
+    cache = getFactory().create(ENTRY_COUNT);
     ints = new Integer[PATTERN_COUNT];
     AccessPattern _pattern =
       new RandomAccessPattern((int) (ENTRY_COUNT * (100D / hitRate)));
@@ -74,6 +75,11 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
     for (int i = 0; i < ENTRY_COUNT; i++) {
       cache.put(i, i);
     }
+  }
+
+  @TearDown(Level.Iteration)
+  public void tearDown() {
+    recordMemoryAndDestroy(cache);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
