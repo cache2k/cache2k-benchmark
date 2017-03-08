@@ -469,7 +469,9 @@ while read key description; do
   f=$RESULT/${benchmark}Memory$key.dat
   (
     echo "threads usedHeap/settled error lower upper usedHeap/fin error lower upper usedHeap/max() error lower upper totalHeap error lower upper VmRSS error lower upper VmHWM error lower upper allocRate(byte/s) error lower upper";
-    extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues | grep "^$key" | stripFirstColumn | cacheShortNames
+    local tmp="$RESULT/tmp-plotMemoryGraphs-$benchmark-$param.data"
+    test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
+    cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames
   ) > $f
   plot --withConfidence --withColors memoryColors $f "$title\n$description" "cache" "Bytes"
 done
@@ -483,7 +485,9 @@ while read key description; do
   f=$RESULT/${benchmark}MemorySettled$key.dat
   (
     echo "threads usedHeap/settled error lower upper usedHeap/fin error lower upper";
-    extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues | grep "^$key" | stripFirstColumn | cacheShortNames
+    local tmp="$RESULT/tmp-plotMemoryGraphsSettled-$benchmark-$param.data"
+    test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
+    cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames
   ) > $f
   plot --withConfidence --withColors memoryColors $f "$title\n$description" "cache" "Bytes"
 done
@@ -497,7 +501,9 @@ while read key description; do
   f=$RESULT/${benchmark}MemoryHeap$key.dat
   (
     echo "threads usedHeap/settled error lower upper usedHeap/fin error lower upper usedHeap/max() error lower upper";
-    extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues | grep "^$key" | stripFirstColumn | cacheShortNames
+    local tmp="$RESULT/tmp-plotMemoryGraphsHeap-$benchmark-$param.data"
+    test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
+    cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames
   ) > $f
   plot --withConfidence --withColors memoryColors $f "$title\n$description" "cache" "Bytes"
 done
@@ -532,11 +538,10 @@ local query=`cat << EOF
   ] | @csv
 EOF
 `
-json | \
-    jq -r "$query"  | \
-    sort | tr -d '"' | \
-    pivot4 $prods | shortenParamValues | sort | grep "$filter" | \
-    stripEmpty
+local tmp="$RESULT/tmp-plotEffectiveHitrate-$name-$param.data"
+test -f "$tmp" || json | \
+    jq -r "$query"  | sort | tr -d '"' | pivot4 $prods | shortenParamValues | sort > "$tmp"
+    cat "$tmp" | grep "$filter" | stripEmpty
 ) > $f
 plot --withConfidence $f "${name} / Effective Hit Rate" "threads - size - $param" "effective hitrate"
 }
@@ -656,7 +661,6 @@ shorten_awk=`cat <<"EOF"
 EOF
 `
 
-
 # plot main score, typically through put in operations per second.
 plotOps() {
 name="$1";
@@ -672,11 +676,12 @@ fi
 graphName=`basename $f .dat`;
 (
 header4 "$prods";
-json | \
+local tmp="$RESULT/tmp-plotOps-$name-$param.data"
+test -f "$tmp" || json | \
     jq -r ".[] |  select (.benchmark | contains (\".${name}\") ) | [ (.threads | tostring) + \"-\" + .params.entryCount + \"-\" + .params.$param, .params.cacheFactory, .primaryMetric.score, .primaryMetric.scoreError, .primaryMetric.scoreConfidence[0], .primaryMetric.scoreConfidence[1]  ] | @csv" | \
     sort | tr -d '"' | \
-    pivot4 $prods | sort -nt- | shortenParamValues | grep "$filter" | \
-    stripEmpty
+    pivot4 $prods | sort -nt- | shortenParamValues > "$tmp"
+    cat "$tmp" | grep "$filter" | stripEmpty
 ) > $f
 plot --withConfidence $f "${name} / Throughput" "threads-size-$param" "ops/s"
 }
@@ -753,6 +758,8 @@ process() {
 
 bigJson;
 cleanTypesetting;
+# clean tmp files.
+rm -f $RESULT/tmp-*;
 
 noBenchmark PopulateParallelOnceBenchmark || {
 
@@ -839,8 +846,40 @@ for I in $benchmarks; do
       plotOps $I hitRate;
       graph "$graphName" "$I, operations per second (complete)";
 
+      plotOps $I hitRate "byMem-10x95" "^10-.*-95 .*";
+      graph "$graphName" "$I, operations per second at 10 threads and 95 percent target hitrate";
+
+      plotOps $I hitRate "byMem-10x80" "^10-.*-80 .*";
+      graph "$graphName" "$I, operations per second at 10 threads and 80 percent target hitrate";
+      # plotEffectiveHitrate $I hitRate "strip10x80" "^10-.*-80 .*";
+      # graph "$graphName" "$I, effective hitrate at 10 threads and 80 percent target hitrate";
+
+      plotOps $I hitRate "byMem-10x50" "^10-.*-50 .*";
+      graph "$graphName" "$I, operations per second at 10 threads and 50 percent target hitrate";
+
+
+      plotOps $I hitRate "byMem-4x95" "^4-.*-95 .*";
+      graph "$graphName" "$I, operations per second at 4 threads and 95 percent target hitrate";
+
+      plotOps $I hitRate "byMem-4x80" "^4-.*-80 .*";
+      graph "$graphName" "$I, operations per second at 4 threads and 80 percent target hitrate";
+
+      plotOps $I hitRate "byMem-4x50" "^4-.*-50 .*";
+      graph "$graphName" "$I, operations per second at 4 threads and 50 percent target hitrate";
+
+
+      plotOps $I hitRate "byThread-1Mx80" "^.*-1M-80 .*";
+      graph "$graphName" "$I, operations per second by thread count at 80 percent target hitrate, 1M size";
+
+      plotOps $I hitRate "byThread-10Mx80" "^.*-10M-80 .*";
+      graph "$graphName" "$I, operations per second by thread count at 80 percent target hitrate, 10M size";
+
+      plotOps $I hitRate "byThread-1Mx95" "^.*-1M-95 .*";
+      graph "$graphName" "$I, operations per second by thread count at 95 percent target hitrate, 1M size";
+
+      plotOps $I hitRate "byThread-10Mx95" "^.*-10M-95 .*";
+      graph "$graphName" "$I, operations per second by thread count at 95 percent target hitrate, 10M size";
       # plotOps $I hitRate "strip" "^.*-50 .*\|^.*-95 .*";
-      graph "$graphName" "$I, operations per second";
 
 #      plotMemUsed $I hitRate;
 #      plotMemUsedSettled $I hitRate;
@@ -857,14 +896,25 @@ for I in $benchmarks; do
   noBenchmark $I || {
       plotOps $I factor;
       graph "$graphName" "$I, operations per second by Zipfian distribution factor (complete)";
-      plotOps $I factor "strip" "^.*-10 .*\|^.*-80 .*";
-      graph "$graphName" "$I, operations per second by Zipfian distribution factor";
-#      plotMemUsed $I factor;
-#      plotMemUsedSettled $I factor;
+
       plotEffectiveHitrate $I factor;
       graph "$graphName" "$I, Effective hitrate by Zipfian distribution factor (complete)";
-      plotEffectiveHitrate $I factor "strip" "^.*-10 .*\|^.*-80 .*";
-      graph "$graphName" "$I, Effective hitrate by Zipfian distribution factor";
+
+      plotOps $I factor "strip4x80" "^4-.*-80 .*";
+      graph "$graphName" "$I, operations per second at 4 threads and 80 Zipfian factor";
+
+      plotEffectiveHitrate $I factor "strip4x80" "^4-.*-80 .*";
+      graph "$graphName" "$I, Effective hitrate at 4 threads and 80 Zipfian factor";
+
+      plotOps $I factor "strip10x80" "^10-.*-80 .*";
+      graph "$graphName" "$I, operations per second at 10 threads and 80 Zipfian factor";
+
+      plotEffectiveHitrate $I factor "strip10x80" "^10-.*-80 .*";
+      graph "$graphName" "$I, Effective hitrate at 10 threads and 80 Zipfian factor";
+
+
+#      plotMemUsed $I factor;
+#      plotMemUsedSettled $I factor;
   }
 done
 
