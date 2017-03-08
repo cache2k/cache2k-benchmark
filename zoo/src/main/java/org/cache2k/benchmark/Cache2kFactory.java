@@ -57,7 +57,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
 
       @Override
       public void close() {
-        c.destroy();
+        c.close();
       }
 
       @Override
