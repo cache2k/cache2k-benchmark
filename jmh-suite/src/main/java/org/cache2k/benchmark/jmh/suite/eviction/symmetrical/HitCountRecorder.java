@@ -51,21 +51,15 @@ public class HitCountRecorder {
   public void tearDown() {
     synchronized (LOCK) {
       if (hitCount > 0) {
-        addCounterResult(
-          "hitCount", hitCount, "hit", AggregationPolicy.AVG
-        );
+        addCounterResult("hitCount", hitCount, "hit", AggregationPolicy.AVG);
       }
       if (missCount > 0) {
-        addCounterResult(
-          "missCount", missCount, "miss", AggregationPolicy.AVG
-        );
+        addCounterResult("missCount", missCount, "miss", AggregationPolicy.AVG);
       }
       if (opCount == 0) {
         opCount = hitCount + missCount;
       }
-      addCounterResult(
-        "opCount", opCount, "op", AggregationPolicy.AVG
-      );
+      addCounterResult("opCount", opCount, "op", AggregationPolicy.AVG);
       updateHitrate();
     }
   }
@@ -89,12 +83,18 @@ public class HitCountRecorder {
   }
 
   private static void updateHitrate() {
+    System.err.println("Thread " + Thread.currentThread());
     long _missCountSum = getCounterResult("missCount");
     long _opCountSum = getCounterResult("opCount");
     if (_opCountSum == 0L) {
+      System.err.println("Skipping hitrate calculation opCountSum=0");
       return;
     }
-    setResult("hitrate", 100.0 - _missCountSum * 100.0 / _opCountSum, "percent", AggregationPolicy.AVG);
+    System.err.println("opCountSum " + _opCountSum);
+    System.err.println("missCountSum " + _missCountSum);
+    double _hitRate = 100.0 - _missCountSum * 100.0 / _opCountSum;
+    System.err.println("hitRate: " + _hitRate);
+    setResult("hitrate", _hitRate, "percent", AggregationPolicy.AVG);
   }
 
 }

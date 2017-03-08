@@ -43,10 +43,10 @@ import java.util.Random;
 @State(Scope.Benchmark)
 public class RandomSequenceBenchmark extends BenchmarkBase {
 
-  @Param({"80"})
+  @Param({"50", "80", "95"})
   public int hitRate = 0;
 
-  @Param({"1000000"})
+  @Param({"100000", "1000000", "10000000"})
   public int entryCount = 100_000;
 
   /** Use thread safe RPNG to give each thread state another seed. */

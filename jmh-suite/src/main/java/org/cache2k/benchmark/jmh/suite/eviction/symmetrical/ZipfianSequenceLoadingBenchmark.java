@@ -55,10 +55,10 @@ import java.util.concurrent.atomic.LongAdder;
 @State(Scope.Benchmark)
 public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
-  @Param({"10"})
+  @Param({"10", "80", "200"})
   public int factor = 0;
 
-  @Param({"100000"})
+  @Param({"100000", "1000000", "10000000"})
   public int entryCount = 100_000;
 
   private final DataSource source = new DataSource();
@@ -82,7 +82,8 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    getsDestroyed = cache = getFactory().createLoadingCache(Integer.class, Integer.class, entryCount, source);
+    getsDestroyed = cache =
+      getFactory().createLoadingCache(Integer.class, Integer.class, entryCount, source);
   }
 
   @TearDown(Level.Iteration)

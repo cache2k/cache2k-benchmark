@@ -29,7 +29,7 @@ test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:+UseG1G
 # -f how many time to fork a single benchmark
 test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 0 -i 1 -r 1s -foe true";
 
-test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 4 -wi 2 -w 10s -i 2 -r 60s";
+test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 2 -wi 2 -w 10s -i 2 -r 90s";
 
 # Tinker benchmark options to do profiling and add assembler code output (linux only).
 # Needs additional disassembly library to display assembler code
@@ -221,7 +221,7 @@ done
 benchmarks="ZipfianSequenceLoadingBenchmark RandomSequenceBenchmark";
 for impl in $COMPLETE; do
   for benchmark in $benchmarks; do
-    for threads in 1 4 8; do
+    for threads in 1 2 3 4 8 10; do
       runid="$impl-$benchmark-$threads";
       fn="$TARGET/result-$runid";
       echo;

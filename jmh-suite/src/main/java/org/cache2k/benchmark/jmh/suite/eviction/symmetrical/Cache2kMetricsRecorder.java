@@ -46,12 +46,20 @@ public class Cache2kMetricsRecorder {
     }
     String[] sa = _statisticsString.split(", |\\(|\\), ");
     long _scanCount = 0;
+    long _evictCount = 0;
     for (String s : sa) {
       if (s.startsWith("coldScanCnt=") || s.startsWith("hotScanCnt=")) {
         _scanCount += Long.parseLong(s.split("=")[1]);
       }
+      if (s.startsWith("evict=")) {
+        _evictCount = Long.parseLong(s.split("=")[1]);
+      }
     }
     l.add(new ProfilerResult(RESULT_PREFIX + "scanCount", _scanCount, "counter", AggregationPolicy.AVG));
+    l.add(new ProfilerResult(RESULT_PREFIX + "evictCount", _evictCount, "counter", AggregationPolicy.AVG));
+    if (_evictCount > 0) {
+      l.add(new ProfilerResult(RESULT_PREFIX + "scanPerEviction", _scanCount * 1.0D / _evictCount, "counter", AggregationPolicy.AVG));
+    }
   }
 
   public static void recordStats(String _statisticsString) {
