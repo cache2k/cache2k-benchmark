@@ -73,7 +73,8 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
     @Setup(Level.Iteration)
     public void setup(ZipfianSequenceLoadingBenchmark _benchmark) {
-      pattern = new ZipfianPattern(_benchmark.offsetSeed.nextLong(), _benchmark.entryCount * _benchmark.factor);
+      pattern = new ZipfianPattern(_benchmark.offsetSeed.nextLong(),
+        _benchmark.entryCount * _benchmark.factor);
     }
 
   }
@@ -82,8 +83,21 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
+    source.missCount.reset();
+    int _range = entryCount * factor;
     cache =
       getFactory().createLoadingCache(Integer.class, Integer.class, entryCount, source);
+    /*
+       fill the cache completely, so memory is already expanded at maximum
+       this way the benchmark runs on better steady state and jitter is reduced.
+       we don't want to measure insert performance, but read + eviction
+     */
+    ZipfianPattern _generator = new ZipfianPattern(1802, _range);
+    for (int i = 0; i < entryCount * 3; i++) {
+      Integer v = _generator.next();
+      cache.put(v, v);
+    }
+    System.out.println("Stats after iteration setup: " + cache);
   }
 
   @TearDown(Level.Iteration)

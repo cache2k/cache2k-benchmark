@@ -44,7 +44,7 @@ import java.util.Random;
 @State(Scope.Benchmark)
 public class RandomSequenceBenchmark extends BenchmarkBase {
 
-  @Param({"95"})
+  @Param({"50", "80", "95"})
   public int hitRate = 0;
 
   @Param({"100000", "1000000", "10000000"})
@@ -67,21 +67,14 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
     cache = getFactory().create(entryCount);
     range = (int) (entryCount * (100D / hitRate));
     /*
-       fill the cache completely. memory is already expanded at maximum
+       fill the cache completely, so memory is already expanded at maximum
+       this way the benchmark runs on better steady state and jitter is reduced.
        we don't want to measure insert performance, but read + eviction
-       fast filling strategy to produce a cache content similar to the zipfian
-       distributions.
      */
-    for (int i = 0; i < entryCount; i++) {
-      Integer _boxed = i;
-      cache.put(_boxed, _boxed);
-    }
     XorShift1024StarRandomGenerator _generator = new XorShift1024StarRandomGenerator(1802);
-    for (int i = 0; i < entryCount * 10; i++) {
+    for (int i = 0; i < entryCount * 2; i++) {
       Integer v = _generator.nextInt(range);
-      if (v >= entryCount) {
-        cache.put(v, v);
-      }
+      cache.put(v, v);
     }
   }
 

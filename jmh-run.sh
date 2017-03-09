@@ -18,9 +18,11 @@ set -e;
 
 # http://mechanical-sympathy.blogspot.de/2011/11/biased-locking-osr-and-benchmarking-fun.html
 # http://www.oracle.com/technetwork/tutorials/tutorials-1876574.html
-# test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx2G -XX:+UseG1GC -XX:+UseBiasedLocking -XX:+UseCompressedOops";
+# test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx2G -XX:+UseG1GC";
 
-test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:+UseG1GC -XX:+UseBiasedLocking";
+# biased locking delay is 4000 by default, enable from the start to minimize effects on the first benchmark iteration
+# (check with: ava  -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal 2>/dev/null | grep BiasedLockingStartupDelay)
+test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:+UseG1GC -XX:BiasedLockingStartupDelay=0";
 
 # -wi warmup iterations
 # -w warmup time
@@ -29,7 +31,8 @@ test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:+UseG1G
 # -f how many time to fork a single benchmark
 test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 0 -i 1 -r 1s -foe true";
 
-test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 2 -wi 2 -w 10s -i 2 -r 90s";
+# -f 2 / -i 2 has not enough confidence, there is sometime one outlier
+test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 3 -wi 1 -w 10s -i 3 -r 20s";
 
 # Tinker benchmark options to do profiling and add assembler code output (linux only).
 # Needs additional disassembly library to display assembler code
@@ -39,7 +42,7 @@ test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 2 -wi 2 -w 10s 
 # install with e.g.: mv ~/Downloads/linux-hsdis-amd64.so jdk1.8.0_45/jre/lib/amd64/hsdis-amd64.so.
 # For profiling only do one fork, but more measurement iterations
 # profilers are described here: http://java-performance.info/introduction-jmh-profilers
-test -n "$BENCHMARK_PERFASM" || BENCHMARK_PERFASM="-f 1 -wi 2 -i 5 -r 30s -prof perfasm";
+test -n "$BENCHMARK_PERFASM" || BENCHMARK_PERFASM="-f 1 -wi 1 -w 10s -i 1 -r 30s -prof perfasm";
 
 STANDARD_PROFILER="-prof comp -prof gc -prof hs_rt";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler";
@@ -221,7 +224,7 @@ done
 benchmarks="ZipfianSequenceLoadingBenchmark RandomSequenceBenchmark";
 for impl in $COMPLETE; do
   for benchmark in $benchmarks; do
-    for threads in 1 2 3 4 8 10; do
+    for threads in 1 2 4 8; do
       runid="$impl-$benchmark-$threads";
       fn="$TARGET/result-$runid";
       echo;
