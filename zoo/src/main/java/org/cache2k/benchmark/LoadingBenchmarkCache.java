@@ -27,19 +27,19 @@ import java.io.Closeable;
  *
  * @author Jens Wilke; created: 2013-06-15
  */
-public abstract class LoadingBenchmarkCache<K, T> implements Closeable {
+public abstract class LoadingBenchmarkCache<K, V> implements Closeable {
 
   /**
    * Return the element that is present in the cache or invoke the loader.
    */
-  public T get(K key) {
+  public V get(K key) {
     throw new UnsupportedOperationException();
   }
 
   /**
    * Puts an entry in the cache. Needed for read/write benchmark.
    */
-  public void put(K key, T value) {
+  public void put(K key, V value) {
     throw new UnsupportedOperationException();
   }
 

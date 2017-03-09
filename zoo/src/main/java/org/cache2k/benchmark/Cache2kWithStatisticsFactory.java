@@ -21,6 +21,8 @@ package org.cache2k.benchmark;
  */
 
 /**
+ * Used for eviction benchmarks.
+ *
  * @author Jens Wilke
  */
 public class Cache2kWithStatisticsFactory extends Cache2kFactory {
