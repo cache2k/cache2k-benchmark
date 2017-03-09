@@ -178,8 +178,8 @@ public class DateFormattingBenchmark {
     for (Date d : l) {
       w.print(c.get(Locale.FRANCE).get(DateFormat.LONG).get(d));
     }
-    for (CacheEntry<Locale, Cache<Integer, Cache<Date, String>>> e : c) {
-      for (CacheEntry<Integer, Cache<Date, String>> e1 : e.getValue()) {
+    for (CacheEntry<Locale, Cache<Integer, Cache<Date, String>>> e : c.entries()) {
+      for (CacheEntry<Integer, Cache<Date, String>> e1 : e.getValue().entries()) {
         e1.getValue().close();
       }
       e.getValue().close();
