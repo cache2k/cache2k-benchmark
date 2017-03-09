@@ -68,11 +68,7 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
     if (withExpiry) {
       cb.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
     }
-    if (Runtime.getRuntime().availableProcessors() > 4) {
-      cb.concurrencyLevel(Runtime.getRuntime().availableProcessors());
-    } else {
-      cb.concurrencyLevel(4);
-    }
+    cb.concurrencyLevel(Runtime.getRuntime().availableProcessors() * 2);
     return cb;
   }
 
