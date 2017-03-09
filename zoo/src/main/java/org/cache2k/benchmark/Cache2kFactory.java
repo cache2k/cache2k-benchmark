@@ -122,7 +122,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
       b.eternal(true);
     }
     if (disableStatistics) {
-      b.disableStatistics(true);
+      b.disableStatistics(true).strictEviction(false).boostConcurrency(true).disableLastModificationTime(true);
     }
     if (_source != null) {
       b.loader(new CacheLoader<K, V>() {
