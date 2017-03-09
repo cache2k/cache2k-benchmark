@@ -23,23 +23,18 @@ package org.cache2k.benchmark.jmh;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.InternalProfiler;
-import org.openjdk.jmh.profile.ProfilerResult;
+
 import org.openjdk.jmh.results.AggregationPolicy;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.Result;
+import org.openjdk.jmh.results.ScalarResult;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 /**
  * Record misc secondary result metrics.
@@ -51,7 +46,7 @@ public class MiscResultRecorderProfiler implements InternalProfiler {
   public static final String SECONDARY_RESULT_PREFIX = "+misc.";
 
   static final Map<String, CounterResult> counters = new ConcurrentHashMap<>();
-  static final Map<String, ProfilerResult> results = new ConcurrentHashMap<>();
+  static final Map<String, Result<?>> results = new ConcurrentHashMap<>();
 
   /**
    * Insert the counter value as secondary result. If a value is already inserted the
@@ -74,13 +69,13 @@ public class MiscResultRecorderProfiler implements InternalProfiler {
    * Insert the counter value as secondary result. An existing counter value is replaced.
    */
   public static void setResult(String key, double _result, String _unit, AggregationPolicy _aggregationPolicy) {
-    setResult(new ProfilerResult(SECONDARY_RESULT_PREFIX + key, _result, _unit, _aggregationPolicy));
+    setResult(new ScalarResult(SECONDARY_RESULT_PREFIX + key, _result, _unit, _aggregationPolicy));
   }
 
   /**
    * Add result to the JMH result data. If called multiple times with the same label only the last one will be added.
    */
-  public static void setResult(ProfilerResult r) {
+  public static void setResult(Result r) {
     results.put(r.getLabel(), r);
   }
 
@@ -91,10 +86,10 @@ public class MiscResultRecorderProfiler implements InternalProfiler {
 
   @Override
   public Collection<? extends Result> afterIteration(final BenchmarkParams benchmarkParams, final IterationParams iterationParams, final IterationResult result) {
-    List<ProfilerResult> all = new ArrayList<>();
+    List<Result<?>> all = new ArrayList<>();
     counters.values().stream()
       .map(e ->
-        new ProfilerResult(SECONDARY_RESULT_PREFIX + e.key, (double) e.counter.get(), e.unit, e.aggregationPolicy))
+        new ScalarResult(SECONDARY_RESULT_PREFIX + e.key, (double) e.counter.get(), e.unit, e.aggregationPolicy))
       .sequential().forEach(e -> all.add(e));
     all.addAll(results.values());
     return all;

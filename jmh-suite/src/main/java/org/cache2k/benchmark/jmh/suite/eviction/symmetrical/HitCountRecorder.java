@@ -61,6 +61,7 @@ public class HitCountRecorder {
       }
       addCounterResult("opCount", opCount, "op", AggregationPolicy.AVG);
       updateHitrate();
+      hitCount = missCount = opCount = 0;
     }
   }
 

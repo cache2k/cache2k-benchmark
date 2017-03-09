@@ -21,8 +21,9 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
  */
 
 import org.cache2k.benchmark.jmh.MiscResultRecorderProfiler;
-import org.openjdk.jmh.profile.ProfilerResult;
 import org.openjdk.jmh.results.AggregationPolicy;
+import org.openjdk.jmh.results.Result;
+import org.openjdk.jmh.results.ScalarResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class Cache2kMetricsRecorder {
   /**
    * Populate a list, so we can do a unit test
    */
-  static void recordStats(List<ProfilerResult> l, String _statisticsString) {
+  static void recordStats(List<Result> l, String _statisticsString) {
     if (!_statisticsString.startsWith("Cache") && !_statisticsString.contains("integrityState=")) {
       return;
     }
@@ -55,15 +56,15 @@ public class Cache2kMetricsRecorder {
         _evictCount = Long.parseLong(s.split("=")[1]);
       }
     }
-    l.add(new ProfilerResult(RESULT_PREFIX + "scanCount", _scanCount, "counter", AggregationPolicy.AVG));
-    l.add(new ProfilerResult(RESULT_PREFIX + "evictCount", _evictCount, "counter", AggregationPolicy.AVG));
+    l.add(new ScalarResult(RESULT_PREFIX + "scanCount", _scanCount, "counter", AggregationPolicy.AVG));
+    l.add(new ScalarResult(RESULT_PREFIX + "evictCount", _evictCount, "counter", AggregationPolicy.AVG));
     if (_evictCount > 0) {
-      l.add(new ProfilerResult(RESULT_PREFIX + "scanPerEviction", _scanCount * 1.0D / _evictCount, "counter", AggregationPolicy.AVG));
+      l.add(new ScalarResult(RESULT_PREFIX + "scanPerEviction", _scanCount * 1.0D / _evictCount, "counter", AggregationPolicy.AVG));
     }
   }
 
   public static void recordStats(String _statisticsString) {
-    List<ProfilerResult> l = new ArrayList<>();
+    List<Result> l = new ArrayList<>();
     recordStats(l, _statisticsString);
     l.forEach(MiscResultRecorderProfiler::setResult);
   }

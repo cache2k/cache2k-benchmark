@@ -51,10 +51,10 @@ import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.InternalProfiler;
 import org.openjdk.jmh.profile.ProfilerException;
-import org.openjdk.jmh.profile.ProfilerResult;
 import org.openjdk.jmh.results.AggregationPolicy;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.Result;
+import org.openjdk.jmh.results.ScalarResult;
 import org.openjdk.jmh.util.HashMultiset;
 import org.openjdk.jmh.util.Multiset;
 
@@ -72,6 +72,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +86,7 @@ public class GcProfiler implements InternalProfiler {
   private HotspotAllocationSnapshot beforeAllocated;
   private final NotificationListener listener;
   private volatile Multiset<String> churn;
-  private long maximumUsedAfterGc = -1;
+  private List<Long> usedAfterGc = Collections.synchronizedList(new ArrayList<>());
 
   public GcProfiler() throws ProfilerException {
     churn = new HashMultiset<String>();
@@ -111,9 +112,7 @@ public class GcProfiler implements InternalProfiler {
               for (Map.Entry<String, MemoryUsage> entry : mapAfter.entrySet()) {
                 String name = entry.getKey();
                 MemoryUsage after = entry.getValue();
-                if (after.getUsed() > maximumUsedAfterGc) {
-                  maximumUsedAfterGc = after.getUsed();
-                }
+                usedAfterGc.add(after.getUsed());
                 MemoryUsage before = mapBefore.get(name);
                 long c = before.getUsed() - after.getUsed();
                 if (c > 0) {
@@ -156,11 +155,17 @@ public class GcProfiler implements InternalProfiler {
     this.beforeGCTime = gcTime;
     this.beforeAllocated = HotspotAllocationSnapshot.create();
     this.beforeTime = System.nanoTime();
-    this.maximumUsedAfterGc = -1;
   }
 
   @Override
   public Collection<? extends Result> afterIteration(BenchmarkParams benchmarkParams, IterationParams iterationParams, IterationResult iResult) {
+
+    try {
+      Thread.sleep(567);
+    } catch (InterruptedException ignore) {
+
+    }
+
     uninstallHooks();
     long afterTime = System.nanoTime();
 
@@ -173,22 +178,22 @@ public class GcProfiler implements InternalProfiler {
       gcTime += bean.getCollectionTime();
     }
 
-    List<ProfilerResult> results = new ArrayList<ProfilerResult>();
+    List<Result<?>> results = new ArrayList<>();
 
     if (beforeAllocated == HotspotAllocationSnapshot.EMPTY) {
-      results.add(new ProfilerResult(Defaults.PREFIX + "gc.alloc.rate",
+      results.add(new ScalarResult(Defaults.PREFIX + "gc.alloc.rate",
         Double.NaN,
         "MB/sec", AggregationPolicy.AVG));
     } else {
       long allocated = newSnapshot.subtract(beforeAllocated);
-      results.add(new ProfilerResult(Defaults.PREFIX + "gc.alloc.rate",
+      results.add(new ScalarResult(Defaults.PREFIX + "gc.alloc.rate",
         (afterTime != beforeTime) ?
           1.0 * allocated / 1024 / 1024 * TimeUnit.SECONDS.toNanos(1) / (afterTime - beforeTime) :
           Double.NaN,
         "MB/sec", AggregationPolicy.AVG));
       if (allocated != 0) {
         long allOps = iResult.getMetadata().getAllOps();
-        results.add(new ProfilerResult(Defaults.PREFIX + "gc.alloc.rate.norm",
+        results.add(new ScalarResult(Defaults.PREFIX + "gc.alloc.rate.norm",
           (allOps != 0) ?
             1.0 * allocated / allOps :
             Double.NaN,
@@ -196,14 +201,14 @@ public class GcProfiler implements InternalProfiler {
       }
     }
 
-    results.add(new ProfilerResult(
+    results.add(new ScalarResult(
       Defaults.PREFIX + "gc.count",
       gcCount - beforeGCCount,
       "counts",
       AggregationPolicy.SUM));
 
     if (gcCount != beforeGCCount || gcTime != beforeGCTime) {
-      results.add(new ProfilerResult(
+      results.add(new ScalarResult(
         Defaults.PREFIX + "gc.time",
         gcTime - beforeGCTime,
         "ms",
@@ -219,21 +224,26 @@ public class GcProfiler implements InternalProfiler {
 
       String spaceName = space.replaceAll(" ", "_");
 
-      results.add(new ProfilerResult(
+      results.add(new ScalarResult(
         Defaults.PREFIX + "gc.churn." + spaceName + "",
         churnRate,
         "MB/sec",
         AggregationPolicy.AVG));
 
-      results.add(new ProfilerResult(Defaults.PREFIX + "gc.churn." + spaceName + ".norm",
+      results.add(new ScalarResult(Defaults.PREFIX + "gc.churn." + spaceName + ".norm",
         churnNorm,
         "B/op",
         AggregationPolicy.AVG));
     }
 
-    if (maximumUsedAfterGc >= 0) {
-      results.add(new ProfilerResult(Defaults.PREFIX + "gc.maximumUsedAfterGc",
-        maximumUsedAfterGc,
+    Collections.sort(usedAfterGc);
+    long _maximumUsedAfterGc = -1;
+    if (!usedAfterGc.isEmpty()) {
+      _maximumUsedAfterGc = usedAfterGc.get(usedAfterGc.size() - 1);
+    }
+    if (_maximumUsedAfterGc >= 0) {
+      results.add(new ScalarResult(Defaults.PREFIX + "gc.maximumUsedAfterGc",
+        _maximumUsedAfterGc,
         "bytes",
         AggregationPolicy.AVG));
     }

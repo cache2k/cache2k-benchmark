@@ -23,10 +23,10 @@ package org.cache2k.benchmark.jmh;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.InternalProfiler;
-import org.openjdk.jmh.profile.ProfilerResult;
 import org.openjdk.jmh.results.AggregationPolicy;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.Result;
+import org.openjdk.jmh.results.ScalarResult;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -246,7 +246,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
    * Parse the linux {@code /proc/self/status} and add everything prefixed with "Vm" as metric to
    * the profiling result.
    */
-  private static void addLinuxVmStats(List<ProfilerResult> l) {
+  private static void addLinuxVmStats(List<Result> l) {
     try {
       LineNumberReader r = new LineNumberReader(new InputStreamReader(new FileInputStream("/proc/self/status")));
       String _line;
@@ -263,7 +263,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
         }
         String _name = sa[0].substring(0, sa[0].length() - 1);
         l.add(
-          new ProfilerResult("+forced-gc-mem.used." + _name, (double) Long.parseLong(sa[1]), "kB", AggregationPolicy.AVG)
+          new ScalarResult("+forced-gc-mem.used." + _name, (double) Long.parseLong(sa[1]), "kB", AggregationPolicy.AVG)
         );
       }
     } catch (IOException ex) {
@@ -276,13 +276,13 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
     if (usedMemory == 0) {
       return Collections.emptyList();
     }
-    List<ProfilerResult> l = new ArrayList<>();
+    List<Result> l = new ArrayList<>();
     addLinuxVmStats(l);
     l.addAll(Arrays.asList(
-      new ProfilerResult("+forced-gc-mem.used.settled", (double) usedMemorySettled, "bytes", AggregationPolicy.AVG),
-      new ProfilerResult("+forced-gc-mem.used.after", (double) usedMemory, "bytes", AggregationPolicy.AVG),
-      new ProfilerResult("+forced-gc-mem.total", (double) totalMemory, "bytes", AggregationPolicy.AVG),
-      new ProfilerResult("+forced-gc-mem.gcTimeMillis", (double) gcTimeMillis, "ms", AggregationPolicy.AVG)
+      new ScalarResult("+forced-gc-mem.used.settled", (double) usedMemorySettled, "bytes", AggregationPolicy.AVG),
+      new ScalarResult("+forced-gc-mem.used.after", (double) usedMemory, "bytes", AggregationPolicy.AVG),
+      new ScalarResult("+forced-gc-mem.total", (double) totalMemory, "bytes", AggregationPolicy.AVG),
+      new ScalarResult("+forced-gc-mem.gcTimeMillis", (double) gcTimeMillis, "ms", AggregationPolicy.AVG)
     ));
     return l;
   }
