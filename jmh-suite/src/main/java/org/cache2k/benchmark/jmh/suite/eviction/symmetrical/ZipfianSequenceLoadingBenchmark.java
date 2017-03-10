@@ -23,6 +23,7 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
 import org.cache2k.benchmark.BenchmarkCacheSource;
 import org.cache2k.benchmark.LoadingBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
+import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
 import org.cache2k.benchmark.util.ZipfianPattern;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -55,10 +56,10 @@ import java.util.concurrent.atomic.LongAdder;
 @State(Scope.Benchmark)
 public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
-  @Param({"10", "80", "200"})
+  @Param({"10"})
   public int factor = 0;
 
-  @Param({"100000", "1000000", "10000000"})
+  @Param({"100000"})
   public int entryCount = 100_000;
 
   private final DataSource source = new DataSource();
@@ -81,9 +82,8 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
   LoadingBenchmarkCache<Integer, Integer> cache;
 
-  @Setup(Level.Iteration)
-  public void setup() throws Exception {
-    source.missCount.reset();
+  @Setup
+  public void setupBenchmark() {
     int _range = entryCount * factor;
     cache =
       getFactory().createLoadingCache(Integer.class, Integer.class, entryCount, source);
@@ -97,14 +97,22 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
       Integer v = _generator.next();
       cache.put(v, v);
     }
-    System.out.println("Stats after iteration setup: " + cache);
+    System.out.println("Cache stats after benchmark setup: " + cache);
+  }
+
+  @Setup(Level.Iteration)
+  public void setup() throws Exception {
+    source.missCount.reset();
   }
 
   @TearDown(Level.Iteration)
   public void tearDown() {
     HitCountRecorder.recordMissCount(source.missCount.longValue());
-    recordMemoryAndDestroy(cache);
-    cache = null;
+    ForcedGcMemoryProfiler.recordUsedMemory();
+    String _statString = cache.toString();
+    System.out.println(_statString);
+    System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
+    Cache2kMetricsRecorder.recordStats(_statString);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
