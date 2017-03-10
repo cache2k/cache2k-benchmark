@@ -146,7 +146,7 @@ fi
 # Implementations with complete caching features
 COMPLETE="Cache2kFactory"
 
-TARGET="target/jmh-result";
+TARGET="/run/shm/jmh-result";
 test -d $TARGET || mkdir -p $TARGET;
 
 if test -n "$backends"; then
@@ -201,6 +201,7 @@ for impl in $NO_EVICTION $COMPLETE; do
       fn="$TARGET/result-$runid";
       echo;
       echo "## $runid";
+      sync
       limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER \
            -t $threads -p cacheFactory=org.cache2k.benchmark.$impl \
            -rf json -rff "$fn.json" \
@@ -221,7 +222,8 @@ done
 # benchmarks="RandomSequenceBenchmark ZipfianSequenceLoadingBenchmark ZipfianLoopingSequenceLoadingBenchmark";
 # benchmarks="ZipfianLoopingPrecomputedSequenceLoadingBenchmark ZipfianHoppingPrecomputedSequenceLoadingBenchmark";
 # benchmarks="RandomSequenceBenchmark";
-benchmarks="ZipfianSequenceLoadingBenchmark RandomSequenceBenchmark";
+# benchmarks="ZipfianSequenceLoadingBenchmark RandomSequenceBenchmark";
+benchmarks="ZipfianSequenceLoadingBenchmark";
 for impl in $COMPLETE; do
   for benchmark in $benchmarks; do
     for threads in 1 2 4 8; do
@@ -229,6 +231,7 @@ for impl in $COMPLETE; do
       fn="$TARGET/result-$runid";
       echo;
       echo "## $runid";
+      sync
       limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER \
            -t $threads -p cacheFactory=org.cache2k.benchmark.$impl \
            -rf json -rff "$fn.json" \
@@ -253,6 +256,7 @@ for impl in $NO_EVICTION $COMPLETE; do
     fn="$TARGET/result-$runid";
     echo;
     echo "## $runid";
+    sync
     limitCores 4 $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER \
          -p cacheFactory=org.cache2k.benchmark.$impl \
          -rf json -rff "$fn.json" \
