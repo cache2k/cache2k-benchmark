@@ -87,6 +87,7 @@ public class GcProfiler implements InternalProfiler {
   private final NotificationListener listener;
   private volatile Multiset<String> churn;
   private List<Long> usedAfterGc = Collections.synchronizedList(new ArrayList<>());
+  private List<Long> committedAfterGc = Collections.synchronizedList(new ArrayList<>());
 
   public GcProfiler() throws ProfilerException {
     churn = new HashMultiset<String>();
@@ -113,6 +114,7 @@ public class GcProfiler implements InternalProfiler {
                 String name = entry.getKey();
                 MemoryUsage after = entry.getValue();
                 usedAfterGc.add(after.getUsed());
+                committedAfterGc.add(after.getCommitted());
                 MemoryUsage before = mapBefore.get(name);
                 long c = before.getUsed() - after.getUsed();
                 if (c > 0) {
@@ -236,14 +238,19 @@ public class GcProfiler implements InternalProfiler {
         AggregationPolicy.AVG));
     }
 
-    Collections.sort(usedAfterGc);
-    long _maximumUsedAfterGc = -1;
     if (!usedAfterGc.isEmpty()) {
-      _maximumUsedAfterGc = usedAfterGc.get(usedAfterGc.size() - 1);
-    }
-    if (_maximumUsedAfterGc >= 0) {
+      Collections.sort(usedAfterGc);
+      long _maximumUsedAfterGc = usedAfterGc.get(usedAfterGc.size() - 1);
       results.add(new ScalarResult(Defaults.PREFIX + "gc.maximumUsedAfterGc",
         _maximumUsedAfterGc,
+        "bytes",
+        AggregationPolicy.AVG));
+    }
+    if (!committedAfterGc.isEmpty()) {
+      Collections.sort(committedAfterGc);
+      long _committedUsedAfterGc = committedAfterGc.get(committedAfterGc.size() - 1);
+      results.add(new ScalarResult(Defaults.PREFIX + "gc.maximumCommittedAfterGc",
+        _committedUsedAfterGc,
         "bytes",
         AggregationPolicy.AVG));
     }
