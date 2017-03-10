@@ -23,6 +23,7 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
 import it.unimi.dsi.util.XorShift1024StarRandomGenerator;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
+import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Level;
@@ -44,10 +45,10 @@ import java.util.Random;
 @State(Scope.Benchmark)
 public class RandomSequenceBenchmark extends BenchmarkBase {
 
-  @Param({"50", "80", "95"})
+  @Param({"80", "95"})
   public int hitRate = 0;
 
-  @Param({"100000", "1000000", "10000000"})
+  @Param({"100000", "1000000"})
   public int entryCount = 100_000;
 
   /** Use thread safe RPNG to give each thread state another seed. */
@@ -62,8 +63,8 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
 
   BenchmarkCache<Integer, Integer> cache;
 
-  @Setup(Level.Iteration)
-  public void setup() throws Exception {
+  @Setup
+  public void setupBenchmark() {
     cache = getFactory().create(entryCount);
     range = (int) (entryCount * (100D / hitRate));
     /*
@@ -80,8 +81,11 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    recordMemoryAndDestroy(cache);
-    cache = null;
+    ForcedGcMemoryProfiler.recordUsedMemory();
+    String _statString = cache.toString();
+    System.out.println(_statString);
+    System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
+    Cache2kMetricsRecorder.recordStats(_statString);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
