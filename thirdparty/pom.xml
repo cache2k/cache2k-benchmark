@@ -14,7 +14,7 @@
   <name>Benchmarks: third party products.</name>
 
   <properties>
-    <caffeine.version>2.3.5</caffeine.version>
+    <caffeine.version>2.4.0</caffeine.version>
   </properties>
 
   <dependencies>
@@ -81,6 +81,14 @@
         <exclusion>
           <groupId>org.ehcache</groupId>
           <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.github.snazy.ohc</groupId>
+          <artifactId>ohc-core-j8</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>systems.comodal</groupId>
+          <artifactId>collision</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
