@@ -22,7 +22,7 @@ set -e;
 
 # biased locking delay is 4000 by default, enable from the start to minimize effects on the first benchmark iteration
 # (check with: ava  -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal 2>/dev/null | grep BiasedLockingStartupDelay)
-test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:+UseG1GC -XX:BiasedLockingStartupDelay=0";
+test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedLockingStartupDelay=0";
 
 # -wi warmup iterations
 # -w warmup time
@@ -32,7 +32,7 @@ test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:+UseG1G
 test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 0 -i 1 -r 1s -foe true";
 
 # -f 2 / -i 2 has not enough confidence, there is sometime one outlier
-test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 3 -wi 1 -w 10s -i 3 -r 20s";
+test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 5 -wi 1 -w 10s -i 3 -r 20s";
 
 # Tinker benchmark options to do profiling and add assembler code output (linux only).
 # Needs additional disassembly library to display assembler code
