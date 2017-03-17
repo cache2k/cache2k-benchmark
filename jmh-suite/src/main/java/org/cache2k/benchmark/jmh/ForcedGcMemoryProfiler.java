@@ -28,6 +28,7 @@ import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.ScalarResult;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -61,6 +62,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
   static long usedMemorySettled;
   static long totalMemory;
   static long gcTimeMillis;
+  static long usedHeapMemory;
 
   /**
    * Called from the benchmark when the objects are still referenced to record the
@@ -80,9 +82,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
         m2 = getUsedMemory();
       } while (m2 < usedMemorySettled);
       gcTimeMillis = System.currentTimeMillis() - t0;
-      System.err.println();
-      System.err.println("Heap histogram after memory settled: ");
-      printHeapHisto(System.out, 30);
+      usedHeapMemory = printHeapHisto(System.out, 30);
     }
   }
 
@@ -122,12 +122,16 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
-      if (countGc(_enabledBeans) > _beforeGcCount) {
-        MemoryUsage mu = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
-        totalMemory = mu.getCommitted();
-        long _usedMemory = mu.getUsed();
-        System.err.println("Used memory: " + _usedMemory);
-        return mu.getUsed();
+      long _gcCount;
+      if ((_gcCount = countGc(_enabledBeans)) > _beforeGcCount) {
+        MemoryUsage _heapUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+        MemoryUsage _nonHeapUsage = ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage();
+        totalMemory = _heapUsage.getCommitted() + _nonHeapUsage.getCommitted();
+        long _usedHeapMemory = _heapUsage.getUsed();
+        long _usedNonHeap = _nonHeapUsage.getUsed();
+        System.err.println("[getMemoryMXBean] usedHeap=" + _usedHeapMemory + ", usedNonHeap=" + _usedNonHeap + ", totalUsed=" + (_usedHeapMemory + _usedNonHeap) + ", gcCount=" + _gcCount);
+        System.err.println("[Runtime totalMemory-freeMemory] used memory: " + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+        return _usedHeapMemory + _usedNonHeap;
       }
     }
     System.err.println("WARNING: System.gc() was invoked but couldn't detect a GC occurring, is System.gc() disabled?");
@@ -142,28 +146,76 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
     return cnt;
   }
 
-  private static void printHeapHisto(PrintStream out, int _maxLines) {
+  /**
+   * oracles' java doc says that remoteDataDump outputs the same as ctrl-break, however,
+   * heap information is missing and only threads are printed.
+   */
+  private static void dumpThreads(PrintStream out) {
     Object obj = getJvmVirtualMachine();
     if (obj == null) {
       return;
     }
     try {
-      Method heapHistoMethod = obj.getClass().getMethod("heapHisto", Object[].class);
-      InputStream in = (InputStream) heapHistoMethod.invoke(obj, new Object[] { new Object[] { "-all" } });
+      Method heapHistoMethod = obj.getClass().getMethod("remoteDataDump", Object[].class);
+      InputStream in = (InputStream) heapHistoMethod.invoke(obj, new Object[] { new Object[] {} });
       LineNumberReader r = new LineNumberReader(new InputStreamReader(in));
       String s;
       while ((s = r.readLine()) != null) {
         out.println(s);
-        if (r.getLineNumber() > _maxLines) {
-          break;
-        }
       }
       r.close();
       in.close();
     } catch (Exception ex) {
-      System.err.println("ForcedGcMemoryProfiler: error attaching");
+      System.err.println("ForcedGcMemoryProfiler: error attaching / reading histogram");
       ex.printStackTrace();
     }
+    out.println();
+  }
+
+  private static long printHeapHisto(PrintStream out, int _maxLines) {
+    Object obj = getJvmVirtualMachine();
+    if (obj == null) {
+      return 0;
+    }
+    boolean _partial = false;
+    long _totalBytes = 0;
+    try {
+      Method heapHistoMethod = obj.getClass().getMethod("heapHisto", Object[].class);
+      InputStream in = (InputStream) heapHistoMethod.invoke(obj, new Object[] { new Object[] { "-live" } });
+      LineNumberReader r = new LineNumberReader(new InputStreamReader(in));
+      String s;
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream ps = new PrintStream(buffer);
+      while ((s = r.readLine()) != null) {
+        if ( s.startsWith("Total")) {
+          ps.println(s);
+          String[] sa = s.split("\\s+");
+          _totalBytes = Long.parseLong(sa[2]);
+        } else if (r.getLineNumber() <= _maxLines) {
+          ps.println(s);
+        } else {
+          if (!_partial) {
+            ps.println("[ ... truncated ... ]");
+          }
+          _partial = true;
+        }
+      }
+      r.close();
+      in.close();
+      ps.close();
+      byte[] _histoOuptut = buffer.toByteArray();
+      buffer = new ByteArrayOutputStream();
+      ps = new PrintStream(buffer);
+      ps.println("[Heap Histogram Live Objects] used=" + _totalBytes);
+      ps.write(_histoOuptut);
+      ps.println();
+      ps.close();
+      out.write(buffer.toByteArray());
+    } catch (Exception ex) {
+      System.err.println("ForcedGcMemoryProfiler: error attaching / reading histogram");
+      ex.printStackTrace();
+    }
+    return _totalBytes;
   }
 
   private static boolean attachingTried;
@@ -284,7 +336,8 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       new ScalarResult("+forced-gc-mem.used.settled", (double) usedMemorySettled, "bytes", AggregationPolicy.AVG),
       new ScalarResult("+forced-gc-mem.used.after", (double) usedMemory, "bytes", AggregationPolicy.AVG),
       new ScalarResult("+forced-gc-mem.total", (double) totalMemory, "bytes", AggregationPolicy.AVG),
-      new ScalarResult("+forced-gc-mem.gcTimeMillis", (double) gcTimeMillis, "ms", AggregationPolicy.AVG)
+      new ScalarResult("+forced-gc-mem.gcTimeMillis", (double) gcTimeMillis, "ms", AggregationPolicy.AVG),
+      new ScalarResult("+forced-gc-mem.usedHeap", (double) usedHeapMemory, "bytes", AggregationPolicy.AVG)
     ));
     return l;
   }

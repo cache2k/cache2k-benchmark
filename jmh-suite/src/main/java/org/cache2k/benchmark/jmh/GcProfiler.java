@@ -106,21 +106,28 @@ public class GcProfiler implements InternalProfiler {
         public void handleNotification(Notification n, Object o) {
           try {
             if (n.getType().equals(notifNameField.get(null))) {
+              StringBuilder debugLine = new StringBuilder();
               Object info = infoMethod.invoke(null, n.getUserData());
               Object gcInfo = getGcInfo.invoke(info);
               Map<String, MemoryUsage> mapBefore = (Map<String, MemoryUsage>) getMemoryUsageBeforeGc.invoke(gcInfo);
               Map<String, MemoryUsage> mapAfter = (Map<String, MemoryUsage>) getMemoryUsageAfterGc.invoke(gcInfo);
+              long committed = 0;
+              long used = 0;
               for (Map.Entry<String, MemoryUsage> entry : mapAfter.entrySet()) {
                 String name = entry.getKey();
                 MemoryUsage after = entry.getValue();
-                usedAfterGc.add(after.getUsed());
-                committedAfterGc.add(after.getCommitted());
+                committed += after.getCommitted();
+                used += after.getUsed();
+                debugLine.append(name).append("=").append(after.getUsed()).append(", ");
                 MemoryUsage before = mapBefore.get(name);
                 long c = before.getUsed() - after.getUsed();
                 if (c > 0) {
                   churn.add(name, c);
                 }
               }
+              usedAfterGc.add(used);
+              committedAfterGc.add(committed);
+              System.out.println("[GC Notification Listener] " + debugLine + "Total used=" + used + ", Total committed=" + committed);
             }
           } catch (IllegalAccessException e) {
           } catch (InvocationTargetException e) {
@@ -245,6 +252,7 @@ public class GcProfiler implements InternalProfiler {
         _maximumUsedAfterGc,
         "bytes",
         AggregationPolicy.AVG));
+      System.out.println("maximumUsedAfterGc=" + _maximumUsedAfterGc);
     }
     if (!committedAfterGc.isEmpty()) {
       Collections.sort(committedAfterGc);
@@ -253,6 +261,7 @@ public class GcProfiler implements InternalProfiler {
         _committedUsedAfterGc,
         "bytes",
         AggregationPolicy.AVG));
+      System.out.println("maximumCommittedAfterGc=" + _committedUsedAfterGc);
     }
 
     return results;
