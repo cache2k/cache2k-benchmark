@@ -125,6 +125,8 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       if (countGc(_enabledBeans) > _beforeGcCount) {
         MemoryUsage mu = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
         totalMemory = mu.getCommitted();
+        long _usedMemory = mu.getUsed();
+        System.err.println("Used memory: " + _usedMemory);
         return mu.getUsed();
       }
     }
