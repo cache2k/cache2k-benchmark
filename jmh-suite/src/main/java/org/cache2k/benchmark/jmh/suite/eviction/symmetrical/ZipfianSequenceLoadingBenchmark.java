@@ -108,6 +108,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @TearDown(Level.Iteration)
   public void tearDown() {
     HitCountRecorder.recordMissCount(source.missCount.longValue());
+    HitCountRecorder.printResult();
     ForcedGcMemoryProfiler.recordUsedMemory();
     String _statString = cache.toString();
     System.out.println(_statString);
