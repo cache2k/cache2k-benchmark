@@ -22,7 +22,7 @@ set -e;
 
 # biased locking delay is 4000 by default, enable from the start to minimize effects on the first benchmark iteration
 # (check with: ava  -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal 2>/dev/null | grep BiasedLockingStartupDelay)
-test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedLockingStartupDelay=0 -verbose:gc -XX:+PrintGCTimeStamps -XX:+PrintGCDetails";
+test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedLockingStartupDelay=0 -verbose:gc -XX:+PrintGCTimeStamps -XX:+PrintGCDetails -XX:+UseG1GC";
 
 # -wi warmup iterations
 # -w warmup time
@@ -49,6 +49,8 @@ STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.ForcedGcMe
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.MiscResultRecorderProfiler";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.GcProfiler";
 
+EXTRA_PROFILER="";
+
 # not used yet
 PERF_NORM_OPTIONS="-prof perfnorm:useDefaultStat=true"
 
@@ -74,7 +76,7 @@ processCommandLine() {
     case "$1" in
       --quick) OPTIONS="$BENCHMARK_QUICK";;
       --perfasm) OPTIONS="$BENCHMARK_PERFASM";;
-      --perfnorm) OPTIONS="$BENCHMARK_PERFNORM";;
+      --perfnorm) EXTRA_PROFILER=$EXTRA_PROFILER" $PERF_NORM_OPTIONS";;
       --no3pty) no3pty=true;;
       --cache2k) cache2k=true;;
       --backends) backends="$2"; shift; ;;
@@ -202,7 +204,7 @@ for impl in $NO_EVICTION $COMPLETE; do
       echo;
       echo "## $runid";
       sync
-      limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER \
+      limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER $EXTRA_PROFILER \
            -t $threads -p cacheFactory=org.cache2k.benchmark.$impl \
            -rf json -rff "$fn.json" \
            2>&1 | tee $fn.out | filterProgress
@@ -232,7 +234,7 @@ for impl in $COMPLETE; do
       echo;
       echo "## $runid";
       sync
-      limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER \
+      limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER  $EXTRA_PROFILER \
            -t $threads -p cacheFactory=org.cache2k.benchmark.$impl \
            -rf json -rff "$fn.json" \
            2>&1 | tee $fn.out | filterProgress
@@ -257,7 +259,7 @@ for impl in $NO_EVICTION $COMPLETE; do
     echo;
     echo "## $runid";
     sync
-    limitCores 4 $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER \
+    limitCores 4 $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER  $EXTRA_PROFILER \
          -p cacheFactory=org.cache2k.benchmark.$impl \
          -rf json -rff "$fn.json" \
          2>&1 | tee $fn.out | filterProgress
