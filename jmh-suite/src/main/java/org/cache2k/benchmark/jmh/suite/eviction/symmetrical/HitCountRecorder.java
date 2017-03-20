@@ -83,21 +83,6 @@ public class HitCountRecorder {
     }
   }
 
-  public static void printResult() {
-    synchronized (LOCK) {
-      long _missCountSum = getCounterResult("missCount");
-      long _opCountSum = getCounterResult("opCount");
-      if (_opCountSum == 0L) {
-        System.err.println("Skipping hitrate calculation opCountSum=0");
-        return;
-      }
-      System.err.println("opCountSum " + _opCountSum);
-      System.err.println("missCountSum " + _missCountSum);
-      double _hitRate = 100.0 - _missCountSum * 100.0 / _opCountSum;
-      System.err.println("hitRate: " + _hitRate);
-    }
-  }
-
   /** Called for each thread */
   private static void updateHitrate() {
     long _missCountSum = getCounterResult("missCount");
@@ -106,6 +91,7 @@ public class HitCountRecorder {
       return;
     }
     double _hitRate = 100.0 - _missCountSum * 100.0 / _opCountSum;
+    System.err.println(Thread.currentThread() + " hitRate: " + _hitRate);
     setResult("hitrate", _hitRate, "percent", AggregationPolicy.AVG);
   }
 
