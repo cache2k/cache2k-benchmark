@@ -463,14 +463,13 @@ local query=`cat << EOF
     .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreConfidence[0] * 1000,
     .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreConfidence[1] * 1000,
     .["secondaryMetrics"]["+c2k.gc.alloc.rate"].score * 1000 * 1000,
-    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreError* 1000 * 1000,
+    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreError * 1000 * 1000,
     .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreConfidence[0] * 1000 * 1000,
     .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreConfidence[1] * 1000 * 1000,
-
-    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].score * 1000 * 1000 / .primaryMetric.score,
-    0,
-    0,
-    0
+    .["secondaryMetrics"]["+c2k.gc.alloc.rate.norm"].score,
+    .["secondaryMetrics"]["+c2k.gc.alloc.rate.norm"].scoreError,
+    .["secondaryMetrics"]["+c2k.gc.alloc.rate.norm"].scoreConfidence[0],
+    .["secondaryMetrics"]["+c2k.gc.alloc.rate.norm"].scoreConfidence[1]
   ] | @csv
 EOF
 `
