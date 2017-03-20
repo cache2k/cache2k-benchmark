@@ -320,12 +320,13 @@ colorScheme "#1b9e77 #d95f02 #7570b3 #e7298a #66a61e #e6ab02 #a6761d #666666";
 plotData() {
 echo "set style histogram clustered gap 2 title  offset character 0, 0, 0";
 local in="$1";
-idx="$2";
+local idx="$2";
 idx=$(( $idx + 1 ));
+local endIndex=$(( $3 + 1 ));
 echo  -n "plot '$in' using $idx:xtic(1) ti col ls $(( $idx - 1 ))";
 cols=$(( `head -n 1 "$in" | wc -w` ));
 idx=$(( $idx + 1 ));
-while [ $idx -le $cols ]; do
+while [ $idx -le $cols ] && [ $idx -le $endIndex ]; do
   echo -n ", '' u $idx ti col ls $(( $idx - 1 ))";
   idx=$(( $idx + 1 ));
 done
@@ -335,6 +336,7 @@ plotDataWithConfidence() {
 echo "set style histogram errorbars gap 2 lw 0.5 title  offset character 0, 0, 0";
 local in="$1";
 local idx="$2";
+local endIndex=$(( ( $3 - 1 ) * 4 + 2 ));
 local ls=$idx;
 idx=$(( ($idx - 1) * 4 + 2 ));
 echo  -n "plot '$in' using $idx:$(( idx + 2)):$(( idx + 3)):xtic(1) ti col($idx) ls ${ls}";
@@ -342,22 +344,23 @@ cols=$(( `head -n 1 "$in" | wc -w` ));
 # TODO: replace with plot for ....
 ls=$(( $ls + 1 ));
 idx=$(( $idx + 4 ));
-while [ $idx -lt $cols ]; do
+while [ $idx -lt $cols ] && [ $idx -le $endIndex ]; do
   echo -n ", '' u $idx:$(( idx + 2)):$(( idx + 3)) ti col($idx) ls ${ls}";
   ls=$(( $ls + 1 ));
   idx=$(( $idx + 4 ));
 done
 }
 
-
 plot() {
 local plot="plotData";
 local colorScheme="highContrast";
 local startIndex=1;
+local endIndex=100;
 while true; do
   case "$1" in
     --withColors) colorScheme="$2"; shift 1;;
     --startIndex) startIndex="$2"; shift 1;;
+    --endIndex) endIndex="$2"; shift 1;;
     --withConfidence) plot="plotDataWithConfidence";;
     # --dir) RESULT="$2"; shift 1;;
     -*) echo "unknown option: $1"; return 1;;
@@ -389,7 +392,7 @@ echo "set output '$out'"
 # echo "set title '$title'";
 echo "set title \"$title\"";
 $colorScheme;
-$plot "$in" $startIndex;
+$plot "$in" $startIndex $endIndex;
 ) > "$in".plot
 gnuplot "$in".plot;
 fi
@@ -401,7 +404,7 @@ echo "$out ....";
 plotHistogramHeader "$in" "$title" "$xTitle" "$yTitle";
 echo "set output '$out'"
 $colorScheme;
-$plot "$in" $startIndex;
+$plot "$in" $startIndex $endIndex;
 ) > "${in}-notitle.plot"
 gnuplot "${in}-notitle.plot";
 
@@ -427,6 +430,10 @@ extractMemoryThreadsHitRate() {
 local query=`cat << EOF
 .[] |  select (.benchmark | contains (".$1") ) |
   [ (.threads | tostring) + "-" + .params.entryCount + "-" + .params.$2, .params.cacheFactory,
+    .["secondaryMetrics"]["+forced-gc-mem.usedHeap"].score,
+    .["secondaryMetrics"]["+forced-gc-mem.usedHeap"].scoreError,
+    .["secondaryMetrics"]["+forced-gc-mem.usedHeap"].scoreConfidence[0],
+    .["secondaryMetrics"]["+forced-gc-mem.usedHeap"].scoreConfidence[1],
     .["secondaryMetrics"]["+forced-gc-mem.used.settled"].score,
     .["secondaryMetrics"]["+forced-gc-mem.used.settled"].scoreError,
     .["secondaryMetrics"]["+forced-gc-mem.used.settled"].scoreConfidence[0],
@@ -458,7 +465,12 @@ local query=`cat << EOF
     .["secondaryMetrics"]["+c2k.gc.alloc.rate"].score * 1000 * 1000,
     .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreError* 1000 * 1000,
     .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreConfidence[0] * 1000 * 1000,
-    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreConfidence[1] * 1000 * 1000
+    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreConfidence[1] * 1000 * 1000,
+
+    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].score * 1000 * 1000 / .primaryMetric.score,
+    0,
+    0,
+    0
   ] | @csv
 EOF
 `
@@ -472,6 +484,7 @@ stripFirstColumn() {
 sed 's/^[^ ]* \(.*\)/\1/'
 }
 
+# everything except alloc rate
 plotMemoryGraphs() {
 read param;
 read title;
@@ -479,7 +492,8 @@ read benchmark;
 while read key description; do
   f=$RESULT/${benchmark}Memory$key.dat
   (
-    echo "threads usedHeap_settled error lower upper usedHeap_fin error lower upper usedHeap_max error lower upper totalHeap error lower upper totalHeap_max error lower upper VmRSS error lower upper VmHWM error lower upper allocRate(byte/s) error lower upper";
+#    echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper totalMem_fin error lower upper totalMem_max error lower upper VmRSS error lower upper VmHWM error lower upper allocRate(byte/s) error lower upper allocRate(byte/op) error lower upper ";
+    echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper totalMem_fin error lower upper totalMem_max error lower upper VmRSS error lower upper VmHWM error lower upper";
     local tmp="$RESULT/tmp-plotMemoryGraphs-$benchmark-$param.data"
     test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
     cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames
@@ -494,6 +508,7 @@ local description="";
 local variant="";
 local filter="";
 local startIndex=1;
+local endIndex=100;
 while true; do
   case "$1" in
     --title) title="$2"; shift 1;;
@@ -501,6 +516,7 @@ while true; do
     --variant) variant="$2"; shift 1;;
     --filter) filter="$2"; shift 1;;
     --startIndex) startIndex="$2"; shift 1;;
+    --endIndex) endIndex="$2"; shift 1;;
     -*) echo "unknown option: $1"; return 1;;
     *) break;;
   esac
@@ -511,12 +527,12 @@ local param="$2";
 local key="$3";
   f=$RESULT/${benchmark}Memory$key$variant.dat
   (
-    echo "threads usedHeap_settled error lower upper usedHeap_fin error lower upper usedHeap_max error lower upper totalHeap error lower upper totalHeap_max error lower upper VmRSS error lower upper VmHWM error lower upper allocRate(byte/s) error lower upper";
+    echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper totalMem_fin error lower upper totalMem_max error lower upper VmRSS error lower upper VmHWM error lower upper allocRate(byte/s) error lower upper allocRate(byte/op) error lower upper";
     local tmp="$RESULT/tmp-plotMemoryGraphs-$benchmark-$param.data"
     test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
     cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames | grep "$filter"
   ) > $f
-  plot --withConfidence --withColors memoryColors --startIndex $startIndex $f "$title\n$description" "cache" "Bytes"
+  plot --withConfidence --withColors memoryColors --startIndex "$startIndex" --endIndex "$endIndex" $f "$title\n$description" "cache" "Bytes"
 }
 
 plotMemoryGraphsSettled() {
@@ -526,7 +542,7 @@ read benchmark;
 while read key description; do
   f=$RESULT/${benchmark}MemorySettled$key.dat
   (
-    echo "threads usedHeap_settled error lower upper usedHeap_fin error lower upper";
+    echo "threads usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper";
     local tmp="$RESULT/tmp-plotMemoryGraphsSettled-$benchmark-$param.data"
     test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
     cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames
@@ -535,15 +551,15 @@ while read key description; do
 done
 }
 
-plotMemoryGraphsHeap() {
+plotMemoryGraphsUsed() {
 read param;
 read title;
 read benchmark;
 while read key description; do
-  f=$RESULT/${benchmark}MemoryHeap$key.dat
+  f=$RESULT/${benchmark}MemoryUsed$key.dat
   (
-    echo "threads usedHeap_settled error lower upper usedHeap_fin error lower upper usedHeap_max error lower upper  totalHeap error lower upper";
-    local tmp="$RESULT/tmp-plotMemoryGraphsHeap-$benchmark-$param.data"
+    echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper";
+    local tmp="$RESULT/tmp-plotMemoryGraphsUsed-$benchmark-$param.data"
     test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
     cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames
   ) > $f
@@ -944,8 +960,8 @@ $name
 4-1M-50 (at 4 threads, 50% hit rate)
 EOF
 `"
-echo "$spec" | plotMemoryGraphsSettled
-echo "$spec" | plotMemoryGraphsHeap
+# echo "$spec" | plotMemoryGraphsSettled
+echo "$spec" | plotMemoryGraphsUsed
 echo "$spec" | plotMemoryGraphs
 percents="50 80 95";
 sizes="100K 1M 10M";
@@ -953,9 +969,9 @@ threads="1 4 8";
 for percent in $percents; do
   for size in $sizes; do
     for thread in $threads; do
-      graph "${name}MemorySettled$thread-$size-$percent" "$name, used heap at end of benchmark and after settling, $thread threads, cache of $size entry capacity at $percent% hit rate"
-      graph "${name}MemoryHeap$thread-$size-$percent" "$name, used heap at end, after settling and after GC during run, $thread threads, cache of $size entry capacity at $percent% hit rate"
-      graph "${name}Memory$thread-$size-$percent" "$name, memory statistics, $thread threads, cache of $size entry capacity at $percent% hit rate"
+      graph "${name}MemoryUsed$thread-$size-$percent" "$name, used memory as reported by the JVM of benchmark and after settling, $thread threads, cache of $size entry capacity at $percent% hit rate"
+#      graph "${name}MemoryHeap$thread-$size-$percent" "$name, used heap at end, after settling and after GC during run, $thread threads, cache of $size entry capacity at $percent% hit rate"
+      graph "${name}Memory$thread-$size-$percent" "$name, all memory metrics, $thread threads, cache of $size entry capacity at $percent% hit rate"
     done
   done
 done
@@ -977,8 +993,8 @@ $name
 8-100K-10 (at 8 threads, factor 10)
 EOF
 `"
-echo "$spec" | plotMemoryGraphsSettled
-echo "$spec" | plotMemoryGraphsHeap
+# echo "$spec" | plotMemoryGraphsSettled
+echo "$spec" | plotMemoryGraphsUsed
 echo "$spec" | plotMemoryGraphs
 factors="10";
 sizes="100K 1M";
@@ -986,19 +1002,31 @@ threads="1 2 4 8";
 for factor in $factors; do
   for size in $sizes; do
     for thread in $threads; do
-      graph "${name}MemorySettled$thread-$size-$factor" "$name, used heap at end of benchmark after settling, $thread threads, cache of $size entry capacity at Zipfian factor $factor"
-      graph "${name}MemoryHeap$thread-$size-$factor" "$name, used heap at end, after settling and after GC during run, $thread threads, cache of $size entry capacity at Zipfian factor $factor"
-      graph "${name}Memory$thread-$size-$factor" "$name, memory statistics, $thread threads, cache of $size entry capacity at Zipfian factor $factor"
+      graph "${name}MemoryUsed$thread-$size-$factor" "$name, used memory of benchmark after settling, $thread threads, cache of $size entry capacity at Zipfian factor $factor"
+#      graph "${name}MemoryHeap$thread-$size-$factor" "$name, used heap at end, after settling and after GC during run, $thread threads, cache of $size entry capacity at Zipfian factor $factor"
+      graph "${name}Memory$thread-$size-$factor" "$name, complete memory statistics, $thread threads, cache of $size entry capacity at Zipfian factor $factor"
     done
   done
 done
 }
 
-plotMem --startIndex 4 --variant "-start4" $name factor "4-100K-10";
-graph "$graphName" "$name, memory statistics at 4 threads, 100K entry capacity at Zipfian factor 10";
+plotMem --startIndex 5 --endIndex 8 --variant "-total" $name factor "4-100K-10";
+graph "$graphName" "$name, total memory at 4 threads, 100K entry capacity at Zipfian factor 10";
 
-plotMem --startIndex 4 --variant "-start4" $name factor "8-100K-10";
-graph "$graphName" "$name, memory statistics at 8 threads, 100K entry capacity at Zipfian factor 10";
+plotMem --startIndex 5 --endIndex 8 --variant "-total" $name factor "8-100K-10";
+graph "$graphName" "$name, total memory at 8 threads, 100K entry capacity at Zipfian factor 10";
+
+plotMem --startIndex 9 --endIndex 9 --variant "-allocRate" $name factor "4-100K-10";
+graph "$graphName" "$name, allocation rate at 4 threads, 100K entry capacity at Zipfian factor 10";
+
+plotMem --startIndex 9 --endIndex 9 --variant "-allocRate" $name factor "8-100K-10";
+graph "$graphName" "$name, allocation rate at 8 threads, 100K entry capacity at Zipfian factor 10";
+
+plotMem --startIndex 10 --endIndex 10 --variant "-allocPerOp" $name factor "4-100K-10";
+graph "$graphName" "$name, allocation rate per operation at 4 threads, 100K entry capacity at Zipfian factor 10";
+
+plotMem --startIndex 10 --endIndex 10 --variant "-allocPerOp" $name factor "8-100K-10";
+graph "$graphName" "$name, allocation rate per operation at 8 threads, 100K entry capacity at Zipfian factor 10";
 
 done
 
@@ -1035,6 +1063,5 @@ echo $RESULT/typeset-adoc.html
 )
 
 }
-
 
 processCommandLine "$@";
