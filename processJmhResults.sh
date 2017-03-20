@@ -930,6 +930,18 @@ for I in $benchmarks; do
       plotEffectiveHitrate $I factor;
       graph "$graphName" "$I, Effective hitrate by Zipfian distribution factor (complete)";
 
+      plotOps $I factor "strip4x100Kx10" "^4-100K-10 .*";
+      graph "$graphName" "$I, operations per second at 4 threads, 100K entries and  Zipfian factor 10";
+
+      plotOps $I factor "stripXx100Kx10" "^.*-100K-10 .*";
+      graph "$graphName" "$I, operations per second with 100K entries and Zipfian factor 10";
+
+      plotOps $I factor "stripXxXx10" "^.*-.*-10 .*";
+      graph "$graphName" "$I, operations per second with  Zipfian factor 10";
+
+      plotOps $I factor "stripXxXx5" "^.*-.*-5 .*";
+      graph "$graphName" "$I, operations per second with  Zipfian factor 5";
+
       plotOps $I factor "strip4x80" "^4-.*-80 .*";
       graph "$graphName" "$I, operations per second at 4 threads and 80 Zipfian factor";
 
@@ -941,6 +953,7 @@ for I in $benchmarks; do
 
       plotEffectiveHitrate $I factor "strip10x80" "^10-.*-80 .*";
       graph "$graphName" "$I, Effective hitrate at 10 threads and 80 Zipfian factor";
+
 
 
 #      plotMemUsed $I factor;
