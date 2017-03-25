@@ -46,12 +46,19 @@ The graphics will be put in `target/benchmark-reults`.
 
 ## Running the JMH benchmarks
 
-The performance benchmarks will be moved over to JMH. To run the JHM benchmark suite:
+To run the JHM benchmark suite:
 
 ```
+# compiles the benchmark and produces: jmh-suite/target/benchmarks.jar
 mvn -DskipTests package
-java -jar jmh-suite/target/benchmarks.jar
+# runs the benchmarks, results are writen to: /var/run/shm/jmh-result
+bash jmh-run.sh
+# generate the graphs
+bash processJmhResults.sh --dir /var/run/shm/jmh-result process
 ```
+
+This requires Linux and gnuplot. Single benchmarks can alternatively be run
+via: `java -jar jmh-suite/target/benchmarks.jar [ jmh-parameters ]`
 
 ## The maven modules
 
