@@ -48,7 +48,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Record the used heap memory of a benchmark iteration by forcing a full garbage collection.
@@ -57,7 +56,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ForcedGcMemoryProfiler implements InternalProfiler {
 
-  static boolean enable;
+  static volatile boolean enable;
   static long usedMemory;
   static long usedMemorySettled;
   static long totalMemory;
@@ -105,12 +104,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       }
     }
     if (_enabledBeans.isEmpty()) {
-      System.err.println("WARNING: MXBeans can not report GC info. System.gc() invoked, pessimistically waiting " + MAX_WAIT_MSEC + " msecs");
-      try {
-        TimeUnit.MILLISECONDS.sleep(MAX_WAIT_MSEC);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
+      System.err.println("WARNING: MXBeans can not report GC info. Cannot extract reliable usage metric.");
       return -1;
     }
     long _beforeGcCount = countGc(_enabledBeans);
@@ -145,6 +139,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
     }
     return cnt;
   }
+
 
   /**
    * oracles' java doc says that remoteDataDump outputs the same as ctrl-break, however,
