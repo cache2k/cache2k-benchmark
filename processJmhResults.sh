@@ -491,8 +491,8 @@ read benchmark;
 while read key description; do
   f=$RESULT/${benchmark}Memory$key.dat
   (
-#    echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper totalMem_fin error lower upper totalMem_max error lower upper VmRSS error lower upper VmHWM error lower upper allocRate(byte/s) error lower upper allocRate(byte/op) error lower upper ";
-    echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper totalMem_fin error lower upper totalMem_max error lower upper VmRSS error lower upper VmHWM error lower upper";
+#    echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper totalMem_settled error lower upper totalMem_max error lower upper VmRSS error lower upper VmHWM error lower upper allocRate(byte/s) error lower upper allocRate(byte/op) error lower upper ";
+    echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper totalMem_settled error lower upper totalMem_max error lower upper VmRSS error lower upper VmHWM error lower upper";
     local tmp="$RESULT/tmp-plotMemoryGraphs-$benchmark-$param.data"
     test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
     cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames
@@ -526,10 +526,10 @@ local param="$2";
 local key="$3";
   f=$RESULT/${benchmark}Memory$key$variant.dat
   (
-    echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper totalMem_fin error lower upper totalMem_max error lower upper VmRSS error lower upper VmHWM error lower upper allocRate(byte/s) error lower upper allocRate(byte/op) error lower upper";
+    echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper totalMem_settled error lower upper totalMem_max error lower upper VmRSS error lower upper VmHWM error lower upper allocRate(byte/s) error lower upper allocRate(byte/op) error lower upper";
     local tmp="$RESULT/tmp-plotMemoryGraphs-$benchmark-$param.data"
     test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
-    cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames | grep "$filter"
+    cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames | grep "$filter" || true
   ) > $f
   plot --withConfidence --withColors memoryColors --startIndex "$startIndex" --endIndex "$endIndex" $f "$title\n$description" "cache" "Bytes"
 }
