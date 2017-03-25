@@ -56,31 +56,40 @@ import java.util.List;
  */
 public class ForcedGcMemoryProfiler implements InternalProfiler {
 
-  static volatile boolean enable;
-  static long usedMemory;
-  static long usedMemorySettled;
-  static long totalMemory;
-  static long gcTimeMillis;
-  static long usedHeapMemory;
+  private static Object keepReference;
+  private static long usedMemory;
+  private static long usedMemorySettled;
+  private static long totalMemory;
+  private static long gcTimeMillis;
+  private static long usedHeapMemory = -1;
+
+  /**
+   * When benchmarking caches that don't have a cache manager we need to ensure that
+   * the reference to the cache/benchmark is kept until we are finished with memory
+   * consumption measurements.
+   */
+  public static void keepReference(Object _rootReferenceToKeep) {
+    keepReference = _rootReferenceToKeep;
+  }
 
   /**
    * Called from the benchmark when the objects are still referenced to record the
    * used memory. This enforces a full garbage collection.
    */
-  public static void recordUsedMemory() {
-    if (enable) {
-      long t0 = System.currentTimeMillis();
-      long m2 = usedMemory = getUsedMemory();
-      do {
-        try {
-          Thread.sleep(567);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        }
-        usedMemorySettled = m2;
-        m2 = getUsedMemory();
-      } while (m2 < usedMemorySettled);
-      gcTimeMillis = System.currentTimeMillis() - t0;
+  private static void recordUsedMemory() {
+    long t0 = System.currentTimeMillis();
+    long m2 = usedMemory = getUsedMemory();
+    do {
+      try {
+        Thread.sleep(567);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      usedMemorySettled = m2;
+      m2 = getUsedMemory();
+    } while (m2 < usedMemorySettled);
+    gcTimeMillis = System.currentTimeMillis() - t0;
+    if (!isJava9()) {
       usedHeapMemory = printHeapHisto(System.out, 30);
     }
   }
@@ -226,11 +235,11 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
     }
     attachingTried = true;
     Class<?> vmClass = findAttachVmClass();
-    Integer pid = getProcessId();
+    Long pid = getProcessId();
     if (vmClass != null && pid != null) {
       try {
         Method m = vmClass.getMethod("attach", String.class);
-        attachedVm = m.invoke(vmClass, Integer.toString(pid));
+        attachedVm = m.invoke(vmClass, Long.toString(pid));
       } catch (Throwable ex) {
         System.err.println("ForcedGcMemoryProfiler: error attaching via attach API");
         ex.printStackTrace();
@@ -272,9 +281,34 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
   }
 
   /**
+   * Obtain process ID via official API on Java 9.
+   */
+  private static Long getProcessIdJava9() {
+    try {
+      Class c = Class.forName("java.lang.ProcessHandle");
+      Method _current = c.getDeclaredMethod("current");
+      Method _getPid = c.getDeclaredMethod("getPid");
+      Object _handle = _current.invoke(null);
+      return (Long) _getPid.invoke(_handle);
+    } catch (Exception ex) {
+      System.err.println("ForcedGcMemoryProfiler: error obtaining PID");
+      ex.printStackTrace();
+    }
+    return null;
+  }
+
+  private static boolean isJava9() {
+    String _version = System.getProperty("java.version");
+    return _version.startsWith("9");
+  }
+
+  /**
    * Hack to obtain process ID. Should work on Unix/Linux and Windows.
    */
-  private static Integer getProcessId() {
+  private static Long getProcessId() {
+    if (isJava9()) {
+      return getProcessIdJava9();
+    }
     try {
       java.lang.management.RuntimeMXBean _runtimeMXBean =
         java.lang.management.ManagementFactory.getRuntimeMXBean();
@@ -283,7 +317,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       sun.management.VMManagement mgm = (sun.management.VMManagement) jvm.get(_runtimeMXBean);
       java.lang.reflect.Method _method = mgm.getClass().getDeclaredMethod("getProcessId");
       _method.setAccessible(true);
-      return (Integer) _method.invoke(mgm);
+      return ((Integer) _method.invoke(mgm)).longValue();
     } catch (Exception ex) {
       System.err.println("ForcedGcMemoryProfiler: error obtaining PID");
       ex.printStackTrace();
@@ -322,8 +356,11 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
 
   @Override
   public Collection<? extends Result> afterIteration(final BenchmarkParams benchmarkParams, final IterationParams iterationParams, final IterationResult result) {
-    if (usedMemory == 0) {
-      return Collections.emptyList();
+    if (usedMemory <= 0) {
+      recordUsedMemory();
+      if (usedMemory <= 0) {
+        return Collections.emptyList();
+      }
     }
     List<Result> l = new ArrayList<>();
     addLinuxVmStats(l);
@@ -334,12 +371,13 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       new ScalarResult("+forced-gc-mem.gcTimeMillis", (double) gcTimeMillis, "ms", AggregationPolicy.AVG),
       new ScalarResult("+forced-gc-mem.usedHeap", (double) usedHeapMemory, "bytes", AggregationPolicy.AVG)
     ));
+    keepReference = null;
     return l;
   }
 
   @Override
   public void beforeIteration(final BenchmarkParams benchmarkParams, final IterationParams iterationParams) {
-    enable = true;
+    usedMemory = -1;
   }
 
   @Override

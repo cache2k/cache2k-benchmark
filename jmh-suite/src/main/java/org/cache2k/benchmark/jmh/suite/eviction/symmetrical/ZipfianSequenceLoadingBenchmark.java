@@ -112,7 +112,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @TearDown(Level.Iteration)
   public void tearDown() {
     HitCountRecorder.recordMissCount(source.missCount.longValue());
-    ForcedGcMemoryProfiler.recordUsedMemory();
+    ForcedGcMemoryProfiler.keepReference(this);
     String _statString = cache.toString();
     System.out.println(_statString);
     System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());

@@ -81,7 +81,7 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    ForcedGcMemoryProfiler.recordUsedMemory();
+    ForcedGcMemoryProfiler.keepReference(this);
     String _statString = cache.toString();
     System.out.println(_statString);
     System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
