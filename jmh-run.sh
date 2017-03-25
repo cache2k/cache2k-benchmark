@@ -32,7 +32,8 @@ test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedL
 test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 0 -i 1 -r 1s -foe true";
 
 # -f 2 / -i 2 has not enough confidence, there is sometime one outlier
-test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 5 -wi 1 -w 10s -i 3 -r 20s";
+# 2 full warmu ps otherwise there is big jitter with G1
+test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 5 -wi 2 -w 20s -i 3 -r 20s";
 
 # Tinker benchmark options to do profiling and add assembler code output (linux only).
 # Needs additional disassembly library to display assembler code
@@ -228,7 +229,7 @@ done
 benchmarks="ZipfianSequenceLoadingBenchmark";
 for impl in $COMPLETE; do
   for benchmark in $benchmarks; do
-    for threads in 1 2 4 8; do
+    for threads in 4; do
       runid="$impl-$benchmark-$threads";
       fn="$TARGET/result-$runid";
       echo;
