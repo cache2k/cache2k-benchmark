@@ -508,6 +508,7 @@ local variant="";
 local filter="";
 local startIndex=1;
 local endIndex=100;
+local sort="";
 while true; do
   case "$1" in
     --title) title="$2"; shift 1;;
@@ -516,6 +517,7 @@ while true; do
     --filter) filter="$2"; shift 1;;
     --startIndex) startIndex="$2"; shift 1;;
     --endIndex) endIndex="$2"; shift 1;;
+    --sort) sort="1";;
     -*) echo "unknown option: $1"; return 1;;
     *) break;;
   esac
@@ -529,7 +531,9 @@ local key="$3";
     echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper totalMem_settled error lower upper totalMem_max error lower upper VmRSS error lower upper VmHWM error lower upper allocRate(byte/s) error lower upper allocRate(byte/op) error lower upper";
     local tmp="$RESULT/tmp-plotMemoryGraphs-$benchmark-$param.data"
     test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
-    cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames | grep "$filter" || true
+    cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames \
+    | { if test -n "$sort"; then sort -k$(( ( $startIndex - 1) * 4 + 2 )) -g; else cat -; fi } \
+    | grep "$filter" || true
   ) > $f
   plot --withConfidence --withColors memoryColors --startIndex "$startIndex" --endIndex "$endIndex" $f "$title\n$description" "cache" "Bytes"
 }
@@ -954,8 +958,6 @@ for I in $benchmarks; do
       plotEffectiveHitrate $I factor "strip10x80" "^10-.*-80 .*";
       graph "$graphName" "$I, Effective hitrate at 10 threads and Zipfian factor 80";
 
-
-
 #      plotMemUsed $I factor;
 #      plotMemUsedSettled $I factor;
   }
@@ -1022,27 +1024,24 @@ for factor in $factors; do
 done
 }
 
-plotMem --startIndex 5 --endIndex 8 --variant "-total" $name factor "4-100K-10";
-graph "$graphName" "$name, total memory at 4 threads, 100K cache entries, Zipfian factor 10";
-
-plotMem --startIndex 5 --endIndex 8 --variant "-total" $name factor "8-100K-10";
-graph "$graphName" "$name, total memory at 8 threads, 100K cache entries, Zipfian factor 10";
-
-plotMem --startIndex 9 --endIndex 9 --variant "-allocRate" $name factor "4-100K-10";
-graph "$graphName" "$name, allocation rate at 4 threads, 100K cache entries, Zipfian factor 10";
-
-plotMem --startIndex 9 --endIndex 9 --variant "-allocRate" $name factor "8-100K-10";
-graph "$graphName" "$name, allocation rate at 8 threads, 100K cache entries, Zipfian factor 10";
-
-plotMem --startIndex 10 --endIndex 10 --variant "-allocPerOp" $name factor "4-100K-10";
-graph "$graphName" "$name, allocation rate per operation at 4 threads, 100K cache entries, Zipfian factor 10";
-
-plotMem --startIndex 10 --endIndex 10 --variant "-allocPerOp" $name factor "8-100K-10";
-graph "$graphName" "$name, allocation rate per operation at 8 threads, 100K cache entries, Zipfian factor 10";
-
+for factor in $factors; do
+  for size in $sizes; do
+    for thread in $threads; do
+     plotMem --startIndex 5 --endIndex 8 --variant "-total" $name factor "$thread-$size-$factor";
+     graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, metrics for total memory consumption";
+     plotMem --startIndex 8 --endIndex 8 --sort --variant "-VmHWM-sorted" $name factor "$thread-$size-$factor";
+     graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, peak memory usage reported by the operating system (VmHWM), sorted by best performance";
+     plotMem --startIndex 1 --endIndex 1 --sort --variant "-usedHeap-sorted" $name factor "$thread-$size-$factor";
+     graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, used heap memory, sorted by best performance";
+     plotMem --startIndex 9 --endIndex 9 --variant "-allocRate" $name factor "$thread-$size-$factor";
+     graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, allocation rate in bytes per second";
+     plotMem --startIndex 10 --endIndex 10 --variant "-allocRatePerOp" $name factor "$thread-$size-$factor";
+     graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, allocation rate in bytes per operation";
+    done
+  done
 done
 
-
+done
 
 if false; then
 (
