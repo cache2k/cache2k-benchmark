@@ -931,28 +931,28 @@ for I in $benchmarks; do
       graph "$graphName" "$I, Effective hitrate by Zipfian distribution factor (complete)";
 
       plotOps $I factor "strip4x100Kx10" "^4-100K-10 .*";
-      graph "$graphName" "$I, operations per second at 4 threads, 100K entries and  Zipfian factor 10";
+      graph "$graphName" "$I, operations per second at 4 threads, 100K cache entries and Zipfian factor 10";
 
       plotOps $I factor "stripXx100Kx10" "^.*-100K-10 .*";
-      graph "$graphName" "$I, operations per second with 100K entries and Zipfian factor 10";
+      graph "$graphName" "$I, operations per second with 100K cache entries and Zipfian factor 10";
 
       plotOps $I factor "stripXxXx10" "^.*-.*-10 .*";
-      graph "$graphName" "$I, operations per second with  Zipfian factor 10";
+      graph "$graphName" "$I, operations per second with Zipfian factor 10";
 
       plotOps $I factor "stripXxXx5" "^.*-.*-5 .*";
-      graph "$graphName" "$I, operations per second with  Zipfian factor 5";
+      graph "$graphName" "$I, operations per second with Zipfian factor 5";
 
       plotOps $I factor "strip4x80" "^4-.*-80 .*";
-      graph "$graphName" "$I, operations per second at 4 threads and 80 Zipfian factor";
+      graph "$graphName" "$I, operations per second at 4 threads and Zipfian factor 80";
 
       plotEffectiveHitrate $I factor "strip4x80" "^4-.*-80 .*";
-      graph "$graphName" "$I, Effective hitrate at 4 threads and 80 Zipfian factor";
+      graph "$graphName" "$I, Effective hitrate at 4 threads and Zipfian factor 80";
 
       plotOps $I factor "strip10x80" "^10-.*-80 .*";
-      graph "$graphName" "$I, operations per second at 10 threads and 80 Zipfian factor";
+      graph "$graphName" "$I, operations per second at 10 threads and Zipfian factor 80";
 
       plotEffectiveHitrate $I factor "strip10x80" "^10-.*-80 .*";
-      graph "$graphName" "$I, Effective hitrate at 10 threads and 80 Zipfian factor";
+      graph "$graphName" "$I, Effective hitrate at 10 threads and Zipfian factor 80";
 
 
 
@@ -1014,31 +1014,31 @@ threads="1 2 4 8";
 for factor in $factors; do
   for size in $sizes; do
     for thread in $threads; do
-      graph "${name}MemoryUsed$thread-$size-$factor" "$name, used memory of benchmark after settling, $thread threads, cache of $size entry capacity at Zipfian factor $factor"
+      graph "${name}MemoryUsed$thread-$size-$factor" "$name, used memory of benchmark after settling, $thread threads, $size cache entries, Zipfian factor $factor"
 #      graph "${name}MemoryHeap$thread-$size-$factor" "$name, used heap at end, after settling and after GC during run, $thread threads, cache of $size entry capacity at Zipfian factor $factor"
-      graph "${name}Memory$thread-$size-$factor" "$name, complete memory statistics, $thread threads, cache of $size entry capacity at Zipfian factor $factor"
+      graph "${name}Memory$thread-$size-$factor" "$name, complete memory statistics, $thread threads, $size cache entries, Zipfian factor $factor"
     done
   done
 done
 }
 
 plotMem --startIndex 5 --endIndex 8 --variant "-total" $name factor "4-100K-10";
-graph "$graphName" "$name, total memory at 4 threads, 100K entry capacity at Zipfian factor 10";
+graph "$graphName" "$name, total memory at 4 threads, 100K cache entries, Zipfian factor 10";
 
 plotMem --startIndex 5 --endIndex 8 --variant "-total" $name factor "8-100K-10";
-graph "$graphName" "$name, total memory at 8 threads, 100K entry capacity at Zipfian factor 10";
+graph "$graphName" "$name, total memory at 8 threads, 100K cache entries, Zipfian factor 10";
 
 plotMem --startIndex 9 --endIndex 9 --variant "-allocRate" $name factor "4-100K-10";
-graph "$graphName" "$name, allocation rate at 4 threads, 100K entry capacity at Zipfian factor 10";
+graph "$graphName" "$name, allocation rate at 4 threads, 100K cache entries, Zipfian factor 10";
 
 plotMem --startIndex 9 --endIndex 9 --variant "-allocRate" $name factor "8-100K-10";
-graph "$graphName" "$name, allocation rate at 8 threads, 100K entry capacity at Zipfian factor 10";
+graph "$graphName" "$name, allocation rate at 8 threads, 100K cache entries, Zipfian factor 10";
 
 plotMem --startIndex 10 --endIndex 10 --variant "-allocPerOp" $name factor "4-100K-10";
-graph "$graphName" "$name, allocation rate per operation at 4 threads, 100K entry capacity at Zipfian factor 10";
+graph "$graphName" "$name, allocation rate per operation at 4 threads, 100K cache entries, Zipfian factor 10";
 
 plotMem --startIndex 10 --endIndex 10 --variant "-allocPerOp" $name factor "8-100K-10";
-graph "$graphName" "$name, allocation rate per operation at 8 threads, 100K entry capacity at Zipfian factor 10";
+graph "$graphName" "$name, allocation rate per operation at 8 threads, 100K cache entries, Zipfian factor 10";
 
 done
 
