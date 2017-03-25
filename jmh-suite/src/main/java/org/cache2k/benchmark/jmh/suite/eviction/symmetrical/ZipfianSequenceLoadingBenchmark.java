@@ -59,7 +59,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @Param({"10"})
   public int factor = 0;
 
-  @Param({"100000"})
+  @Param({"1000000"})
   public int entryCount = 100_000;
 
   private final DataSource source = new DataSource();
