@@ -45,7 +45,8 @@ test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 5 -wi 2 -w 20s 
 # profilers are described here: http://java-performance.info/introduction-jmh-profilers
 test -n "$BENCHMARK_PERFASM" || BENCHMARK_PERFASM="-f 1 -wi 1 -w 10s -i 1 -r 30s -prof perfasm";
 
-STANDARD_PROFILER="-prof comp -prof gc -prof hs_rt";
+# hs_gc: detailed counters from the GC implementation
+STANDARD_PROFILER="-prof comp -prof gc -prof hs_rt -prof hs_gc";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.MiscResultRecorderProfiler";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.GcProfiler";

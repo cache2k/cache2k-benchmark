@@ -56,6 +56,7 @@ import java.util.List;
  */
 public class ForcedGcMemoryProfiler implements InternalProfiler {
 
+  @SuppressWarnings("unused")
   private static Object keepReference;
   private static long usedMemory;
   private static long usedMemorySettled;
