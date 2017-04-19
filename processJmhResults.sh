@@ -485,6 +485,27 @@ json | \
      # | scaleBytesToMegaBytes4x4MemAlloc
 }
 
+extractStaticPeakMemoryThreadsHitRate() {
+local query=`cat << EOF
+.[] |  select (.benchmark | contains (".$1") ) |
+  [ (.threads | tostring) + "-" + .params.entryCount + "-" + .params.$2, .params.cacheFactory,
+    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].score,
+    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].scoreError,
+    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].scoreConfidence[0],
+    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].scoreConfidence[1],
+    .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].score * 1000,
+    .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreError * 1000,
+    .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreConfidence[0] * 1000,
+    .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreConfidence[1] * 1000
+  ] | @csv
+EOF
+`
+json | \
+    jq -r "$query" | \
+    sort | tr -d '"'
+     # | scaleBytesToMegaBytes4x4MemAlloc
+}
+
 stripFirstColumn() {
 sed 's/^[^ ]* \(.*\)/\1/'
 }
@@ -543,6 +564,45 @@ local key="$3";
   ) > $f
   plot --withConfidence --withColors memoryColors --startIndex "$startIndex" --endIndex "$endIndex" $f "$title\n$description" "cache" "Bytes"
 }
+
+plotStaticPeakMem() {
+local title="";
+local description="";
+local variant="";
+local filter="";
+local startIndex=1;
+local endIndex=100;
+local sort="";
+while true; do
+  case "$1" in
+    --title) title="$2"; shift 1;;
+    --description) description="$2"; shift 1;;
+    --variant) variant="$2"; shift 1;;
+    --filter) filter="$2"; shift 1;;
+    --startIndex) startIndex="$2"; shift 1;;
+    --endIndex) endIndex="$2"; shift 1;;
+    --sort) sort="1";;
+    -*) echo "unknown option: $1"; return 1;;
+    *) break;;
+  esac
+  shift 1;
+done
+local benchmark="$1";
+local param="$2";
+local key="$3";
+  f=$RESULT/${benchmark}StaticPeakMemory$key$variant.dat
+  (
+    echo "product usedMem_settled error lower upper VmHWM error lower upper";
+    local tmp="$RESULT/tmp-plotStaticPeakMemoryGraphs-$benchmark-$param.data"
+    test -f "$tmp" || extractStaticPeakMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
+    cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames \
+    | { if test -n "$sort"; then sort -k$(( ( $startIndex - 1) * 4 + 2 )) -g; else cat -; fi } \
+    | grep "$filter" || true
+  ) > $f
+  plot --withConfidence --withColors memoryColors --startIndex "$startIndex" --endIndex "$endIndex" $f "$title\n$description" "cache" "Bytes"
+}
+
+
 
 plotMemoryGraphsSettled() {
 read param;
@@ -617,7 +677,7 @@ name="$1";
 param="$2";
 suffix="$3";
 filter="$4";
-local prods="$CACHE_FACTORY_LIST";
+local prods="org.cache2k.benchmark.Cache2kFactory";
 if test -n "$suffix"; then
 f=$RESULT/${name}ScanCount-${suffix}.dat
 else
@@ -641,7 +701,7 @@ test -f "$tmp" || json | \
     jq -r "$query"  | sort | tr -d '"' | pivot4 $prods | sort -n -t- -k1,1 -k2,2 -k3,3 | shortenParamValues > "$tmp"
     cat "$tmp" | grep "$filter" | stripEmpty
 ) > $f
-plot --withConfidence $f "${name} / scans per eviction" "threads - size - $param" "effective hitrate"
+plot --withConfidence $f "${name} / scans per eviction" "threads - size - $param" "scan count"
 }
 
 
@@ -965,6 +1025,14 @@ for I in $benchmarks; do
           graph "$graphName" "$I, scan count by thread count at $HR percent target hitrate and $S cache size";
         done
       done
+
+      for TC in 10 4; do
+        for S in 100K 1M 10M; do
+          plotScanCount $I hitRate "byHitrate-${TC}x${S}" "^$TC-$S-.* .*";
+          graph "$graphName" "$I, scan count by hitrate at $TC threads and $S cache size";
+        done
+      done
+
   }
 done
 
@@ -974,9 +1042,29 @@ for I in $benchmarks; do
       plotOps $I factor;
       graph "$graphName" "$I, operations per second by Zipfian distribution factor (complete)";
 
-      plotEffectiveHitrate $I factor;
-      graph "$graphName" "$I, Effective hitrate by Zipfian distribution factor (complete)";
+#      plotEffectiveHitrate $I factor;
+#      graph "$graphName" "$I, Effective hitrate by Zipfian distribution factor (complete)";
 
+      for TC in 10 4; do
+        for F in 5 10 20; do
+          plotOps $I factor "bySize-${TC}x$F" "^$TC-.*-$F .*";
+          graph "$graphName" "$I, operations per second by cache size at $TC threads and Zipfian factor $F";
+          plotEffectiveHitrate $I factor "bySize-${TC}x$F" "^$TC-.*-$F .*";
+          graph "$graphName" "$I, effective hitrate by cache size at $TC threads and Zipfian factor $F";
+          plotScanCount $I factor "bySize-${TC}x$F" "^$TC-.*-$F .*";
+          graph "$graphName" "$I, scan count by cache size at $TC threads and Zipfian factor $F";
+        done
+      done
+
+      for S in 100K 1M 10M; do
+        for F in 5 10 20; do
+          plotOps $I factor "byThread-${S}x$F" "^.*-${S}-$F .*";
+          graph "$graphName" "$I, operations per second by thread count with cache size ${S} and Zipfian factor $F";
+        done
+      done
+
+
+false && (
       plotOps $I factor "strip4x100Kx10" "^4-100K-10 .*";
       graph "$graphName" "$I, operations per second at 4 threads, 100K cache entries and Zipfian factor 10";
 
@@ -1000,6 +1088,7 @@ for I in $benchmarks; do
 
       plotEffectiveHitrate $I factor "strip10x80" "^10-.*-80 .*";
       graph "$graphName" "$I, Effective hitrate at 10 threads and Zipfian factor 80";
+)
 
 #      plotMemUsed $I factor;
 #      plotMemUsedSettled $I factor;
@@ -1053,9 +1142,10 @@ EOF
 # echo "$spec" | plotMemoryGraphsSettled
 echo "$spec" | plotMemoryGraphsUsed
 echo "$spec" | plotMemoryGraphs
-factors="10";
-sizes="100K 1M";
+factors="5 10 20";
+sizes="100K 1M 10M";
 threads="1 2 4 8";
+majorThreads="4";
 for factor in $factors; do
   for size in $sizes; do
     for thread in $threads; do
@@ -1069,7 +1159,7 @@ done
 
 for factor in $factors; do
   for size in $sizes; do
-    for thread in $threads; do
+    for thread in $majorThreads; do
      plotMem --startIndex 5 --endIndex 8 --variant "-total" $name factor "$thread-$size-$factor";
      graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, metrics for total memory consumption";
      plotMem --startIndex 8 --endIndex 8 --sort --variant "-VmHWM-sorted" $name factor "$thread-$size-$factor";
@@ -1080,6 +1170,8 @@ for factor in $factors; do
      graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, allocation rate in bytes per second";
      plotMem --startIndex 10 --endIndex 10 --variant "-allocRatePerOp" $name factor "$thread-$size-$factor";
      graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, allocation rate in bytes per operation";
+     plotStaticPeakMem $name factor "$thread-$size-$factor";
+     graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, static and peak memory usage";
     done
   done
 done

@@ -45,7 +45,7 @@ import java.util.Random;
 @State(Scope.Benchmark)
 public class RandomSequenceBenchmark extends BenchmarkBase {
 
-  @Param({"80"})
+  @Param({"50"})
   public int hitRate = 0;
 
   @Param({"10000000"})
@@ -77,6 +77,7 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
       Integer v = _generator.nextInt(range);
       cache.put(v, v);
     }
+    System.out.println("Cache stats after seeding: " + cache.toString());
   }
 
   @TearDown(Level.Iteration)
