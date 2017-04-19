@@ -22,6 +22,7 @@ set -e;
 
 # biased locking delay is 4000 by default, enable from the start to minimize effects on the first benchmark iteration
 # (check with: ava  -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal 2>/dev/null | grep BiasedLockingStartupDelay)
+# test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedLockingStartupDelay=0 -verbose:gc -XX:+PrintGCTimeStamps -XX:+PrintGCDetails -XX:+UseG1GC";
 test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedLockingStartupDelay=0 -verbose:gc -XX:+PrintGCTimeStamps -XX:+PrintGCDetails";
 
 # -wi warmup iterations
@@ -32,8 +33,9 @@ test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedL
 test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 0 -i 1 -r 1s -foe true";
 
 # -f 2 / -i 2 has not enough confidence, there is sometime one outlier
-# 2 full warmu ps otherwise there is big jitter with G1
-test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 5 -wi 2 -w 20s -i 3 -r 20s";
+# 2 full warmups otherwise there is big jitter with G1
+# test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 2 -wi 2 -w 40s -i 3 -r 40s";
+test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 2 -wi 0 -w 40s -i 8 -r 20s";
 
 # Tinker benchmark options to do profiling and add assembler code output (linux only).
 # Needs additional disassembly library to display assembler code
@@ -227,7 +229,7 @@ done
 # benchmarks="ZipfianLoopingPrecomputedSequenceLoadingBenchmark ZipfianHoppingPrecomputedSequenceLoadingBenchmark";
 # benchmarks="RandomSequenceBenchmark";
 # benchmarks="ZipfianSequenceLoadingBenchmark RandomSequenceBenchmark";
-benchmarks="ZipfianSequenceLoadingBenchmark";
+benchmarks="RandomSequenceBenchmark";
 for impl in $COMPLETE; do
   for benchmark in $benchmarks; do
     for threads in 4; do

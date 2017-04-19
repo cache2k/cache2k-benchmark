@@ -612,6 +612,39 @@ test -f "$tmp" || json | \
 plot --withConfidence $f "${name} / Effective Hit Rate" "threads - size - $param" "effective hitrate"
 }
 
+plotScanCount() {
+name="$1";
+param="$2";
+suffix="$3";
+filter="$4";
+local prods="$CACHE_FACTORY_LIST";
+if test -n "$suffix"; then
+f=$RESULT/${name}ScanCount-${suffix}.dat
+else
+f=$RESULT/${name}ScanCount.dat
+fi
+(
+header4 "$prods";
+local query=`cat << EOF
+.[] |  select (.benchmark | contains (".${name}") ) |
+  [ (.threads | tostring) +  "-" + .params.entryCount + "-" + .params.$param,
+     .params.cacheFactory,
+     .["secondaryMetrics"]["+c2k.stat.scanPerEviction"].score,
+     .["secondaryMetrics"]["+c2k.stat.scanPerEviction"].scoreError,
+     .["secondaryMetrics"]["+c2k.stat.scanPerEviction"].scoreConfidence[0],
+     .["secondaryMetrics"]["+c2k.stat.scanPerEviction"].scoreConfidence[1]
+  ] | @csv
+EOF
+`
+local tmp="$RESULT/tmp-plotScanCount-$name-$param.data"
+test -f "$tmp" || json | \
+    jq -r "$query"  | sort | tr -d '"' | pivot4 $prods | sort -n -t- -k1,1 -k2,2 -k3,3 | shortenParamValues > "$tmp"
+    cat "$tmp" | grep "$filter" | stripEmpty
+) > $f
+plot --withConfidence $f "${name} / scans per eviction" "threads - size - $param" "effective hitrate"
+}
+
+
 plotMemUsed() {
 name="$1";
 param="$2";
@@ -917,6 +950,8 @@ for I in $benchmarks; do
           graph "$graphName" "$I, operations per second by cache size at $TC threads and $HR percent target hitrate";
           plotEffectiveHitrate $I hitRate "bySize-${TC}x$HR" "^$TC-.*-$HR .*";
           graph "$graphName" "$I, effective hitrate by cache size at $TC threads and $HR percent target hitrate";
+          plotScanCount $I hitRate "bySize-${TC}x$HR" "^$TC-.*-$HR .*";
+          graph "$graphName" "$I, scan count by cache size at $TC threads and $HR percent target hitrate";
         done
       done
 
@@ -926,6 +961,8 @@ for I in $benchmarks; do
           graph "$graphName" "$I, operations per second by thread count at $HR percent target hitrate and $S cache size";
           plotEffectiveHitrate $I hitRate "byThread-${S}x$HR" "^.*-$S-$HR .*";
           graph "$graphName" "$I, effective hitrate by thread count at $HR percent target hitrate and $S cache size";
+          plotScanCount $I hitRate "byThread-${S}x$HR" "^.*-$S-$HR .*";
+          graph "$graphName" "$I, scan count by thread count at $HR percent target hitrate and $S cache size";
         done
       done
   }
