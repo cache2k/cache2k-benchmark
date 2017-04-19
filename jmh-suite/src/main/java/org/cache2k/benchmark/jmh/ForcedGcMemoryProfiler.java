@@ -63,6 +63,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
   private static long totalMemory;
   private static long gcTimeMillis;
   private static long usedHeapMemory = -1;
+  private static volatile boolean enabled = false;
 
   /**
    * When benchmarking caches that don't have a cache manager we need to ensure that
@@ -70,7 +71,9 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
    * consumption measurements.
    */
   public static void keepReference(Object _rootReferenceToKeep) {
-    keepReference = _rootReferenceToKeep;
+    if (enabled) {
+      keepReference = _rootReferenceToKeep;
+    }
   }
 
   /**
@@ -90,7 +93,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       m2 = getUsedMemory();
     } while (m2 < usedMemorySettled);
     gcTimeMillis = System.currentTimeMillis() - t0;
-    if (!isJava9()) {
+    if (!PlatformUtil.isJava9()) {
       usedHeapMemory = printHeapHisto(System.out, 30);
     }
   }
@@ -236,7 +239,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
     }
     attachingTried = true;
     Class<?> vmClass = findAttachVmClass();
-    Long pid = getProcessId();
+    Long pid = PlatformUtil.getProcessId();
     if (vmClass != null && pid != null) {
       try {
         Method m = vmClass.getMethod("attach", String.class);
@@ -279,51 +282,6 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       ex.printStackTrace();
       return null;
     }
-  }
-
-  /**
-   * Obtain process ID via official API on Java 9.
-   */
-  private static Long getProcessIdJava9() {
-    try {
-      Class c = Class.forName("java.lang.ProcessHandle");
-      Method _current = c.getDeclaredMethod("current");
-      Method _getPid = c.getDeclaredMethod("getPid");
-      Object _handle = _current.invoke(null);
-      return (Long) _getPid.invoke(_handle);
-    } catch (Exception ex) {
-      System.err.println("ForcedGcMemoryProfiler: error obtaining PID");
-      ex.printStackTrace();
-    }
-    return null;
-  }
-
-  private static boolean isJava9() {
-    String _version = System.getProperty("java.version");
-    return _version.startsWith("9");
-  }
-
-  /**
-   * Hack to obtain process ID. Should work on Unix/Linux and Windows.
-   */
-  private static Long getProcessId() {
-    if (isJava9()) {
-      return getProcessIdJava9();
-    }
-    try {
-      java.lang.management.RuntimeMXBean _runtimeMXBean =
-        java.lang.management.ManagementFactory.getRuntimeMXBean();
-      java.lang.reflect.Field jvm = _runtimeMXBean.getClass().getDeclaredField("jvm");
-      jvm.setAccessible(true);
-      sun.management.VMManagement mgm = (sun.management.VMManagement) jvm.get(_runtimeMXBean);
-      java.lang.reflect.Method _method = mgm.getClass().getDeclaredMethod("getProcessId");
-      _method.setAccessible(true);
-      return ((Integer) _method.invoke(mgm)).longValue();
-    } catch (Exception ex) {
-      System.err.println("ForcedGcMemoryProfiler: error obtaining PID");
-      ex.printStackTrace();
-    }
-    return null;
   }
 
   /**
@@ -379,6 +337,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
   @Override
   public void beforeIteration(final BenchmarkParams benchmarkParams, final IterationParams iterationParams) {
     usedMemory = -1;
+    enabled = true;
   }
 
   @Override
