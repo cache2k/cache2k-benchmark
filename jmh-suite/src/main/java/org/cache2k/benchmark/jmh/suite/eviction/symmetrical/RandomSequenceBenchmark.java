@@ -77,7 +77,9 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
       Integer v = _generator.nextInt(range);
       cache.put(v, v);
     }
-    System.out.println("Cache stats after seeding: " + cache.toString());
+    String _statString = cache.toString();
+    System.out.println("Cache stats after seeding: " + _statString);
+    Cache2kMetricsRecorder.saveStats(_statString);
   }
 
   @TearDown(Level.Iteration)

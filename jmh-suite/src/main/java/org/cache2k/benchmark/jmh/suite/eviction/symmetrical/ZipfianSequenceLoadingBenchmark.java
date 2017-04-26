@@ -101,7 +101,9 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
       Integer v = _generator.next();
       cache.put(v, v);
     }
-    System.out.println("Cache stats after benchmark setup: " + cache);
+    String _statString = cache.toString();
+    System.out.println("Cache stats after seeding: " + _statString);
+    Cache2kMetricsRecorder.saveStats(_statString);
   }
 
   @Setup(Level.Iteration)
