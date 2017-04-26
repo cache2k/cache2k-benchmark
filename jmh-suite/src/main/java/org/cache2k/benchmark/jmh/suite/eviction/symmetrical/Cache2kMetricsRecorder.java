@@ -38,35 +38,57 @@ public class Cache2kMetricsRecorder {
 
   public final static String RESULT_PREFIX = "+c2k.stat.";
 
-  /**
-   * Populate a list, so we can do a unit test
-   */
-  static void recordStats(List<Result> l, String _statisticsString) {
+  static Stat extract(String _statisticsString) {
+    Stat x = new Stat();
     if (!_statisticsString.startsWith("Cache") && !_statisticsString.contains("integrityState=")) {
-      return;
+      return x;
     }
     String[] sa = _statisticsString.split(", |\\(|\\), ");
-    long _scanCount = 0;
-    long _evictCount = 0;
     for (String s : sa) {
       if (s.startsWith("coldScanCnt=") || s.startsWith("hotScanCnt=")) {
-        _scanCount += Long.parseLong(s.split("=")[1]);
+        x.scanCount += Long.parseLong(s.split("=")[1]);
       }
       if (s.startsWith("evict=")) {
-        _evictCount = Long.parseLong(s.split("=")[1]);
+        x.evictCount = Long.parseLong(s.split("=")[1]);
+      }
+      if (s.startsWith("get=")) {
+        x.getCount = Long.parseLong(s.split("=")[1]);
       }
     }
-    l.add(new ScalarResult(RESULT_PREFIX + "scanCount", _scanCount, "counter", AggregationPolicy.AVG));
-    l.add(new ScalarResult(RESULT_PREFIX + "evictCount", _evictCount, "counter", AggregationPolicy.AVG));
-    if (_evictCount > 0) {
-      l.add(new ScalarResult(RESULT_PREFIX + "scanPerEviction", _scanCount * 1.0D / _evictCount, "counter", AggregationPolicy.AVG));
-    }
+    return x;
+  }
+
+  static class Stat {
+
+    long scanCount;
+    long evictCount;
+    long getCount;
+
+  }
+
+  static volatile Stat before;
+
+  public static void saveStats(String _statisticsString) {
+    before = extract(_statisticsString);
   }
 
   public static void recordStats(String _statisticsString) {
+    if (before == null) {
+      throw new IllegalStateException("saveStats() needs to be called before iteration.");
+    }
+    Stat now = extract(_statisticsString);
+    long _scanCount = now.scanCount - before.scanCount;
+    long _evictCount = now.evictCount - before.evictCount;
+    long _getCount = now.getCount - before.getCount;
     List<Result> l = new ArrayList<>();
-    recordStats(l, _statisticsString);
+    l.add(new ScalarResult(RESULT_PREFIX + "scanCount", _scanCount, "counter", AggregationPolicy.AVG));
+    l.add(new ScalarResult(RESULT_PREFIX + "evictCount", _evictCount, "counter", AggregationPolicy.AVG));
+    l.add(new ScalarResult(RESULT_PREFIX + "getCount", _getCount, "counter", AggregationPolicy.AVG));
+    if (_evictCount > 0) {
+      l.add(new ScalarResult(RESULT_PREFIX + "scanPerEviction", _scanCount * 1.0D / _evictCount, "counter", AggregationPolicy.AVG));
+    }
     l.forEach(MiscResultRecorderProfiler::setResult);
+    before = now;
   }
 
 }
