@@ -1007,29 +1007,33 @@ for I in $benchmarks; do
       for TC in 10 4; do
         for HR in 95 80 50; do
           plotOps $I hitRate "bySize-${TC}x$HR" "^$TC-.*-$HR .*";
-          graph "$graphName" "$I, operations per second by cache size at $TC threads and $HR percent target hitrate";
+          graph "$graphName" "$I, operations per second by cache size at $TC threads and $HR percent target hit rate";
           plotEffectiveHitrate $I hitRate "bySize-${TC}x$HR" "^$TC-.*-$HR .*";
-          graph "$graphName" "$I, effective hitrate by cache size at $TC threads and $HR percent target hitrate";
+          graph "$graphName" "$I, effective hit rate by cache size at $TC threads and $HR percent target hit rate";
           plotScanCount $I hitRate "bySize-${TC}x$HR" "^$TC-.*-$HR .*";
-          graph "$graphName" "$I, scan count by cache size at $TC threads and $HR percent target hitrate";
+          graph "$graphName" "$I, scan count by cache size at $TC threads and $HR percent target hit rate";
         done
       done
 
       for S in 100K 1M 10M; do
         for HR in 95 80 50; do
           plotOps $I hitRate "byThread-${S}x$HR" "^.*-$S-$HR .*";
-          graph "$graphName" "$I, operations per second by thread count at $HR percent target hitrate and $S cache size";
+          graph "$graphName" "$I, operations per second by thread count at $HR percent target hit rate and $S cache size";
           plotEffectiveHitrate $I hitRate "byThread-${S}x$HR" "^.*-$S-$HR .*";
-          graph "$graphName" "$I, effective hitrate by thread count at $HR percent target hitrate and $S cache size";
+          graph "$graphName" "$I, effective hitrate by thread count at $HR percent target hit rate and $S cache size";
           plotScanCount $I hitRate "byThread-${S}x$HR" "^.*-$S-$HR .*";
-          graph "$graphName" "$I, scan count by thread count at $HR percent target hitrate and $S cache size";
+          graph "$graphName" "$I, scan count by thread count at $HR percent target hit rate and $S cache size";
         done
       done
 
       for TC in 10 4; do
         for S in 100K 1M 10M; do
+          plotOps $I hitRate "byHitrate-$TC-${S}" "^$TC-$S-.* .*";
+          graph "$graphName" "$I, operations per second by hit rate at $TC threads and $S cache size";
+          plotEffectiveHitrate $I hitRate "byHitrate-$TC-${S}" "^$TC-$S-.* .*";
+          graph "$graphName" "$I, effective hit rate by thread count at $TC threads and $S cache size";
           plotScanCount $I hitRate "byHitrate-${TC}x${S}" "^$TC-$S-.* .*";
-          graph "$graphName" "$I, scan count by hitrate at $TC threads and $S cache size";
+          graph "$graphName" "$I, scan count by hit rate at $TC threads and $S cache size";
         done
       done
 
@@ -1050,7 +1054,7 @@ for I in $benchmarks; do
           plotOps $I factor "bySize-${TC}x$F" "^$TC-.*-$F .*";
           graph "$graphName" "$I, operations per second by cache size at $TC threads and Zipfian factor $F";
           plotEffectiveHitrate $I factor "bySize-${TC}x$F" "^$TC-.*-$F .*";
-          graph "$graphName" "$I, effective hitrate by cache size at $TC threads and Zipfian factor $F";
+          graph "$graphName" "$I, effective hit rate by cache size at $TC threads and Zipfian factor $F";
           plotScanCount $I factor "bySize-${TC}x$F" "^$TC-.*-$F .*";
           graph "$graphName" "$I, scan count by cache size at $TC threads and Zipfian factor $F";
         done
@@ -1061,6 +1065,17 @@ for I in $benchmarks; do
           plotOps $I factor "byThread-${S}x$F" "^.*-${S}-$F .*";
           graph "$graphName" "$I, operations per second by thread count with cache size ${S} and Zipfian factor $F";
         done
+      done
+
+      for TC in 10 4; do
+          for S in 100K 1M 10M; do
+              plotOps $I factor "byFactor-${S}-${TC}" "^$TC-$S-.* .*";
+              graph "$graphName" "$I, operations per second by Zipfian factor with cache size ${S} at $TC threads";
+              plotEffectiveHitrate $I factor "byFactor-${S}-${TC}" "^$TC-$S-.* .*";
+              graph "$graphName" "$I, effective hit rate by Zipfian factor with cache size ${S} at $TC threads";
+              plotScanCount $I factor "byFactor-${S}-${TC}" "^$TC-$S-.* .*";
+              graph "$graphName" "$I, scan count by Zipfian factor with cache size ${S} at $TC threads";
+          done
       done
 
 
@@ -1081,13 +1096,13 @@ false && (
       graph "$graphName" "$I, operations per second at 4 threads and Zipfian factor 80";
 
       plotEffectiveHitrate $I factor "strip4x80" "^4-.*-80 .*";
-      graph "$graphName" "$I, Effective hitrate at 4 threads and Zipfian factor 80";
+      graph "$graphName" "$I, Effective hit rate at 4 threads and Zipfian factor 80";
 
       plotOps $I factor "strip10x80" "^10-.*-80 .*";
       graph "$graphName" "$I, operations per second at 10 threads and Zipfian factor 80";
 
       plotEffectiveHitrate $I factor "strip10x80" "^10-.*-80 .*";
-      graph "$graphName" "$I, Effective hitrate at 10 threads and Zipfian factor 80";
+      graph "$graphName" "$I, Effective hit rate at 10 threads and Zipfian factor 80";
 )
 
 #      plotMemUsed $I factor;
