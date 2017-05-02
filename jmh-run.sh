@@ -22,8 +22,8 @@ set -e;
 
 # biased locking delay is 4000 by default, enable from the start to minimize effects on the first benchmark iteration
 # (check with: ava  -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal 2>/dev/null | grep BiasedLockingStartupDelay)
-# test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedLockingStartupDelay=0 -verbose:gc -XX:+PrintGCTimeStamps -XX:+PrintGCDetails -XX:+UseG1GC";
-test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedLockingStartupDelay=0 -verbose:gc -XX:+PrintGCTimeStamps -XX:+PrintGCDetails  -XX:+UseG1GC";
+test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedLockingStartupDelay=0 -verbose:gc -XX:+PrintGCTimeStamps -XX:+PrintGCDetails";
+# BENCHMARK_JVM_ARGS="$BENCHMARK_JVM_ARGS -XX:+UseG1GC";
 
 # -wi warmup iterations
 # -w warmup time
@@ -35,8 +35,10 @@ test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 0 -i 1 -r 1s -foe true";
 # -f 2 / -i 2 has not enough confidence, there is sometime one outlier
 # 2 full warmups otherwise there is big jitter with G1
 # 5x30 warumups needed for cache2k 10M performance with CMS
+# -gc true: careful with -gc true, this seems to influence the measures performance significantly
+test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 2 -wi 5 -w 30s -i 3 -r 30s";
 # test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 3 -wi 5 -w 30s -i 5 -r 30s";
-test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 3 -wi 5 -w 30s -i 5 -r 30s";
+# test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 3 -wi 5 -w 30s -i 5 -r 30s";
 # test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 2 -wi 0 -w 40s -i 8 -r 20s";
 
 # Tinker benchmark options to do profiling and add assembler code output (linux only).
@@ -51,7 +53,9 @@ test -n "$BENCHMARK_PERFASM" || BENCHMARK_PERFASM="-f 1 -wi 1 -w 10s -i 1 -r 30s
 
 # hs_gc: detailed counters from the GC implementation
 STANDARD_PROFILER="-prof comp -prof gc -prof hs_rt -prof hs_gc";
-# STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler";
+
+STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler";
+STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.LinuxVmProfiler";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.MiscResultRecorderProfiler";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.GcProfiler";
 
@@ -233,7 +237,7 @@ done
 benchmarks="ZipfianSequenceLoadingBenchmark RandomSequenceBenchmark";
 for impl in $COMPLETE; do
   for benchmark in $benchmarks; do
-    for threads in 4; do
+    for threads in 1 2 4; do
       runid="$impl-$benchmark-$threads";
       fn="$TARGET/result-$runid";
       echo;
