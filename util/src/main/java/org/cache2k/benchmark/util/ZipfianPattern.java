@@ -172,6 +172,7 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
     zetaStaticMap.put("80000000|0.99", 20.534952035464187);
     zetaStaticMap.put("100000000|0.99", 20.80293049002014);
     zetaStaticMap.put("800000000|0.99", 23.329143628120455);
+    zetaStaticMap.put("200000000|0.99", 21.639171532673963);
   }
 
   /**
