@@ -133,8 +133,9 @@ public class BenchmarkingBase {
       _cacheImplementation + "|" + // 2
         String.format("%.2f", _hitRateTimes100) + "|" + // 3
         _cacheSize + "|" + // 4
-      _trace.getTraceLength() + "|" + // 5
-      _trace.getValueCount(); // 6
+        _missCount + "|" + // 5
+      _trace.getTraceLength() + "|" + // 6
+      _trace.getValueCount(); // 7
 
     if (!benchmarkName2csv.containsKey(_testName)) {
       benchmarkName2csv.put(_testName, _csvLine);
