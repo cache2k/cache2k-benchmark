@@ -27,10 +27,11 @@ package org.cache2k.benchmark.thirdparty;
 
 import com.trivago.triava.tcache.TCacheFactory;
 import com.trivago.triava.tcache.core.Builder;
-import com.trivago.triava.tcache.eviction.Cache;
+import com.trivago.triava.tcache.Cache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -45,7 +46,7 @@ public class TCache1Factory extends BenchmarkCacheFactory {
   public BenchmarkCache<Integer, Integer> create(int _maxElements) {
     TCacheFactory factory = TCacheFactory.standardFactory();
     Builder<Integer, Integer> b = factory.builder();
-    b.setExpectedMapSize(_maxElements);
+    b.setMaxElements(_maxElements);
 
     /**
      * Set a cache name. For some reason, auto-assigning a name does not work properly in this JMH based test.
@@ -57,22 +58,20 @@ public class TCache1Factory extends BenchmarkCacheFactory {
     b.setId(id);
 
     if (withExpiry) {
-      b.setMaxCacheTime(5 * 60);
-      b.setMaxIdleTime(5 * 60);
+      b.setMaxCacheTime(5, TimeUnit.MINUTES);
+      b.setMaxIdleTime(5, TimeUnit.MINUTES);
     }
 
-    return new MyBenchmarkCacheAdapter(b, _maxElements, factory);
+    return new MyBenchmarkCacheAdapter(b, _maxElements);
   }
 
   static class MyBenchmarkCacheAdapter extends BenchmarkCache<Integer, Integer> {
     final int size;
     final Cache<Integer, Integer> cache;
-    final public TCacheFactory factory;
 
-    public MyBenchmarkCacheAdapter(Builder<Integer, Integer> builder, int maxElements, TCacheFactory factory) {
+    public MyBenchmarkCacheAdapter(Builder<Integer, Integer> builder, int maxElements) {
       super();
       this.size = maxElements;
-      this.factory = factory;
       this.cache = builder.build();
     }
 
@@ -93,7 +92,7 @@ public class TCache1Factory extends BenchmarkCacheFactory {
 
     @Override
     public void close() {
-      factory.destroyCache(cache.id());
+        cache.close();
     }
 
     @Override
