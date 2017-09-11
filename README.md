@@ -57,7 +57,7 @@ bash jmh-run.sh
 bash processJmhResults.sh --dir /var/run/shm/jmh-result process
 ```
 
-This requires Linux and gnuplot. Single benchmarks can alternatively be run
+This requires Linux with gnuplot, pandoc and asciidoctor. Single benchmarks can alternatively be run
 via: `java -jar jmh-suite/target/benchmarks.jar [ jmh-parameters ]`
 
 ## The maven modules
