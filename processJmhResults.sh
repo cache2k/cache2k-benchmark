@@ -33,7 +33,8 @@ sed "$script";
 CACHE_FACTORY_LIST="org.cache2k.benchmark.Cache2kFactory \
 org.cache2k.benchmark.thirdparty.CaffeineCacheFactory \
 org.cache2k.benchmark.thirdparty.GuavaCacheFactory \
-org.cache2k.benchmark.thirdparty.EhCache2Factory";
+org.cache2k.benchmark.thirdparty.EhCache2Factory \
+org.cache2k.benchmark.thirdparty.TCache1Factory";
 
 # "org.cache2k.benchmark.thirdparty.EhCache3Factory";
 

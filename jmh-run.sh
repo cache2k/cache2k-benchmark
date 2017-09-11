@@ -164,7 +164,7 @@ test -d $TARGET || mkdir -p $TARGET;
 if test -n "$backends"; then
   COMPLETE="$backends";
 elif test -z "$no3pty"; then
-  COMPLETE="$COMPLETE thirdparty.CaffeineCacheFactory thirdparty.GuavaCacheFactory thirdparty.EhCache2Factory";
+  COMPLETE="$COMPLETE thirdparty.CaffeineCacheFactory thirdparty.GuavaCacheFactory thirdparty.EhCache2Factory thirdparty.TCache1Factory";
   # "thirdparty.EhCache3Factory";
 fi
 
