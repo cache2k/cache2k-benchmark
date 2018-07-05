@@ -4,7 +4,7 @@ package org.cache2k.benchmark.traces;
  * #%L
  * Benchmarks: Access trace collection
  * %%
- * Copyright (C) 2013 - 2017 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2018 headissue GmbH, Munich
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
