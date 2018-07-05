@@ -12,6 +12,9 @@
 # process     paint nice diagrams
 # copyToSite  copy the diagrams and all results the the cache2k project site
 
+# set -x
+# set -e
+
 RESULT="target/benchmark-result";
 SITE="../cache2k/src/site/resources/benchmark-result";
 
@@ -137,7 +140,7 @@ cat $RESULT/benchmark.log | awk "$extract_jub_csv_from_log_awk"
 }
 
 printCacheCsv() {
-for I in $RESULT/*-cache2k-benchmark-result.csv; do
+for I in $RESULT/*.csv; do
   cat $I;
 done
 }
@@ -241,14 +244,15 @@ printHitrate() {
   printCacheCsv;
 }
 
+traces="Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 Zipf10k TotalRandom1000 \
+       UmassWebSearch1 UmassFinancial1 UmassFinancial2 \
+       OrmAccessBusytime OrmAccessNight Glimpse ScarabRecs ScarabProds";
+
 process() {
 rm -rf $RESULT/*.dat;
 rm -rf $RESULT/*.svg;
 rm -rf $RESULT/*.plot;
 
-traces="Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 Zipf10k TotalRandom1000 \
-       UmassWebSearch1 UmassFinancial1 UmassFinancial2 \
-       OrmAccessBusytime OrmAccessNight Glimpse ScarabRecs ScarabProds";
 
 # S/WTLfu S/WTLfu90
 header="Size OPT LRU S/LRU CLOCK Cache2k ARC CAR S/Lirs EHCache2 Guava Caffeine S/Mru S/Lfu RAND";
@@ -320,6 +324,23 @@ for I in $traces; do
   plot $f "Hitrates for $I trace";
 done
 
+}
+
+processExp() {
+header="Size c2k-0809 c2k-1.0 Caffeine=";
+impls="cache2k-1.1-20170809 \
+       cache2k-1.0 \
+       org.cache2k.benchmark.thirdparty.CaffeineRegularBenchmark";
+for I in $traces; do
+  f=$RESULT/trace${I}exp.dat;
+  (
+  echo $header;
+  printHitrate | grep "^benchmark${I}_" | alongSize | sort -n -k1 -t'|' | \
+    pivot $impls | \
+    stripEmpty
+  ) > $f
+  plot $f "Hitrates for $I trace";
+done
 }
 
 processCommandLine "$@";

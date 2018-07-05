@@ -25,6 +25,12 @@ s/org.cache2k.benchmark.thirdparty.CaffeineCacheFactory/Caffeine/
 s/org.cache2k.benchmark.thirdparty.GuavaCacheFactory/Guava/
 s/org.cache2k.benchmark.Cache2kFactory/cache2k/
 s/org.cache2k.benchmark.thirdparty.TCache1Factory/tCache/
+s/org.cache2k.benchmark.thirdparty.EhCache2Factory0/EhCache2~/
+s/org.cache2k.benchmark.thirdparty.EhCache3Factory0/EhCache3~/
+s/org.cache2k.benchmark.thirdparty.CaffeineCacheFactory0/Caffeine~/
+s/org.cache2k.benchmark.thirdparty.GuavaCacheFactory0/Guava~/
+s/org.cache2k.benchmark.Cache2kFactory0/cache2k~/
+s/org.cache2k.benchmark.thirdparty.TCache1Factory0/tCache~/
 EOF
 `
 sed "$script";
@@ -34,6 +40,10 @@ CACHE_FACTORY_LIST="org.cache2k.benchmark.Cache2kFactory \
 org.cache2k.benchmark.thirdparty.CaffeineCacheFactory \
 org.cache2k.benchmark.thirdparty.GuavaCacheFactory \
 org.cache2k.benchmark.thirdparty.EhCache2Factory";
+CACHE_FACTORY_LIST_BASE="org.cache2k.benchmark.Cache2kFactory0 \
+org.cache2k.benchmark.thirdparty.CaffeineCacheFactory0 \
+org.cache2k.benchmark.thirdparty.GuavaCacheFactory0 \
+org.cache2k.benchmark.thirdparty.EhCache2Factory0";
 
 # "org.cache2k.benchmark.thirdparty.EhCache3Factory";
 
@@ -43,6 +53,11 @@ org.cache2k.benchmark.thirdparty.EhCache2Factory";
 # CACHE_FACTORY_LIST=org.cache2k.benchmark.thirdparty.CaffeineCacheFactory
 
 CACHE_LABEL_LIST=`echo $CACHE_FACTORY_LIST | cacheShortNames`;
+
+withBase() {
+CACHE_FACTORY_LIST="$CACHE_FACTORY_LIST $CACHE_FACTORY_LIST_BASE";
+CACHE_LABEL_LIST=`echo $CACHE_FACTORY_LIST | cacheShortNames`;
+}
 
 processCommandLine() {
   pars="$#";
