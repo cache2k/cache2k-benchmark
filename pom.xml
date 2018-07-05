@@ -27,7 +27,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cache2k-version>1.0.0.CR3</cache2k-version>
+    <cache2k-version>1.0.2.Final</cache2k-version>
   </properties>
 
   <modules>
@@ -53,6 +53,15 @@
   </dependencies>
 
   <profiles>
+
+    <!-- enable to use latest cache2k version -->
+    <profile>
+      <id>local-snapshosts</id>
+      <properties>
+        <cache2k-version>[0,)</cache2k-version>
+      </properties>
+    </profile>
+
     <profile>
       <id>benchmark</id>
       <build>
@@ -69,7 +78,9 @@
                    implementation do not influence each other -->
               <reuseForks>false</reuseForks>
               <enableAssertions>false</enableAssertions>
+              <!--
               <argLine>-verbose:gc -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+UseSerialGC</argLine>
+              -->
               <systemProperties>
                 <jub.consumers>CONSOLE,XML</jub.consumers>
                 <jub.xml.file>${project.build.directory}/junit-benchmark.xml</jub.xml.file>
