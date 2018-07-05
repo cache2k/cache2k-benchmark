@@ -80,7 +80,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
    * Called from the benchmark when the objects are still referenced to record the
    * used memory. This enforces a full garbage collection.
    */
-  private static void recordUsedMemory() {
+  public static void recordUsedMemory() {
     long t0 = System.currentTimeMillis();
     long m2 = usedMemory = getUsedMemory();
     do {

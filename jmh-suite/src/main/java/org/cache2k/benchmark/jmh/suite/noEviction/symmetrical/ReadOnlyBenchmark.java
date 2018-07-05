@@ -22,6 +22,7 @@ package org.cache2k.benchmark.jmh.suite.noEviction.symmetrical;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
+import org.cache2k.benchmark.jmh.suite.eviction.symmetrical.Cache2kMetricsRecorder;
 import org.cache2k.benchmark.util.AccessPattern;
 import org.cache2k.benchmark.util.RandomAccessPattern;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -66,6 +67,7 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
   @Setup(Level.Iteration)
   public void setup() throws Exception {
     cache = getFactory().create(ENTRY_COUNT);
+    Cache2kMetricsRecorder.saveStats(cache.toString());
     ints = new Integer[PATTERN_COUNT];
     AccessPattern _pattern =
       new RandomAccessPattern((int) (ENTRY_COUNT * (100D / hitRate)));
@@ -79,6 +81,7 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
 
   @TearDown(Level.Iteration)
   public void tearDown() {
+    Cache2kMetricsRecorder.recordStats(cache.toString());
     recordMemoryAndDestroy(cache);
   }
 

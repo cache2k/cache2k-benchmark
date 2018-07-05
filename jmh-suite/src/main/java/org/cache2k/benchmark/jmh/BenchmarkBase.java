@@ -56,7 +56,17 @@ public class BenchmarkBase {
   }
 
   public void recordMemoryAndDestroy(Closeable _closeable) {
-    throw new UnsupportedOperationException("needs revising, keep steady state instead of destroy?");
+    ForcedGcMemoryProfiler.recordUsedMemory();
+    if (_closeable != null) {
+      System.out.println();
+      String _statString = _closeable.toString();
+      System.out.println(_statString);
+      System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
+      try {
+        _closeable.close();
+      } catch (IOException _ignore) {
+      }
+    }
   }
 
 }
