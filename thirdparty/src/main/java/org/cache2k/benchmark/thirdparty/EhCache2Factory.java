@@ -98,7 +98,7 @@ public class EhCache2Factory extends BenchmarkCacheFactory {
       .persistence(new PersistenceConfiguration().strategy(PersistenceConfiguration.Strategy.NONE));
     if (withExpiry) {
       c.setEternal(false);
-      c.setTimeToLiveSeconds(5 * 60);
+      c.setTimeToLiveSeconds(2 * 60);
     }
     return c;
   }

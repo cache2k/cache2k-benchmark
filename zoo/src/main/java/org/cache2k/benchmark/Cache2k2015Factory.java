@@ -49,7 +49,7 @@ public class Cache2k2015Factory extends BenchmarkCacheFactory {
     final Cache<Integer, Integer> c = bc;
     CacheConfig<Integer, Integer> cc = new CacheConfig<>();
     cc.setName("testCache-" + counter.incrementAndGet());
-    cc.setExpirySeconds(withExpiry ? 5 * 60 : Integer.MAX_VALUE);
+    cc.setExpirySeconds(withExpiry ? 2 * 60 : Integer.MAX_VALUE);
     cc.setEntryCapacity(_maxElements);
     cc.setBackgroundRefresh(false);
     cc.setKeepDataAfterExpired(false);

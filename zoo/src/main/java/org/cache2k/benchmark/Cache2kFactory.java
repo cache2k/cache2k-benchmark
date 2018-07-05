@@ -117,7 +117,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
         .refreshAhead(false)
         .strictEviction(true);
     if (withExpiry) {
-      b.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
+      b.expireAfterWrite(2 * 60, TimeUnit.SECONDS);
     } else {
       b.eternal(true);
     }

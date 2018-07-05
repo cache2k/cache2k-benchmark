@@ -20,6 +20,7 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
  * #L%
  */
 
+import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheSource;
 import org.cache2k.benchmark.LoadingBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
@@ -59,8 +60,11 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @Param({"5", "10", "20"})
   public int factor = 0;
 
-  @Param({"100000", "1000000", "10000000"})
+  @Param({"100000", "1000000"})
   public int entryCount = 100_000;
+
+  @Param({"false"})
+  public boolean expiry = false;
 
   private final DataSource source = new DataSource();
 
@@ -89,8 +93,12 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @Setup
   public void setupBenchmark() {
     int _range = entryCount * factor;
+    BenchmarkCacheFactory f = getFactory();
+    if (expiry) {
+      f.withExpiry(true);
+    }
     cache =
-      getFactory().createLoadingCache(Integer.class, Integer.class, entryCount, source);
+      f.createLoadingCache(Integer.class, Integer.class, entryCount, source);
     /*
        fill the cache completely, so memory is already expanded at maximum
        this way the benchmark runs on better steady state and jitter is reduced.

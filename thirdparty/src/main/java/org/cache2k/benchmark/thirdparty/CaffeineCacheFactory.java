@@ -84,7 +84,7 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
       b.initialCapacity(_maxElements);
     }
     if (withExpiry) {
-      b.expireAfterWrite(5 * 60, TimeUnit.SECONDS);
+      b.expireAfterWrite(2 * 60, TimeUnit.SECONDS);
     }
     return b;
   }

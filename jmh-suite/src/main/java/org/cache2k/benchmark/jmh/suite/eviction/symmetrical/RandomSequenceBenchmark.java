@@ -48,7 +48,7 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
   @Param({"50", "80", "95"})
   public int hitRate = 0;
 
-  @Param({"100000", "1000000", "10000000"})
+  @Param({"100000", "1000000"})
   public int entryCount = 100_000;
 
   /** Use thread safe RPNG to give each thread state another seed. */
