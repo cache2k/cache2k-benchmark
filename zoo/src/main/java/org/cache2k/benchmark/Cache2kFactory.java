@@ -114,8 +114,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
       Cache2kBuilder.of(_keyType, _valueType)
         .name("testCache-" + counter.incrementAndGet())
         .entryCapacity(_maxElements)
-        .refreshAhead(false)
-        .strictEviction(true);
+        .refreshAhead(false);
     if (withExpiry) {
       b.expireAfterWrite(2 * 60, TimeUnit.SECONDS);
     } else {
