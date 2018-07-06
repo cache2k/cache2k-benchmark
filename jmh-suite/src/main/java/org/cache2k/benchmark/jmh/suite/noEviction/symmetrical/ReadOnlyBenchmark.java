@@ -47,11 +47,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 @State(Scope.Benchmark)
 public class ReadOnlyBenchmark extends BenchmarkBase {
 
-  public static final int ENTRY_COUNT = 100 * 1000;
   public static final int PATTERN_COUNT = 1000 * 1000;
 
   @Param({"100", "50", "33"})
   public int hitRate = 0;
+
+  @Param({"100000"})
+  public int entryCount = 100 * 1000;
 
   private final static AtomicInteger offset = new AtomicInteger(0);
 
@@ -66,15 +68,15 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    cache = getFactory().create(ENTRY_COUNT);
+    cache = getFactory().create(entryCount);
     Cache2kMetricsRecorder.saveStats(cache.toString());
     ints = new Integer[PATTERN_COUNT];
     AccessPattern _pattern =
-      new RandomAccessPattern((int) (ENTRY_COUNT * (100D / hitRate)));
+      new RandomAccessPattern((int) (entryCount * (100D / hitRate)));
     for (int i = 0; i < PATTERN_COUNT; i++) {
       ints[i] = _pattern.next();
     }
-    for (int i = 0; i < ENTRY_COUNT; i++) {
+    for (int i = 0; i < entryCount; i++) {
       cache.put(i, i);
     }
   }

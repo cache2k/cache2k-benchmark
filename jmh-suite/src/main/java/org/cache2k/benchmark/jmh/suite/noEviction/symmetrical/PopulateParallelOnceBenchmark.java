@@ -43,15 +43,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 @State(Scope.Benchmark)
 public class PopulateParallelOnceBenchmark extends BenchmarkBase {
 
-  @Param({"1000000", "2000000", "4000000", "8000000"})
-  public int size = 1000 * 1000;
+  @Param({ "2000000", "4000000", "8000000"})
+  public int entryCount = 1000 * 1000;
   protected final AtomicInteger offset = new AtomicInteger(0);
 
   BenchmarkCache <Integer, Integer> cache;
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    cache = getFactory().create(size);
+    cache = getFactory().create(entryCount);
   }
 
   @TearDown(Level.Iteration)
@@ -66,7 +66,7 @@ public class PopulateParallelOnceBenchmark extends BenchmarkBase {
 
   @Benchmark @BenchmarkMode(Mode.SingleShotTime)
   public long populateChunkInCache(ThreadState ts, BenchmarkParams p) {
-    int _chunkSize = size / p.getThreads();
+    int _chunkSize = entryCount / p.getThreads();
     int _startIndex = offset.getAndAdd(_chunkSize);
     int _endIndex = _startIndex + _chunkSize;
     for (int i = _startIndex; i < _endIndex; i++) {
