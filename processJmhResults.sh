@@ -19,12 +19,14 @@ SITE="../cache2k/src/site/resources/benchmark-result";
 # replace class names by short name of each cache implementation for graph labeling
 cacheShortNames() {
 local script=`cat << EOF
+s/org.cache2k.benchmark.ConcurrentHashMapFactory/CHM/
 s/org.cache2k.benchmark.thirdparty.EhCache2Factory/EhCache2/
 s/org.cache2k.benchmark.thirdparty.EhCache3Factory/EhCache3/
 s/org.cache2k.benchmark.thirdparty.CaffeineCacheFactory/Caffeine/
 s/org.cache2k.benchmark.thirdparty.GuavaCacheFactory/Guava/
 s/org.cache2k.benchmark.Cache2kFactory/cache2k/
 s/org.cache2k.benchmark.thirdparty.TCache1Factory/tCache/
+s/org.cache2k.benchmark.ConcurrentHashMapFactory0/CHM~/
 s/org.cache2k.benchmark.thirdparty.EhCache2Factory0/EhCache2~/
 s/org.cache2k.benchmark.thirdparty.EhCache3Factory0/EhCache3~/
 s/org.cache2k.benchmark.thirdparty.CaffeineCacheFactory0/Caffeine~/
@@ -856,7 +858,32 @@ test -f "$tmp" || json | \
     pivot4 $prods | sort -n -t- -k1,1 -k2,2 -k3,3 | shortenParamValues > "$tmp"
     cat "$tmp" | grep "$filter" | stripEmpty
 ) > $f
-plot --withConfidence $f "${name} / Throughput" "threads-size-$param" "ops/s"
+plot --withConfidence $f "${name} / Throughput (higher is better)" "threads-size-$param" "ops/s"
+}
+
+# plot main score, typically runtime
+plotRuntime() {
+name="$1";
+param="$2";
+suffix="$3";
+filter="$4";
+local prods="$CACHE_FACTORY_LIST org.cache2k.benchmark.ConcurrentHashMapFactory";
+if test -n "$suffix"; then
+f=$RESULT/${name}-${suffix}.dat
+else
+f=$RESULT/${name}.dat
+fi
+(
+header4 "$prods";
+local tmp="$RESULT/tmp-plotOps-$name-$param.data"
+# FIXME: size -> entry count
+test -f "$tmp" || json | \
+    jq -r ".[] |  select (.benchmark | contains (\".${name}\") ) | [ (.threads | tostring) + \"-\" + .params.size + \"-\" + .params.$param, .params.cacheFactory, .primaryMetric.score, .primaryMetric.scoreError, .primaryMetric.scoreConfidence[0], .primaryMetric.scoreConfidence[1]  ] | @csv" | \
+    sort | tr -d '"' | \
+    pivot4 $prods | sort -n -t- -k1,1 -k2,2 -k3,3 | shortenParamValues > "$tmp"
+    cat "$tmp" | grep "$filter" | stripEmpty
+) > $f
+plot --withConfidence $f "${name} / Runtime (lower is better)" "threads-size-$param" "runtime[s]"
 }
 
 # not yet used
@@ -936,19 +963,21 @@ rm -f $RESULT/tmp-*;
 
 noBenchmark PopulateParallelOnceBenchmark || {
 
-    f=$RESULT/populateParallelOnce.dat
-    (
-    echo "threads-size CHM $CACHE_LABEL_LIST";
-    json | \
-        jq -r '.[] |  select (.benchmark | contains ("PopulateParallelOnceBenchmark") ) | [ (.threads | tostring) + "-" + .params.size, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
-        sort | tr -d '"' | \
-        pivot \
-              "org.cache2k.benchmark.ConcurrentHashMapFactory" \
-                $CACHE_FACTORY_LIST \
-              | sort | \
-        stripEmpty
-    ) > $f
-    plot $f "PopulateParallelOnceBenchmark multiple threads" "runtime in seconds" "threads - cache size (entries)"
+#    f=$RESULT/populateParallelOnce.dat
+#        (
+#        echo "threads-size CHM $CACHE_LABEL_LIST";
+#        json | \
+#            jq -r '.[] |  select (.benchmark | contains ("PopulateParallelOnceBenchmark") ) | [ (.threads | tostring) + "-" + .params.size, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
+#            sort | tr -d '"' | \
+#            pivot \
+#                  "org.cache2k.benchmark.ConcurrentHashMapFactory" \
+#                    $CACHE_FACTORY_LIST \
+#                  | sort | \
+#            stripEmpty
+#        ) > $f
+#        plot $f "PopulateParallelOnceBenchmark multiple threads" "runtime in seconds" "threads - cache size (entries)"
+    plotRuntime PopulateParallelOnceBenchmark runtime;
+    graph "$graphName" "PopulateParallelOnceBenchmark";
 
     for threads in 1 2 4; do
     f=$RESULT/populateParallelOnce-$threads.dat
@@ -964,6 +993,7 @@ noBenchmark PopulateParallelOnceBenchmark || {
         stripEmpty
     ) > $f
     plot $f "PopulateParallelOnceBenchmark $threads threads" "runtime in seconds" "cache size (entries)"
+    graph "$graphName" "PopulateParallelOnceBenchmark $threads threads";
     done
 
     f=$RESULT/populateParallelOnce-memory.dat
@@ -979,6 +1009,7 @@ noBenchmark PopulateParallelOnceBenchmark || {
         stripEmpty
     ) > $f
     plot $f "PopulateParallelOnceBenchmark heap size after forced GC" "MB" "cache size (entries)"
+    graph "$graphName" "PopulateParallelOnceBenchmark heap size after GC";
 
 }
 
