@@ -843,7 +843,7 @@ name="$1";
 param="$2";
 suffix="$3";
 filter="$4";
-local prods="$CACHE_FACTORY_LIST";
+local prods="$CACHE_FACTORY_LIST $5";
 if test -n "$suffix"; then
 f=$RESULT/${name}-${suffix}.dat
 else
@@ -876,32 +876,13 @@ fi
 (
 header4 "$prods";
 local tmp="$RESULT/tmp-plotOps-$name-$param.data"
-# FIXME: size -> entry count
 test -f "$tmp" || json | \
-    jq -r ".[] |  select (.benchmark | contains (\".${name}\") ) | [ (.threads | tostring) + \"-\" + .params.size + \"-\" + .params.$param, .params.cacheFactory, .primaryMetric.score, .primaryMetric.scoreError, .primaryMetric.scoreConfidence[0], .primaryMetric.scoreConfidence[1]  ] | @csv" | \
+    jq -r ".[] |  select (.benchmark | contains (\".${name}\") ) | [ (.threads | tostring) + \"-\" + .params.entryCount, .params.cacheFactory, .primaryMetric.score, .primaryMetric.scoreError, .primaryMetric.scoreConfidence[0], .primaryMetric.scoreConfidence[1]  ] | @csv" | \
     sort | tr -d '"' | \
     pivot4 $prods | sort -n -t- -k1,1 -k2,2 -k3,3 | shortenParamValues > "$tmp"
     cat "$tmp" | grep "$filter" | stripEmpty
 ) > $f
-plot --withConfidence $f "${name} / Runtime (lower is better)" "threads-size-$param" "runtime[s]"
-}
-
-# not yet used
-withExpiry() {
-
-f=$RESULT/populateParallelOnceCache2k.dat
-(
-echo "threads-size cache2k cache2k+expiry ConcurrentHashMap";
-json | \
-    jq -r '.[] |  select (.benchmark | contains ("PopulateParallelOnceBenchmark") ) | [ (.threads | tostring) + "-" + .params.size, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
-    sort | tr -d '"' | \
-    pivot "org.cache2k.benchmark.Cache2kFactory" \
-          "org.cache2k.benchmark.Cache2kWithExpiryFactory" \
-          "org.cache2k.benchmark.ConcurrentHashMapFactory" | sort | \
-    stripEmpty
-) > $f
-plot $f "PopulateParallelOnceBenchmark multiple threads" "runtime in seconds" "threads - cache size (entries)"
-
+plot --withConfidence $f "${name} / Runtime (lower is better)" "threads-size" "runtime[s]"
 }
 
 noBenchmark() {
@@ -954,95 +935,53 @@ typesetPlainMarkDown "$1" "$2";
 typesetAsciiDoc "$1" "$2";
 }
 
-process() {
-
-bigJson;
-cleanTypesetting;
-# clean tmp files.
-rm -f $RESULT/tmp-*;
-
+processGraphs() {
 noBenchmark PopulateParallelOnceBenchmark || {
+    I=PopulateParallelOnceBenchmark;
+    plotRuntime I runtime;
+    graph "$graphName" "I";
 
-#    f=$RESULT/populateParallelOnce.dat
-#        (
-#        echo "threads-size CHM $CACHE_LABEL_LIST";
-#        json | \
-#            jq -r '.[] |  select (.benchmark | contains ("PopulateParallelOnceBenchmark") ) | [ (.threads | tostring) + "-" + .params.size, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
-#            sort | tr -d '"' | \
-#            pivot \
-#                  "org.cache2k.benchmark.ConcurrentHashMapFactory" \
-#                    $CACHE_FACTORY_LIST \
-#                  | sort | \
-#            stripEmpty
-#        ) > $f
-#        plot $f "PopulateParallelOnceBenchmark multiple threads" "runtime in seconds" "threads - cache size (entries)"
-    plotRuntime PopulateParallelOnceBenchmark runtime;
-    graph "$graphName" "PopulateParallelOnceBenchmark";
-
-    for threads in 1 2 4; do
-    f=$RESULT/populateParallelOnce-$threads.dat
-    (
-    echo "size CHM $CACHE_LABEL_LIST";
-    json | \
-        jq -r ".[] |  select (.benchmark | contains (\"PopulateParallelOnceBenchmark\") ) | select (.threads == $threads ) | [ .params.size, .params.cacheFactory, .primaryMetric.score ] | @csv"  | \
-        sort | tr -d '"' | \
-        pivot \
-              "org.cache2k.benchmark.ConcurrentHashMapFactory" \
-               $CACHE_FACTORY_LIST \
-              | sort | \
-        stripEmpty
-    ) > $f
-    plot $f "PopulateParallelOnceBenchmark $threads threads" "runtime in seconds" "cache size (entries)"
-    graph "$graphName" "PopulateParallelOnceBenchmark $threads threads";
+    for T in 1 2 4; do
+      plotRuntime $I hitRate "bySize-${T}" "^$T-.*";
+      graph "$graphName" "$I, runtime by size for ${T} threads";
     done
 
-    f=$RESULT/populateParallelOnce-memory.dat
-    (
-    echo "size CHM $CACHE_LABEL_LIST";
-    json | \
-        jq -r ".[] |  select (.benchmark | contains (\"PopulateParallelOnceBenchmark\") ) | select (.threads == 1 ) | [ .params.size, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used.after\"][\"score\"] ] | @csv"  | \
-        sort | tr -d '"' | scaleBytesToMegaBytes | \
-        pivot \
-              "org.cache2k.benchmark.ConcurrentHashMapFactory" \
-               $CACHE_FACTORY_LIST \
-              | sort | \
-        stripEmpty
-    ) > $f
-    plot $f "PopulateParallelOnceBenchmark heap size after forced GC" "MB" "cache size (entries)"
-    graph "$graphName" "PopulateParallelOnceBenchmark heap size after GC";
+    for S in 2M 4M 8M; do
+      plotRuntime $I hitRate "byThreads-${S}" "^.*-${S}";
+      graph "$graphName" "$I, runtime by thread count for ${S} cache size";
+    done
 
 }
 
-noBenchmark ReadOnlyBenchmark || {
-    f=$RESULT/readOnly.dat
-    (
-    echo "threads-size CHM $CACHE_LABEL_LIST";
-    json | \
-        jq -r '.[] |  select (.benchmark | contains ("ReadOnlyBenchmark") ) | [ (.threads | tostring) + "-" + .params.hitRate, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
-        sort | tr -d '"' | \
-        pivot \
-              "org.cache2k.benchmark.ConcurrentHashMapFactory" \
-              $CACHE_FACTORY_LIST \
-              | sort | \
-        stripEmpty
-    ) > $f
-    plot $f "ReadOnlyBenchmark (threads-hitRate)" "ops/s"
+benchmarks="ReadOnlyBenchmark"
+for I in $benchmarks; do
+  noBenchmark $I || {
+      plotOps $I hitRate "" "" org.cache2k.benchmark.ConcurrentHashMapFactory;
+      graph "$graphName" "$I, operations per second (complete)";
 
-    f=$RESULT/combinedReadWrite.dat
-    (
-    echo "threads-size CHM $CACHE_LABEL_LIST";
-    json | \
-        jq -r '.[] |  select (.benchmark | contains ("CombinedReadWriteBenchmark") ) | [ .benchmark, .params.cacheFactory, .primaryMetric.score ] | @csv'  | \
-        sed 's/org.cache2k.benchmark.jmh.suite.noEviction.asymmetrical.CombinedReadWriteBenchmark.//' | \
-        sort | tr -d '"' | \
-        pivot \
-              "org.cache2k.benchmark.ConcurrentHashMapFactory" \
-              $CACHE_FACTORY_LIST \
-              | sort | \
-        stripEmpty
-    ) > $f
-    plot $f "CombinedReadWrite" "ops/s"
-}
+      for TC in 10 4; do
+        for HR in 100 50 33; do
+          plotOps $I hitRate "bySize-${TC}x$HR" "^$TC-.*-$HR .*" org.cache2k.benchmark.ConcurrentHashMapFactory;
+          graph "$graphName" "$I, operations per second by cache size at $TC threads and $HR percent target hit rate";
+        done
+      done
+
+      for S in 100K 1M 10M; do
+        for HR in 100 50 33; do
+          plotOps $I hitRate "byThread-${S}x$HR" "^.*-$S-$HR .*" org.cache2k.benchmark.ConcurrentHashMapFactory;
+          graph "$graphName" "$I, operations per second by thread count at $HR percent target hit rate and $S cache size";
+        done
+      done
+
+      for TC in 10 4; do
+        for S in 100K 1M 10M; do
+          plotOps $I hitRate "byHitrate-$TC-${S}" "^$TC-$S-.* .*" org.cache2k.benchmark.ConcurrentHashMapFactory;
+          graph "$graphName" "$I, operations per second by hit rate at $TC threads and $S cache size";
+        done
+      done
+
+  }
+done
 
 benchmarks="RandomSequenceBenchmark NeverHitBenchmark RandomAccessLongSequenceBenchmark MultiRandomAccessBenchmark GeneratedRandomSequenceBenchmark"
 for I in $benchmarks; do
@@ -1260,6 +1199,20 @@ EOF
 ) | plotMemoryGraphs
 
 fi
+
+}
+
+
+
+
+process() {
+
+bigJson;
+cleanTypesetting;
+# clean tmp files.
+rm -f $RESULT/tmp-*;
+
+processGraphs;
 
 (
 cd $RESULT;
