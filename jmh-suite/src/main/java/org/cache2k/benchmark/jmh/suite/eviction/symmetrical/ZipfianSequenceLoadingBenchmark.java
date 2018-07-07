@@ -22,6 +22,7 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
 
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.IntLoadingBenchmarkCache;
 import org.cache2k.benchmark.LoadingBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
@@ -88,7 +89,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     }
   }
 
-  LoadingBenchmarkCache<Integer, Integer> cache;
+  IntLoadingBenchmarkCache<Integer> cache;
 
   @Setup
   public void setupBenchmark() {
@@ -97,7 +98,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     if (expiry) {
       f.withExpiry(true);
     }
-    cache =
+    cache = (IntLoadingBenchmarkCache<Integer>)
       f.createLoadingCache(Integer.class, Integer.class, entryCount, source);
     /*
        fill the cache completely, so memory is already expanded at maximum

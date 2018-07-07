@@ -27,6 +27,7 @@ import com.google.common.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.IntLoadingBenchmarkCache;
 import org.cache2k.benchmark.LoadingBenchmarkCache;
 
 import java.util.concurrent.TimeUnit;
@@ -37,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 public class GuavaCacheFactory extends BenchmarkCacheFactory {
 
   @Override
-  public BenchmarkCache<Integer, Integer> create(int _maxElements) {
+  protected <K, V> BenchmarkCache<K, V> createUnspecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     MyBenchmarkCache c = new MyBenchmarkCache();
     c.size = _maxElements;
     CacheBuilder cb = builder(_maxElements);
@@ -46,7 +47,7 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
   }
 
   @Override
-  public <K, V> LoadingBenchmarkCache<K, V> createLoadingCache(
+  public <K, V> LoadingBenchmarkCache<K, V> createUnspecializedLoadingCache(
     final Class<K> _keyType, final Class<V> _valueType,
     final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
     MyLoadingBenchmarkCache c = new MyLoadingBenchmarkCache();
@@ -72,10 +73,10 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
     return cb;
   }
 
-  static class MyBenchmarkCache extends BenchmarkCache<Integer, Integer> {
+  static class MyBenchmarkCache<K,V> extends BenchmarkCache<K, V> {
 
     int size;
-    Cache<Integer, Integer> cache;
+    Cache<K, V> cache;
 
     @Override
     public int getCacheSize() {
@@ -83,12 +84,12 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public Integer getIfPresent(final Integer key) {
+    public V getIfPresent(final K key) {
       return cache.getIfPresent(key);
     }
 
     @Override
-    public void put(final Integer key, final Integer value) {
+    public void put(final K key, final V value) {
       cache.put(key, value);
     }
 

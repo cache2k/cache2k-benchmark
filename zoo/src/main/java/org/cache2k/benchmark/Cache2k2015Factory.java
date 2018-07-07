@@ -39,15 +39,15 @@ public class Cache2k2015Factory extends BenchmarkCacheFactory {
   AtomicInteger counter = new AtomicInteger();
 
   @Override
-  public BenchmarkCache<Integer, Integer> create(final int _maxElements) {
+  protected <K, V> BenchmarkCache<K, V> createUnspecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     final BaseCache bc;
     try {
       bc = (BaseCache) implementation.newInstance();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-    final Cache<Integer, Integer> c = bc;
-    CacheConfig<Integer, Integer> cc = new CacheConfig<>();
+    final Cache<K, V> c = bc;
+    CacheConfig<K, V> cc = new CacheConfig<>();
     cc.setName("testCache-" + counter.incrementAndGet());
     cc.setExpirySeconds(withExpiry ? 2 * 60 : Integer.MAX_VALUE);
     cc.setEntryCapacity(_maxElements);
@@ -55,7 +55,7 @@ public class Cache2k2015Factory extends BenchmarkCacheFactory {
     cc.setKeepDataAfterExpired(false);
     bc.setCacheConfig(cc);
     bc.init();
-    return new BenchmarkCache<Integer, Integer>() {
+    return new BenchmarkCache<K, V>() {
 
       @Override
       public int getCacheSize() {
@@ -63,12 +63,12 @@ public class Cache2k2015Factory extends BenchmarkCacheFactory {
       }
 
       @Override
-      public Integer getIfPresent(Integer key) {
+      public V getIfPresent(K key) {
         return c.peek(key);
       }
 
       @Override
-      public void put(Integer key, Integer value) {
+      public void put(K key, V value) {
         c.put(key, value);
       }
 

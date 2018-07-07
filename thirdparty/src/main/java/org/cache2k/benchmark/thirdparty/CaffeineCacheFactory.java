@@ -27,6 +27,7 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.IntLoadingBenchmarkCache;
 import org.cache2k.benchmark.LoadingBenchmarkCache;
 
 import java.util.concurrent.Executor;
@@ -53,7 +54,8 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
   }
 
   @Override
-  public BenchmarkCache<Integer, Integer> create(int _maxElements) {
+  protected <K, V> BenchmarkCache<K, V> createUnspecialized(
+    final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
     c.size = _maxElements;
     c.cache = createCache(_maxElements).build();
@@ -61,17 +63,18 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
   }
 
   @Override
-  public <K, V> LoadingBenchmarkCache<K, V> createLoadingCache(
+  public <K, V> LoadingBenchmarkCache<K, V> createUnspecializedLoadingCache(
     final Class<K> _keyType, final Class<V> _valueType,
     final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
-    MyLoadingBenchmarkCache c = new MyLoadingBenchmarkCache();
-    c.size = _maxElements;
-    c.cache = createCache(_maxElements).build(new CacheLoader<K, V>() {
+    CacheLoader<K,V> l = new CacheLoader<K, V>() {
       @Override
-      public V load(final K key) throws Exception {
+      public V load(final K key) {
         return _source.load(key);
       }
-    });
+    };
+    MyLoadingBenchmarkCache c = new MyLoadingBenchmarkCache();
+    c.size = _maxElements;
+    c.cache = createCache(_maxElements).build(l);
     return c;
   }
 
@@ -89,10 +92,10 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
     return b;
   }
 
-  static class MyBenchmarkCacheAdapter extends BenchmarkCache<Integer, Integer> {
+  static class MyBenchmarkCacheAdapter<K,V> extends BenchmarkCache<K, V> {
 
     int size;
-    Cache<Integer, Integer> cache;
+    Cache<K, V> cache;
 
     @Override
     public int getCacheSize() {
@@ -100,12 +103,12 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public Integer getIfPresent(final Integer key) {
+    public V getIfPresent(final K key) {
       return cache.getIfPresent(key);
     }
 
     @Override
-    public void put(final Integer key, final Integer value) {
+    public void put(final K key, final V value) {
       cache.put(key, value);
     }
 

@@ -37,21 +37,21 @@ public class EhCache3Factory extends BenchmarkCacheFactory {
   static final String CACHE_NAME = "testCache";
 
   @Override
-  public BenchmarkCache<Integer, Integer> create(int _maxElements) {
-    return new MyBenchmarkCache(createCacheConfiguration(_maxElements));
+  protected <K, V> BenchmarkCache<K, V> createUnspecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+    return new MyBenchmarkCache<K,V>(createCacheConfiguration(_keyType, _valueType, _maxElements));
   }
 
-  protected CacheConfiguration<Integer,Integer> createCacheConfiguration(int _maxElements) {
-    return CacheConfigurationBuilder.newCacheConfigurationBuilder(Integer.class, Integer.class,
+  protected <K,V> CacheConfiguration<K,V> createCacheConfiguration(final Class<K> _keyType, final Class<V> _valueType, int _maxElements) {
+    return CacheConfigurationBuilder.newCacheConfigurationBuilder(_keyType, _valueType,
       ResourcePoolsBuilder.heap(_maxElements)).build();
   }
 
-  class MyBenchmarkCache extends BenchmarkCache<Integer, Integer> {
+  class MyBenchmarkCache<K,V> extends BenchmarkCache<K, V> {
 
     CacheConfiguration config;
-    org.ehcache.Cache<Integer,Integer> cache;
+    org.ehcache.Cache<K,V> cache;
 
-    MyBenchmarkCache(CacheConfiguration<Integer, Integer> cfg) {
+    MyBenchmarkCache(CacheConfiguration<K, V> cfg) {
       this.config = cfg;
       org.ehcache.CacheManager
       manager = CacheManagerBuilder.newCacheManagerBuilder().build(true);
@@ -64,12 +64,12 @@ public class EhCache3Factory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public Integer getIfPresent(Integer key) {
+    public V getIfPresent(K key) {
       return cache.get(key);
     }
 
     @Override
-    public void put(final Integer key, final Integer value) {
+    public void put(final K key, final V value) {
       cache.put(key, value);
     }
 

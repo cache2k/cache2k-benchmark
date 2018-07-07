@@ -42,9 +42,9 @@ public class TCache1Factory extends BenchmarkCacheFactory {
   AtomicInteger counter = new AtomicInteger();
 
   @Override
-  public BenchmarkCache<Integer, Integer> create(int _maxElements) {
+  public <K, V> BenchmarkCache<K, V> create(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     TCacheFactory factory = TCacheFactory.standardFactory();
-    Builder<Integer, Integer> b = factory.builder();
+    Builder<K, V> b = factory.builder();
     b.setExpectedMapSize(_maxElements);
 
     /**
@@ -61,15 +61,16 @@ public class TCache1Factory extends BenchmarkCacheFactory {
       b.setMaxIdleTime(5 * 60);
     }
 
-    return new MyBenchmarkCacheAdapter(b, _maxElements, factory);
+    return new MyBenchmarkCacheAdapter<K,V>(b, _maxElements, factory);
   }
 
-  static class MyBenchmarkCacheAdapter extends BenchmarkCache<Integer, Integer> {
+  static class MyBenchmarkCacheAdapter<K,V> extends BenchmarkCache<K, V> {
+
     final int size;
-    final Cache<Integer, Integer> cache;
+    final Cache<K, V> cache;
     final public TCacheFactory factory;
 
-    public MyBenchmarkCacheAdapter(Builder<Integer, Integer> builder, int maxElements, TCacheFactory factory) {
+    public MyBenchmarkCacheAdapter(Builder<K, V> builder, int maxElements, TCacheFactory factory) {
       super();
       this.size = maxElements;
       this.factory = factory;
@@ -82,12 +83,12 @@ public class TCache1Factory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public Integer getIfPresent(final Integer key) {
+    public V getIfPresent(final K key) {
       return cache.get(key);
     }
 
     @Override
-    public void put(final Integer key, final Integer value) {
+    public void put(final K key, final V value) {
       cache.put(key, value);
     }
 

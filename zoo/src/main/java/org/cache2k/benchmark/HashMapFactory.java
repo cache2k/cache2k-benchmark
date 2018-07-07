@@ -28,8 +28,9 @@ import java.util.HashMap;
 public class HashMapFactory extends BenchmarkCacheFactory {
 
   @Override
-  public BenchmarkCache<Integer, Integer> create(int _maxElements) {
-    return new ConcurrentHashMapFactory.MyCache(new HashMap<Integer, Integer>(), _maxElements);
+  protected <K, V> BenchmarkCache<K, V> createUnspecialized(
+    final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+    return new ConcurrentHashMapFactory.MyCache(new HashMap<K, V>(), _maxElements);
   }
 
 }

@@ -22,6 +22,7 @@ package org.cache2k.benchmark;
 
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
+import org.cache2k.core.experimentalApi.IntCache;
 import org.cache2k.integration.CacheLoader;
 
 import java.util.concurrent.TimeUnit;
@@ -36,9 +37,44 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
   boolean disableStatistics = true;
 
   @Override
-  public BenchmarkCache<Integer, Integer> create(final int _maxElements) {
-    final Cache<Integer, Integer> c = createInternal(Integer.class, Integer.class, _maxElements, null);
-    return new BenchmarkCache<Integer, Integer>() {
+  public <K, V> BenchmarkCache<K, V> create(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+    final Cache<K, V> c = createInternal(_keyType, _valueType, _maxElements, null);
+    if (c instanceof IntCache) {
+      final IntCache<V> ic = (IntCache<V>) c;
+      return (BenchmarkCache<K, V>) new IntBenchmarkCache<V>() {
+
+        @Override
+        public int getCacheSize() {
+          return _maxElements;
+        }
+
+        @Override
+        public V getIfPresent(int key) {
+          return ic.peek(key);
+        }
+
+        @Override
+        public void put(int key, V value) {
+          ic.put(key, value);
+        }
+
+        @Override
+        public void close() {
+          ic.close();
+        }
+
+        @Override
+        public String toString() {
+          return ic.toString();
+        }
+
+        @Override
+        public Object getOriginalCache() {
+          return c;
+        }
+      };
+    }
+    BenchmarkCache<K,V> bc = new BenchmarkCache<K, V>() {
 
       @Override
       public int getCacheSize() {
@@ -46,12 +82,12 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
       }
 
       @Override
-      public Integer getIfPresent(Integer key) {
+      public V getIfPresent(K key) {
         return c.peek(key);
       }
 
       @Override
-      public void put(Integer key, Integer value) {
+      public void put(K key, V value) {
         c.put(key, value);
       }
 
@@ -70,12 +106,83 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
         return c;
       }
     };
-
+    if (_keyType == Integer.class) {
+      return IntBenchmarkCache.wrap(bc);
+    }
+    return bc;
   }
 
   @Override
   public <K, V> LoadingBenchmarkCache<K, V> createLoadingCache(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
     final Cache<K, V> c = createInternal(_keyType, _valueType, _maxElements, _source);
+    if (c instanceof IntCache) {
+      final IntCache<V> ic = (IntCache<V>) c;
+      return (LoadingBenchmarkCache<K, V>) new IntLoadingBenchmarkCache<V>() {
+        @Override
+        public V get(final int key) {
+          return ic.get(key);
+        }
+
+        @Override
+        public void put(final int key, final V value) {
+          ic.put(key, value);
+        }
+
+        @Override
+        public String toString() {
+          return ic.toString();
+        }
+
+        @Override
+        public Object getOriginalCache() {
+          return ic;
+        }
+
+        @Override
+        public void close() {
+          ic.close();
+        }
+
+        @Override
+        public int getCacheSize() {
+          return _maxElements;
+        }
+      };
+    }
+    if (_keyType == Integer.class) {
+      final Cache<Integer, V> ic = (Cache<Integer, V>) c;
+      return (LoadingBenchmarkCache<K, V>) new IntLoadingBenchmarkCache<V>() {
+        @Override
+        public V get(final Integer key) {
+          return ic.get(key);
+        }
+
+        @Override
+        public void put(final Integer key, final V value) {
+          ic.put(key, value);
+        }
+
+        @Override
+        public String toString() {
+          return ic.toString();
+        }
+
+        @Override
+        public Object getOriginalCache() {
+          return ic;
+        }
+
+        @Override
+        public void close() {
+          c.close();
+        }
+
+        @Override
+        public int getCacheSize() {
+          return _maxElements;
+        }
+      };
+    }
     return new LoadingBenchmarkCache<K, V>() {
       @Override
       public V get(final K key) {

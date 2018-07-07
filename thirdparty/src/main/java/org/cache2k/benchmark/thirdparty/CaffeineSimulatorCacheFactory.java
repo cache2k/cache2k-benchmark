@@ -51,8 +51,8 @@ public class CaffeineSimulatorCacheFactory extends BenchmarkCacheFactory {
   }
 
   @Override
-  public BenchmarkCache<Integer, Integer> create(int _maxElements) {
-    MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
+  protected <K, V> BenchmarkCache<K, V> createUnspecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+    MyBenchmarkCacheAdapter<K, V> c = new MyBenchmarkCacheAdapter<K,V>();
     c.size = _maxElements;
     String _config =
       "maximum-size = " + _maxElements + "\n";
@@ -67,7 +67,7 @@ public class CaffeineSimulatorCacheFactory extends BenchmarkCacheFactory {
 
   }
 
-  static class MyBenchmarkCacheAdapter extends BenchmarkCache<Integer, Integer> implements SimulatorPolicy {
+  static class MyBenchmarkCacheAdapter<K,V> extends BenchmarkCache<K, V> implements SimulatorPolicy {
 
     int size;
     Policy policy;

@@ -46,8 +46,8 @@ public class EhCache2Factory extends BenchmarkCacheFactory {
   Algorithm algorithm = Algorithm.DEFAULT;
 
   @Override
-  public BenchmarkCache<Integer, Integer> create(int _maxElements) {
-    MyBenchmarkCache c = new MyBenchmarkCache();
+  protected <K, V> BenchmarkCache<K, V> createUnspecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+    MyBenchmarkCache<K,V> c = new MyBenchmarkCache<K,V>();
     c.cache = new Cache(createCacheConfiguration(_maxElements));
     getManager().addCache(c.cache);
     c.size = _maxElements;
@@ -108,7 +108,7 @@ public class EhCache2Factory extends BenchmarkCacheFactory {
     return this;
   }
 
-  class MyBenchmarkCache extends BenchmarkCache<Integer, Integer> {
+  class MyBenchmarkCache<K,V> extends BenchmarkCache<K, V> {
 
     int size;
     Ehcache cache;
@@ -119,16 +119,16 @@ public class EhCache2Factory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public Integer getIfPresent(final Integer key) {
+    public V getIfPresent(final K key) {
       Element e = cache.get(key);
       if (e != null) {
-        return (Integer) e.getObjectValue();
+        return (V) e.getObjectValue();
       }
       return null;
     }
 
     @Override
-    public void put(final Integer key, final Integer value) {
+    public void put(final K key, final V value) {
       cache.put(new Element(key, value));
     }
 

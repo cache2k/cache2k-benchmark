@@ -27,12 +27,39 @@ public abstract class BenchmarkCacheFactory {
 
   protected boolean withExpiry;
 
-  public abstract BenchmarkCache<Integer, Integer> create(int _maxElements);
+  public final IntBenchmarkCache<Integer> create(int _maxElements) {
+    return (IntBenchmarkCache<Integer>) create(Integer.class, Integer.class, _maxElements);
+  }
+
+  /**
+   * Caches not supporting specialized versions for the key type override this method.
+   */
+  protected <K,V> BenchmarkCache<K, V> createUnspecialized(Class<K> _keyType, Class<V> _valueType, int _maxElements) {
+    throw new UnsupportedOperationException();
+  }
+
+  public <K,V> BenchmarkCache<K, V> create(Class<K> _keyType, Class<V> _valueType, int _maxElements) {
+    BenchmarkCache<K, V> c = createUnspecialized(_keyType, _valueType, _maxElements);
+    if (_keyType == Integer.class) {
+      return IntBenchmarkCache.wrap(c);
+    }
+    return c;
+  }
+
+  public <K,V> LoadingBenchmarkCache<K, V> createUnspecializedLoadingCache(
+    Class<K> _keyType, Class<V> _valueType,
+    int _maxElements, BenchmarkCacheSource<K,V> _source) {
+    throw new UnsupportedOperationException();
+  }
 
   public <K,V> LoadingBenchmarkCache<K, V> createLoadingCache(
     Class<K> _keyType, Class<V> _valueType,
     int _maxElements, BenchmarkCacheSource<K,V> _source) {
-    throw new UnsupportedOperationException();
+    LoadingBenchmarkCache<K,V> c = createUnspecializedLoadingCache(_keyType, _valueType, _maxElements, _source);
+    if (_keyType == Integer.class) {
+      return IntLoadingBenchmarkCache.wrap(c);
+    }
+    return c;
   }
 
   public BenchmarkCacheFactory withExpiry(boolean v) {

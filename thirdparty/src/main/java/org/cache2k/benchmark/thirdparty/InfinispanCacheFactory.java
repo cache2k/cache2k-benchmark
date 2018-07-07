@@ -53,7 +53,7 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
   }
 
   @Override
-  public BenchmarkCache<Integer, Integer> create(int _maxElements) {
+  protected <K, V> BenchmarkCache<K, V> createUnspecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     EmbeddedCacheManager m = getCacheMangaer();
     ConfigurationBuilder cb = new ConfigurationBuilder();
 
@@ -72,25 +72,26 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
     m.defineConfiguration(CACHE_NAME, cb.build());
     Cache<Integer, Integer> _cache = m.getCache(CACHE_NAME);
     return new MyBenchmarkCache(_cache);
+
   }
 
   public enum Algorithm { DEFAULT, LRU, LIRS, UNORDERED }
 
-  static class MyBenchmarkCache extends BenchmarkCache<Integer, Integer> {
+  static class MyBenchmarkCache<K,V> extends BenchmarkCache<K, V> {
 
-    Cache<Integer, Integer> cache;
+    Cache<K, V> cache;
 
-    MyBenchmarkCache(Cache<Integer, Integer> cache) {
+    MyBenchmarkCache(Cache<K, V> cache) {
       this.cache = cache;
     }
 
     @Override
-    public Integer getIfPresent(final Integer key) {
+    public V getIfPresent(final K key) {
       return cache.get(key);
     }
 
     @Override
-    public void put(Integer key, Integer value) {
+    public void put(K key, V value) {
       cache.put(key, value);
     }
 
