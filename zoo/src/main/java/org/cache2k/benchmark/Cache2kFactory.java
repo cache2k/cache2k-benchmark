@@ -22,7 +22,7 @@ package org.cache2k.benchmark;
 
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
-import org.cache2k.core.experimentalApi.IntCache;
+import org.cache2k.IntCache;
 import org.cache2k.integration.CacheLoader;
 
 import java.util.concurrent.TimeUnit;
