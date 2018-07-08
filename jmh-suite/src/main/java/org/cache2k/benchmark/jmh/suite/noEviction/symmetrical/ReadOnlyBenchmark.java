@@ -20,7 +20,7 @@ package org.cache2k.benchmark.jmh.suite.noEviction.symmetrical;
  * #L%
  */
 
-import org.cache2k.benchmark.BenchmarkCache;
+import org.cache2k.benchmark.IntBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.suite.eviction.symmetrical.Cache2kMetricsRecorder;
 import org.cache2k.benchmark.util.AccessPattern;
@@ -62,7 +62,7 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
     long index = offset.getAndAdd(PATTERN_COUNT / 16);
   }
 
-  BenchmarkCache<Integer, Integer> cache;
+  IntBenchmarkCache<Integer> cache;
 
   Integer[] ints;
 
@@ -77,7 +77,7 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
       ints[i] = _pattern.next();
     }
     for (int i = 0; i < entryCount; i++) {
-      cache.put(i, i);
+      cache.put(i, (Integer) i);
     }
   }
 
@@ -90,7 +90,7 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
   @Benchmark @BenchmarkMode(Mode.Throughput)
   public long read(ThreadState threadState) {
     int idx = (int) (threadState.index++ % PATTERN_COUNT);
-    Integer key = ints[idx];
+    int key = ints[idx];
     cache.getIfPresent(key);
     return idx;
   }

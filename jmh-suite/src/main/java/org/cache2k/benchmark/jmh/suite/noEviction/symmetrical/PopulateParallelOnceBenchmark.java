@@ -21,6 +21,7 @@ package org.cache2k.benchmark.jmh.suite.noEviction.symmetrical;
  */
 
 import org.cache2k.benchmark.BenchmarkCache;
+import org.cache2k.benchmark.IntBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -47,10 +48,10 @@ public class PopulateParallelOnceBenchmark extends BenchmarkBase {
   public int entryCount = 1000 * 1000;
   protected final AtomicInteger offset = new AtomicInteger(0);
 
-  BenchmarkCache <Integer, Integer> cache;
+  IntBenchmarkCache<Integer> cache;
 
   @Setup(Level.Iteration)
-  public void setup() throws Exception {
+  public void setup() {
     cache = getFactory().create(entryCount);
   }
 
@@ -70,7 +71,7 @@ public class PopulateParallelOnceBenchmark extends BenchmarkBase {
     int _startIndex = offset.getAndAdd(_chunkSize);
     int _endIndex = _startIndex + _chunkSize;
     for (int i = _startIndex; i < _endIndex; i++) {
-      cache.put(i, i);
+      cache.put(i, (Integer) i);
     }
     ts.operations = _chunkSize;
     return _chunkSize;

@@ -22,6 +22,7 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
 
 import it.unimi.dsi.util.XorShift1024StarRandomGenerator;
 import org.cache2k.benchmark.BenchmarkCache;
+import org.cache2k.benchmark.IntBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -61,7 +62,7 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
     XorShift1024StarRandomGenerator generator = new XorShift1024StarRandomGenerator(offsetSeed.nextLong());
   }
 
-  BenchmarkCache<Integer, Integer> cache;
+  IntBenchmarkCache<Integer> cache;
 
   @Setup
   public void setupBenchmark() {
@@ -93,10 +94,10 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
   public long operation(ThreadState threadState, HitCountRecorder rec) {
-    Integer k = threadState.generator.nextInt(range);
+    int k = threadState.generator.nextInt(range);
     Integer v = cache.getIfPresent(k);
     if (v == null) {
-      cache.put(k, k);
+      cache.put(k, (Integer) k);
       rec.missCount++;
     } else {
       rec.hitCount++;
