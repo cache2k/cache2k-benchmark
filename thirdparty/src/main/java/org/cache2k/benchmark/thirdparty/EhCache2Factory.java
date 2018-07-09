@@ -55,7 +55,7 @@ public class EhCache2Factory extends BenchmarkCacheFactory {
   }
 
   @Override
-  public <K, V> LoadingBenchmarkCache<K, V> createLoadingCache(
+  public <K, V> LoadingBenchmarkCache<K, V> createUnspecializedLoadingCache(
     final Class<K> _keyType, final Class<V> _valueType,
     final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
     MyLoadingBenchmarkCache c = new MyLoadingBenchmarkCache();
