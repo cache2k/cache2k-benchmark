@@ -1050,7 +1050,7 @@ for I in $benchmarks; do
   }
 done
 
-benchmarks="ZipfianSequenceLoadingBenchmark"
+benchmarks="ZipfianSequenceLoadingBenchmark PrecalculatedZipfianSequenceLoadingBenchmark"
 for I in $benchmarks; do
   noBenchmark $I || {
       plotOps $I factor;

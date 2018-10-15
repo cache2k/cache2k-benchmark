@@ -32,7 +32,7 @@ test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedL
 # -r time
 # -f how many time to fork a single benchmark
 
-test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 0 -i 1 -r 5s -foe true";
+test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 1 -w 3s -i 2 -r 3s -foe true";
 
 # -f 2 / -i 2 has not enough confidence, there is sometime one outlier
 # 2 full warmups otherwise there is big jitter with G1
@@ -181,7 +181,7 @@ test -d $TARGET || mkdir -p $TARGET;
 if test -n "$backends"; then
   COMPLETE="$backends";
 elif test -z "$no3pty"; then
-  COMPLETE="$COMPLETE thirdparty.CaffeineCacheFactory thirdparty.GuavaCacheFactory thirdparty.EhCache2Factory";
+  COMPLETE="$COMPLETE thirdparty.CaffeineCacheFactory thirdparty.GuavaCacheFactory thirdparty.EhCache3Factory";
   # "thirdparty.EhCache3Factory";
 fi
 
@@ -352,6 +352,29 @@ benchmark=ReadOnlyBenchmark;
 done
 }
 
+suiteZipfian() {
+benchmarks="PrecalculatedZipfianSequenceLoadingBenchmark";
+for impl in $COMPLETE; do
+  for benchmark in $benchmarks; do
+    for threads in 1 2 4; do
+      runid="$impl-$benchmark-$threads";
+      fn="$TARGET/result-$runid";
+      echo;
+      echo "## $runid";
+      sync
+      limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER  $EXTRA_PROFILER \
+           -t $threads -p cacheFactory=org.cache2k.benchmark.$impl \
+           -rf json -rff "$fn.json" \
+           2>&1 | tee $fn.out | filterProgress
+      if test -n "$dry"; then
+        cat $fn.out;
+      else
+        echo "=> $fn.out";
+      fi
+    done
+  done
+done
+}
 
 complete() {
 #
