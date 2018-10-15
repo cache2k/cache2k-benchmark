@@ -23,20 +23,32 @@ set -e;
 # biased locking delay is 4000 by default, enable from the start to minimize effects on the first benchmark iteration
 # (check with: ava  -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal 2>/dev/null | grep BiasedLockingStartupDelay)
 test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedLockingStartupDelay=0 -verbose:gc -XX:+PrintGCTimeStamps -XX:+PrintGCDetails";
-# BENCHMARK_JVM_ARGS="$BENCHMARK_JVM_ARGS -XX:+UseG1GC";
+# extra G1 args
+# BENCHMARK_JVM_ARGS="$BENCHMARK_JVM_ARGS -XX:+UseG1GC -XX:-G1UseAdaptiveConcRefinement -XX:G1ConcRefinementGreenZone=2G -XX:G1ConcRefinementThreads=0";
 
 # -wi warmup iterations
 # -w warmup time
 # -i number of iterations
 # -r time
 # -f how many time to fork a single benchmark
-test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 0 -i 1 -r 1s -foe true";
+
+test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 0 -i 1 -r 5s -foe true";
 
 # -f 2 / -i 2 has not enough confidence, there is sometime one outlier
 # 2 full warmups otherwise there is big jitter with G1
-# 5x30 warumups needed for cache2k 10M performance with CMS
 # -gc true: careful with -gc true, this seems to influence the measures performance significantly
-test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 2 -wi 5 -w 30s -i 3 -r 30s";
+test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 2 -wi 2 -w 15s -i 3 -r 15s";
+
+# longer test run for expiry tests
+test -n "$BENCHMARK_DILIGENT_LONG" || BENCHMARK_DILIGENT_LONG="-f 2 -wi 1 -w 180s -i 2 -r 180s";
+# test -n "$BENCHMARK_DILIGENT_LONG" || BENCHMARK_DILIGENT_LONG="-f 2 -wi 2 -w 15s -i 3 -r 15s";
+
+
+# setup for blog article:
+# 5x30 warumups needed for cache2k 10M performance with CMS
+# test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 2 -wi 5 -w 30s -i 3 -r 30s";
+
+# other experiments:
 # test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 3 -wi 5 -w 30s -i 5 -r 30s";
 # test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 3 -wi 5 -w 30s -i 5 -r 30s";
 # test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 2 -wi 0 -w 40s -i 8 -r 20s";
@@ -49,7 +61,9 @@ test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 2 -wi 5 -w 30s -i 3 -r 3
 # install with e.g.: mv ~/Downloads/linux-hsdis-amd64.so jdk1.8.0_45/jre/lib/amd64/hsdis-amd64.so.
 # For profiling only do one fork, but more measurement iterations
 # profilers are described here: http://java-performance.info/introduction-jmh-profilers
-test -n "$BENCHMARK_PERFASM" || BENCHMARK_PERFASM="-f 1 -wi 1 -w 10s -i 1 -r 30s -prof perfasm";
+test -n "$BENCHMARK_PERFASM" || BENCHMARK_PERFASM="-f 1 -wi 1 -w 10s -i 1 -r 20s -prof perfasm";
+# longer test run for expiry tests
+test -n "$BENCHMARK_PERFASM_LONG" || BENCHMARK_PERFASM_LONG="-f 1 -wi 1 -w 180s -i 1 -r 180s -prof perfasm";
 
 # hs_gc: detailed counters from the GC implementation
 STANDARD_PROFILER="-prof comp -prof gc -prof hs_rt -prof hs_gc";
@@ -65,11 +79,20 @@ EXTRA_PROFILER="";
 PERF_NORM_OPTIONS="-prof perfnorm:useDefaultStat=true"
 
 OPTIONS="$BENCHMARK_DILIGENT";
+OPTIONS_LONG="$BENCHMARK_DILIGENT_LONG";
+
+if test -z "$JAVA_HOME"; then
+  echo "JAVA_HOME needs to be set" 1>&2
+  exit 1;
+fi
+
+java=$JAVA_HOME/bin/java
 
 unset cache2k;
 unset no3pty;
 unset dry;
 unset backends;
+unset quick;
 
 usage() {
   echo "Usage: $0 options"
@@ -84,15 +107,21 @@ usage() {
 processCommandLine() {
   while true; do
     case "$1" in
-      --quick) OPTIONS="$BENCHMARK_QUICK";;
-      --perfasm) OPTIONS="$BENCHMARK_PERFASM";;
+      --quick) quick=true;
+               OPTIONS="$BENCHMARK_QUICK";
+               OPTIONS_LONG="$BENCHMARK_QUICK";;
+      --perfasm) OPTIONS="$BENCHMARK_PERFASM";
+                 OPTIONS_LONG="$BENCHMARK_PERFASM_LONG";;
       --perfnorm) EXTRA_PROFILER=$EXTRA_PROFILER" $PERF_NORM_OPTIONS";;
       --no3pty) no3pty=true;;
       --cache2k) cache2k=true;;
       --backends) backends="$2"; shift; ;;
-      --dry) dry=true;;
+      --dry) dry=true;
+             java="dryEcho";;
       -*) echo "unknown option: $1"; usage; exit 1;;
-      *) break;;
+      *) "$1";
+         stopTimer;
+         exit 0;;
     esac
     shift 1;
   done
@@ -127,24 +156,12 @@ dryEcho() {
   echo;
 }
 
-processCommandLine "$@";
-
-if test -z "$JAVA_HOME"; then
-  echo "JAVA_HOME needs to be set" 1>&2
-  exit 1;
-fi
-
-java=$JAVA_HOME/bin/java
-if test -n "$dry"; then
-  java="dryEcho";
-fi
-
 JAR="jmh-suite/target/benchmarks.jar";
 
 unset SINGLE_THREADED;
 unset NO_EVICTION;
 
-# add tests of JDK internal stuff (useful as base line reference), if not cache22k only is requested.
+# add tests of JDK internal stuff (useful as base line reference), if not cache2k only is requested.
 if test -z "$cache2k"; then
 
   # Implementations with no eviction (actually not a cache) and not thread safe
@@ -202,20 +219,90 @@ shift;
 }
 
 #
-# Multi threaded with variable thread counts, no eviction needed
+# Benchmarks for maximum throughput / benchmark overhead
 #
-# benchmarks="PopulateParallelOnceBenchmark ReadOnlyBenchmark";
-benchmarks="";
-for impl in $NO_EVICTION $COMPLETE; do
-  for benchmark in $benchmarks; do
+# benchmarks="ZipfianSequenceLoadingRpngThroughputBenchmark ZipfianSequenceLoadingRpngWithBoxingThroughputBenchmark";
+benchmarkMaxThroughput() {
+benchmarks="ZipfianSequenceLoadingRpngWithBoxingThroughputBenchmark";
+impl="maxthroughput";
+for benchmark in $benchmarks; do
     for threads in 1 2 4; do
       runid="$impl-$benchmark-$threads";
       fn="$TARGET/result-$runid";
       echo;
       echo "## $runid";
       sync
-      limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER $EXTRA_PROFILER \
-           -t $threads -p cacheFactory=org.cache2k.benchmark.$impl \
+      limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER  $EXTRA_PROFILER \
+           -t $threads \
+           -rf json -rff "$fn.json" \
+           2>&1 | tee $fn.out | filterProgress
+      if test -n "$dry"; then
+        cat $fn.out;
+      else
+        echo "=> $fn.out";
+      fi
+    done
+done
+}
+
+allImpls="`cat - << "EOF"
+-p cacheFactory=org.cache2k.benchmark.Cache2kFactory
+-p cacheFactory=org.cache2k.benchmark.thirdparty.GuavaCacheFactory
+-p cacheFactory=org.cache2k.benchmark.thirdparty.CaffeineCacheFactory
+-p cacheFactory=org.cache2k.benchmark.thirdparty.EhCache3Factory
+EOF
+`"
+
+caches="`cat - << "EOF"
+-p cacheFactory=org.cache2k.benchmark.Cache2kFactory
+-p cacheFactory=org.cache2k.benchmark.JCacheFactory -p cacheProvider=org.cache2k.jcache.provider.JCacheProvider
+EOF
+`"
+
+cache2k="`cat - << "EOF"
+-p cacheFactory=org.cache2k.benchmark.Cache2kFactory
+EOF
+`"
+
+guava="`cat - << "EOF"
+-p cacheFactory=org.cache2k.benchmark.thirdparty.GuavaCacheFactory
+EOF
+`"
+
+maps="`cat - << "EOF"
+-p cacheFactory=org.cache2k.benchmark.ConcurrentHashMapFactory
+-p cacheFactory=org.cache2k.benchmark.SynchronizedLinkedHashMapFactory
+-p cacheFactory=org.cache2k.benchmark.PartitionedLinkedHashMapFactory
+EOF
+`"
+
+#
+# Multi threaded with variable thread counts, no eviction needed
+#
+suiteNoEviction(){
+if test -n "$quick"; then
+  OPTIONS="-f 1 -wi 0 -i 1 -r 5s -foe true";
+else
+  OPTIONS="-f 2 -wi 2 -w 15s -i 3 -r 15s";
+fi
+benchmarks="PopulateParallelOnceBenchmark ReadOnlyBenchmark";
+# benchmarks="";
+# for impl in $NO_EVICTION $COMPLETE; do
+(
+  echo "$guava"
+  echo "$maps"
+) | while read impl; do
+  for benchmark in $benchmarks; do
+    for threads in 1 2 4; do
+      # remove -p for a nice file name
+      short="`echo "$impl" |sed "s/^\-p //g" | sed "s/ -p /:/g" `"
+      runid="$short-$benchmark-$threads";
+      fn="$TARGET/result-$runid";
+      echo;
+      echo "## $runid";
+      sync
+      limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS -gc true $STANDARD_PROFILER $EXTRA_PROFILER \
+           -t $threads $impl \
            -rf json -rff "$fn.json" \
            2>&1 | tee $fn.out | filterProgress
       if test -n "$dry"; then
@@ -226,6 +313,74 @@ for impl in $NO_EVICTION $COMPLETE; do
     done
   done
 done
+}
+
+#
+# Compare CHM and a "naive" linkedhashmap with Guava
+#
+suiteNaiveNoEviction(){
+if test -n "$quick"; then
+  OPTIONS="-f 1 -wi 1 -w 3s -i 4 -r 3s -foe true";
+else
+  OPTIONS="-f 2 -wi 2 -w 15s -i 3 -r 15s";
+fi
+# benchmarks="";
+# for impl in $NO_EVICTION $COMPLETE; do
+benchmark=ReadOnlyBenchmark;
+(
+  echo "$allImpls"
+  echo "$maps"
+) | while read impl; do
+  for threads in 1 2 3 4; do
+    # remove -p for a nice file name
+    short="`echo "$impl" |sed "s/^\-p //g" | sed "s/ -p /:/g" `"
+    runid="$short-$benchmark-$threads";
+    fn="$TARGET/result-$runid";
+    echo;
+    echo "## $runid";
+    sync
+    limitCores $threads $java -jar $JAR \\.$benchmark -p hitRate=100 -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS -gc true $STANDARD_PROFILER $EXTRA_PROFILER \
+         -t $threads $impl \
+         -rf json -rff "$fn.json" \
+         2>&1 | tee $fn.out | filterProgress
+    if test -n "$dry"; then
+      cat $fn.out;
+    else
+      echo "=> $fn.out";
+    fi
+  done
+done
+}
+
+
+complete() {
+#
+# Expiry: Multi threaded with variable thread counts, with eviction and expiry
+#
+false && {
+benchmarks="ZipfianSequenceLoadingBenchmark";
+for impl in $COMPLETE; do
+  for benchmark in $benchmarks; do
+    for threads in 4; do
+      runid="${impl}-${benchmark}WithExpiry-${threads}";
+      fn="$TARGET/result-$runid";
+      echo;
+      echo "## $runid";
+      sync
+      limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS_LONG $STANDARD_PROFILER  $EXTRA_PROFILER \
+           -t $threads -p cacheFactory=org.cache2k.benchmark.$impl -p expiry=true -p factor=1,5 \
+           -rf json -rff "$fn.json" \
+           2>&1 | tee $fn.out | filterProgress
+      if test -n "$dry"; then
+        cat $fn.out;
+      else
+        echo "=> $fn.out";
+      fi
+    done
+  done
+done
+}
+
 
 #
 # Multi threaded with variable thread counts, with eviction
@@ -268,7 +423,7 @@ for impl in $NO_EVICTION $COMPLETE; do
     echo;
     echo "## $runid";
     sync
-    limitCores 4 $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER  $EXTRA_PROFILER \
+    limitCores 4 $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER $EXTRA_PROFILER \
          -p cacheFactory=org.cache2k.benchmark.$impl \
          -rf json -rff "$fn.json" \
          2>&1 | tee $fn.out | filterProgress
@@ -279,5 +434,11 @@ for impl in $NO_EVICTION $COMPLETE; do
     fi
   done
 done
+}
 
-stopTimer;
+# complete;
+
+# stopTimer;
+
+processCommandLine "$@";
+

@@ -86,7 +86,7 @@ public class PrecomputedRandomSequenceCacheBenchmark extends BenchmarkBase {
   public long operation(ThreadState threadState, HitCountRecorder rec) {
     int idx = (int) (threadState.index++ % PATTERN_COUNT);
     Integer k = ints[idx];
-    Integer v = cache.getIfPresent(k);
+    Integer v = cache.get(k);
     if (v == null) {
       cache.put(k, k);
       rec.missCount++;

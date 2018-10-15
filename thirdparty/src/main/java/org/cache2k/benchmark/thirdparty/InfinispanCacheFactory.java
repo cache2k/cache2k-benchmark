@@ -53,7 +53,7 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
   }
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createUnspecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+  protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     EmbeddedCacheManager m = getCacheMangaer();
     ConfigurationBuilder cb = new ConfigurationBuilder();
 
@@ -86,7 +86,7 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public V getIfPresent(final K key) {
+    public V get(final K key) {
       return cache.get(key);
     }
 
@@ -96,12 +96,17 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
     }
 
     @Override
+    public void remove(final K key) {
+      cache.remove(key);
+    }
+
+    @Override
     public void close() {
       cache.getCacheManager().removeCache(CACHE_NAME);
     }
 
     @Override
-    public int getCacheSize() {
+    public int getCapacity() {
       return cache.getCacheConfiguration().eviction().maxEntries();
     }
 

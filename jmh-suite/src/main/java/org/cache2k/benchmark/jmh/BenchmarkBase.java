@@ -23,6 +23,7 @@ package org.cache2k.benchmark.jmh;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.Cache2kFactory;
 import org.cache2k.benchmark.jmh.suite.eviction.symmetrical.Cache2kMetricsRecorder;
+import org.cache2k.benchmark.thirdparty.JCacheCacheFactory;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
@@ -42,6 +43,12 @@ public class BenchmarkBase {
   @Param("DEFAULT")
   public String cacheFactory;
 
+  @Param("")
+  public String cacheProvider;
+
+  @Param("")
+  public String cacheName;
+
   public BenchmarkCacheFactory getFactory() {
     try {
       if ("DEFAULT".equals(cacheFactory)) {
@@ -49,6 +56,11 @@ public class BenchmarkBase {
       }
       BenchmarkCacheFactory _factoryInstance =
         (BenchmarkCacheFactory) Class.forName(cacheFactory).newInstance();
+      if (_factoryInstance instanceof JCacheCacheFactory) {
+      	JCacheCacheFactory _jCacheCacheFactory = (JCacheCacheFactory) _factoryInstance;
+      	_jCacheCacheFactory.setCacheName(cacheName);
+      	_jCacheCacheFactory.setProvider(cacheProvider);
+			}
       return _factoryInstance;
     } catch (Exception e) {
       throw new RuntimeException(e);

@@ -20,7 +20,6 @@ package org.cache2k.benchmark.thirdparty;
  * #L%
  */
 
-import net.sf.ehcache.CacheManager;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.ehcache.config.CacheConfiguration;
@@ -34,10 +33,11 @@ import org.ehcache.config.builders.ResourcePoolsBuilder;
  */
 public class EhCache3Factory extends BenchmarkCacheFactory {
 
+  static final org.ehcache.CacheManager MANAGER = CacheManagerBuilder.newCacheManagerBuilder().build(true);
   static final String CACHE_NAME = "testCache";
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createUnspecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+  protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     return new MyBenchmarkCache<K,V>(createCacheConfiguration(_keyType, _valueType, _maxElements));
   }
 
@@ -53,18 +53,16 @@ public class EhCache3Factory extends BenchmarkCacheFactory {
 
     MyBenchmarkCache(CacheConfiguration<K, V> cfg) {
       this.config = cfg;
-      org.ehcache.CacheManager
-      manager = CacheManagerBuilder.newCacheManagerBuilder().build(true);
-      cache = manager.createCache(CACHE_NAME, cfg);
+      cache = MANAGER.createCache(CACHE_NAME, cfg);
     }
 
     @Override
-    public int getCacheSize() {
+    public int getCapacity() {
       return (int) config.getResourcePools().getPoolForResource(ResourceType.Core.HEAP).getSize();
     }
 
     @Override
-    public V getIfPresent(K key) {
+    public V get(K key) {
       return cache.get(key);
     }
 
@@ -74,8 +72,13 @@ public class EhCache3Factory extends BenchmarkCacheFactory {
     }
 
     @Override
+    public void remove(final K key) {
+      cache.remove(key);
+    }
+
+    @Override
     public void close() {
-      CacheManager.getInstance().removeCache("testCache");
+      MANAGER.removeCache(CACHE_NAME);
     }
 
     @Override

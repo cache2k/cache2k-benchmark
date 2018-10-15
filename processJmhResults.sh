@@ -19,7 +19,10 @@ SITE="../cache2k/src/site/resources/benchmark-result";
 # replace class names by short name of each cache implementation for graph labeling
 cacheShortNames() {
 local script=`cat << EOF
+
 s/org.cache2k.benchmark.ConcurrentHashMapFactory/CHM/
+s/org.cache2k.benchmark.SynchronizedLinkedHashMapFactory/SLHM/
+s/org.cache2k.benchmark.PartitionedLinkedHashMapFactory/PLHM/
 s/org.cache2k.benchmark.thirdparty.EhCache2Factory/EhCache2/
 s/org.cache2k.benchmark.thirdparty.EhCache3Factory/EhCache3/
 s/org.cache2k.benchmark.thirdparty.CaffeineCacheFactory/Caffeine/
@@ -27,6 +30,7 @@ s/org.cache2k.benchmark.thirdparty.GuavaCacheFactory/Guava/
 s/org.cache2k.benchmark.Cache2kFactory/cache2k/
 s/org.cache2k.benchmark.thirdparty.TCache1Factory/tCache/
 s/org.cache2k.benchmark.ConcurrentHashMapFactory0/CHM~/
+s/org.cache2k.benchmark.SynchronizedLinkedHashMapFactory0/SLHM~/
 s/org.cache2k.benchmark.thirdparty.EhCache2Factory0/EhCache2~/
 s/org.cache2k.benchmark.thirdparty.EhCache3Factory0/EhCache3~/
 s/org.cache2k.benchmark.thirdparty.CaffeineCacheFactory0/Caffeine~/
@@ -41,11 +45,11 @@ sed "$script";
 CACHE_FACTORY_LIST="org.cache2k.benchmark.Cache2kFactory \
 org.cache2k.benchmark.thirdparty.CaffeineCacheFactory \
 org.cache2k.benchmark.thirdparty.GuavaCacheFactory \
-org.cache2k.benchmark.thirdparty.EhCache2Factory";
+org.cache2k.benchmark.thirdparty.EhCache3Factory";
 CACHE_FACTORY_LIST_BASE="org.cache2k.benchmark.Cache2kFactory0 \
 org.cache2k.benchmark.thirdparty.CaffeineCacheFactory0 \
 org.cache2k.benchmark.thirdparty.GuavaCacheFactory0 \
-org.cache2k.benchmark.thirdparty.EhCache2Factory0";
+org.cache2k.benchmark.thirdparty.EhCache3Factory0";
 
 # "org.cache2k.benchmark.thirdparty.EhCache3Factory";
 
@@ -208,7 +212,6 @@ function flushRow() {
 }
 EOF
 `
-
 
 # renameBenchmarks
 #
@@ -843,7 +846,13 @@ name="$1";
 param="$2";
 suffix="$3";
 filter="$4";
-local prods="$CACHE_FACTORY_LIST $5";
+prods="$CACHE_FACTORY_LIST $5";
+tmpext="";
+if test -n "$6"; then
+  prods="$6";
+  # seperate tmp files if different list ist used!
+  tmpext="-$suffix";
+fi
 if test -n "$suffix"; then
 f=$RESULT/${name}-${suffix}.dat
 else
@@ -851,7 +860,7 @@ f=$RESULT/${name}.dat
 fi
 (
 header4 "$prods";
-local tmp="$RESULT/tmp-plotOps-$name-$param.data"
+local tmp="$RESULT/tmp-plotOps-$name-$param$tmpext.data"
 test -f "$tmp" || json | \
     jq -r ".[] |  select (.benchmark | contains (\".${name}\") ) | [ (.threads | tostring) + \"-\" + .params.entryCount + \"-\" + .params.$param, .params.cacheFactory, .primaryMetric.score, .primaryMetric.scoreError, .primaryMetric.scoreConfidence[0], .primaryMetric.scoreConfidence[1]  ] | @csv" | \
     sort | tr -d '"' | \
@@ -867,7 +876,7 @@ name="$1";
 param="$2";
 suffix="$3";
 filter="$4";
-local prods="$CACHE_FACTORY_LIST org.cache2k.benchmark.ConcurrentHashMapFactory";
+local prods="$CACHE_FACTORY_LIST";
 if test -n "$suffix"; then
 f=$RESULT/${name}-${suffix}.dat
 else
@@ -952,6 +961,22 @@ noBenchmark PopulateParallelOnceBenchmark || {
     done
 
 }
+
+benchmarks="ReadOnlyBenchmark"
+for I in $benchmarks; do
+  noBenchmark $I || {
+      plotOps $I hitRate "naive" "" "" "org.cache2k.benchmark.ConcurrentHashMapFactory org.cache2k.benchmark.SynchronizedLinkedHashMapFactory org.cache2k.benchmark.thirdparty.GuavaCacheFactory";
+      graph "$graphName" "$I, operations per second with simple cache based on LinkedHashMap";
+  }
+done
+
+benchmarks="ReadOnlyBenchmark"
+for I in $benchmarks; do
+  noBenchmark $I || {
+      plotOps $I hitRate "naive2" "" "" "org.cache2k.benchmark.ConcurrentHashMapFactory org.cache2k.benchmark.SynchronizedLinkedHashMapFactory org.cache2k.benchmark.thirdparty.GuavaCacheFactory  org.cache2k.benchmark.PartitionedLinkedHashMapFactory";
+      graph "$graphName" "$I, operations per second with simple cache based on LinkedHashMap with single or partitioned locking";
+  }
+done
 
 benchmarks="ReadOnlyBenchmark"
 for I in $benchmarks; do

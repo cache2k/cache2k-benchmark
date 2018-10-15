@@ -66,7 +66,7 @@ public class OptBenchmark extends RandomCacheBenchmark {
     }
 
     @Override
-    public int getCacheSize() {
+    public int getCapacity() {
       return size;
     }
   }

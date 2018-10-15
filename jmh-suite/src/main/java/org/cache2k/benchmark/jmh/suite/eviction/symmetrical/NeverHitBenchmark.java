@@ -68,7 +68,7 @@ public class NeverHitBenchmark extends BenchmarkBase {
   public long operation(ThreadState threadState, HitCountRecorder rec) {
     int idx = (int) (threadState.index++);
     Integer k = idx;
-    Integer v = cache.getIfPresent(k);
+    Integer v = cache.get(k);
     if (v != null) {
       rec.hitCount++;
     } else {

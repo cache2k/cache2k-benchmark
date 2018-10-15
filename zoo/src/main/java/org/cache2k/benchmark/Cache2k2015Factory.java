@@ -39,7 +39,7 @@ public class Cache2k2015Factory extends BenchmarkCacheFactory {
   AtomicInteger counter = new AtomicInteger();
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createUnspecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+  protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     final BaseCache bc;
     try {
       bc = (BaseCache) implementation.newInstance();
@@ -58,18 +58,23 @@ public class Cache2k2015Factory extends BenchmarkCacheFactory {
     return new BenchmarkCache<K, V>() {
 
       @Override
-      public int getCacheSize() {
+      public int getCapacity() {
         return _maxElements;
       }
 
       @Override
-      public V getIfPresent(K key) {
+      public V get(K key) {
         return c.peek(key);
       }
 
       @Override
       public void put(K key, V value) {
         c.put(key, value);
+      }
+
+      @Override
+      public void remove(final K key) {
+        c.remove(key);
       }
 
       @Override

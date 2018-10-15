@@ -20,6 +20,9 @@ package org.cache2k.benchmark.jmh.suite.noEviction.symmetrical;
  * #L%
  */
 
+import it.unimi.dsi.util.XorShift1024StarRandomGenerator;
+import org.apache.commons.math3.random.RandomGenerator;
+import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.IntBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.suite.eviction.symmetrical.Cache2kMetricsRecorder;
@@ -62,22 +65,25 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
     long index = offset.getAndAdd(PATTERN_COUNT / 16);
   }
 
-  IntBenchmarkCache<Integer> cache;
+  BenchmarkCache<Integer, Integer> cache;
 
   Integer[] ints;
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    cache = getFactory().create(entryCount);
+    cache = getFactory().createUnspecialized(entryCount * 10);
     Cache2kMetricsRecorder.saveStats(cache.toString());
     ints = new Integer[PATTERN_COUNT];
-    AccessPattern _pattern =
-      new RandomAccessPattern((int) (entryCount * (100D / hitRate)));
+    RandomGenerator generator = new XorShift1024StarRandomGenerator(1802);
+    int _keyRange = entryCount * 100 / hitRate;
     for (int i = 0; i < PATTERN_COUNT; i++) {
-      ints[i] = _pattern.next();
+      ints[i] = generator.nextInt(_keyRange);
     }
     for (int i = 0; i < entryCount; i++) {
-      cache.put(i, (Integer) i);
+      cache.put(i, i);
+    }
+    if (_keyRange > entryCount) {
+      throw new IllegalArgumentException("key range to big, check hitrate <= 100");
     }
   }
 
@@ -90,9 +96,7 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
   @Benchmark @BenchmarkMode(Mode.Throughput)
   public long read(ThreadState threadState) {
     int idx = (int) (threadState.index++ % PATTERN_COUNT);
-    int key = ints[idx];
-    cache.getIfPresent(key);
-    return idx;
+    return cache.get(ints[idx]);
   }
 
 }

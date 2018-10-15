@@ -1,8 +1,8 @@
-package org.cache2k.benchmark.thirdparty;
+package org.cache2k.benchmark.impls;
 
 /*
  * #%L
- * Benchmarks: third party products.
+ * Benchmarks: implementation variants
  * %%
  * Copyright (C) 2013 - 2018 headissue GmbH, Munich
  * %%
@@ -20,15 +20,30 @@ package org.cache2k.benchmark.thirdparty;
  * #L%
  */
 
-import org.cache2k.benchmark.BenchmarkCollection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
- * @author Jens Wilke; created: 2013-06-13
+ * Simple, not thread safe cache based on the {@code LinkedHashMap}
+ *
+ * @author Jens Wilke
+ * @see <a href="http://chriswu.me/blog/a-lru-cache-in-10-lines-of-java/"/>
  */
-public class EhCache2Benchmark extends BenchmarkCollection {
+public class LinkedHashMapCache<K,V> extends LinkedHashMap<K,V> {
 
-  {
-    factory = new EhCache2Factory();
+  private final int cacheSize;
+
+  public LinkedHashMapCache(int cacheSize) {
+    super(16, 0.75F, true);
+    this.cacheSize = cacheSize;
+  }
+
+  protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+    return size() >= cacheSize;
+  }
+
+  public int getCacheSize() {
+    return cacheSize;
   }
 
 }

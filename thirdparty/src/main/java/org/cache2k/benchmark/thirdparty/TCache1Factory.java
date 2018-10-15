@@ -78,18 +78,23 @@ public class TCache1Factory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public int getCacheSize() {
+    public int getCapacity() {
       return size;
     }
 
     @Override
-    public V getIfPresent(final K key) {
+    public V get(final K key) {
       return cache.get(key);
     }
 
     @Override
     public void put(final K key, final V value) {
       cache.put(key, value);
+    }
+
+    @Override
+    public void remove(final K key) {
+      cache.remove(key);
     }
 
     @Override

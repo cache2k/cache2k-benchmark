@@ -27,8 +27,6 @@ import com.google.common.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheSource;
-import org.cache2k.benchmark.IntLoadingBenchmarkCache;
-import org.cache2k.benchmark.LoadingBenchmarkCache;
 
 import java.util.concurrent.TimeUnit;
 
@@ -38,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 public class GuavaCacheFactory extends BenchmarkCacheFactory {
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createUnspecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+  protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     MyBenchmarkCache c = new MyBenchmarkCache();
     c.size = _maxElements;
     CacheBuilder cb = builder(_maxElements);
@@ -47,7 +45,7 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
   }
 
   @Override
-  public <K, V> LoadingBenchmarkCache<K, V> createUnspecializedLoadingCache(
+  public <K, V> BenchmarkCache<K, V> createUnspecializedLoadingCache(
     final Class<K> _keyType, final Class<V> _valueType,
     final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
     MyLoadingBenchmarkCache c = new MyLoadingBenchmarkCache();
@@ -69,7 +67,6 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
     if (withExpiry) {
       cb.expireAfterWrite(2 * 60, TimeUnit.SECONDS);
     }
-    cb.concurrencyLevel(Runtime.getRuntime().availableProcessors() * 2);
     return cb;
   }
 
@@ -79,12 +76,12 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
     Cache<K, V> cache;
 
     @Override
-    public int getCacheSize() {
+    public int getCapacity() {
       return size;
     }
 
     @Override
-    public V getIfPresent(final K key) {
+    public V get(final K key) {
       return cache.getIfPresent(key);
     }
 
@@ -94,19 +91,24 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
     }
 
     @Override
+    public void remove(final K key) {
+      cache.invalidate(key);
+    }
+
+    @Override
     public void close() {
       cache.cleanUp();
     }
 
   }
 
-  static class MyLoadingBenchmarkCache<K, V> extends LoadingBenchmarkCache<K, V> {
+  static class MyLoadingBenchmarkCache<K, V> extends BenchmarkCache<K, V> {
 
     int size;
     LoadingCache<K, V> cache;
 
     @Override
-    public int getCacheSize() {
+    public int getCapacity() {
       return size;
     }
 

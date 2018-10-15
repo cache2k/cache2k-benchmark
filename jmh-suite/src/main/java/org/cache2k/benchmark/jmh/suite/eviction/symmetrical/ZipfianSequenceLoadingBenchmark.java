@@ -22,8 +22,7 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
 
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheSource;
-import org.cache2k.benchmark.IntLoadingBenchmarkCache;
-import org.cache2k.benchmark.LoadingBenchmarkCache;
+import org.cache2k.benchmark.IntBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
 import org.cache2k.benchmark.util.ZipfianPattern;
@@ -89,7 +88,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     }
   }
 
-  IntLoadingBenchmarkCache<Integer> cache;
+  IntBenchmarkCache<Integer> cache;
 
   @Setup
   public void setupBenchmark() {
@@ -98,7 +97,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     if (expiry) {
       f.withExpiry(true);
     }
-    cache = (IntLoadingBenchmarkCache<Integer>)
+    cache = (IntBenchmarkCache<Integer>)
       f.createLoadingCache(Integer.class, Integer.class, entryCount, source);
     /*
        fill the cache completely, so memory is already expanded at maximum
@@ -133,7 +132,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @Benchmark @BenchmarkMode(Mode.Throughput)
   public long operation(ThreadState threadState, HitCountRecorder rec) {
     rec.opCount++;
-    Integer v = cache.get(threadState.pattern.next());
+    Integer v = cache.getIfPresent(threadState.pattern.next());
     return v;
   }
 

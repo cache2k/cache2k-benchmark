@@ -71,7 +71,7 @@ public class CombinedReadWriteBenchmark extends BenchmarkBase {
 
   @Benchmark @Group("readOnly") @GroupThreads(4) @BenchmarkMode(Mode.Throughput)
   public Integer readOnly(ThreadState threadState) {
-    return cache.getIfPresent(ints[threadState.index++ & MASK]);
+    return cache.get(ints[threadState.index++ & MASK]);
   }
 
   @Benchmark @Group("writeOnly") @GroupThreads(4) @BenchmarkMode(Mode.Throughput)
@@ -81,7 +81,7 @@ public class CombinedReadWriteBenchmark extends BenchmarkBase {
 
   @Benchmark @Group("readWrite") @GroupThreads(3) @BenchmarkMode(Mode.Throughput)
   public Integer readWrite_get(ThreadState threadState) {
-    return cache.getIfPresent(ints[threadState.index++ & MASK]);
+    return cache.get(ints[threadState.index++ & MASK]);
   }
 
   @Benchmark @Group("readWrite") @GroupThreads(1) @BenchmarkMode(Mode.Throughput)

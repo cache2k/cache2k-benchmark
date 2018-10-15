@@ -20,7 +20,7 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
  * #L%
  */
 
-import org.cache2k.benchmark.LoadingBenchmarkCache;
+import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.util.ZipfianPattern;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -76,7 +76,7 @@ public class ZipfianLoopingPrecomputedSequenceLoadingBenchmark extends Benchmark
     }
   }
 
-  LoadingBenchmarkCache<Integer, Integer> cache;
+  BenchmarkCache<Integer, Integer> cache;
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {

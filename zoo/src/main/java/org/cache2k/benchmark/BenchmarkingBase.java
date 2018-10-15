@@ -49,7 +49,7 @@ public class BenchmarkingBase {
     if (cache != null) {
       throw new IllegalStateException("Two caches in one test? Please call destroyCache() first");
     }
-    return cache = factory.create(_maxElements);
+    return cache = factory.createUnspecialized(_maxElements);
   }
 
   public void destroyCache() {
@@ -75,7 +75,7 @@ public class BenchmarkingBase {
     }
     long _missCount =  0;
     for (Integer k : _trace) {
-      Integer v = c.getIfPresent(k);
+      Integer v = c.get(k);
       if (v == null) {
         c.put(k, k);
         _missCount++;
@@ -103,7 +103,7 @@ public class BenchmarkingBase {
     }
     onlyOneResult.add(_testName);
     long _usedMem = -1;
-    saveHitRate(_testName, c.getCacheSize(), _trace, _optHitRate,_optHitCount, _missCount, _usedMem);
+    saveHitRate(_testName, c.getCapacity(), _trace, _optHitRate,_optHitCount, _missCount, _usedMem);
     String _cacheStatistics = c.toString();
     System.out.println(_cacheStatistics);
     System.out.flush();

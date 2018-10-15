@@ -27,27 +27,35 @@ import java.io.Closeable;
  *
  * @author Jens Wilke; created: 2013-06-15
  */
-public abstract class BenchmarkCache<K, T> implements Closeable {
+public abstract class BenchmarkCache<K, V> implements Closeable {
 
   /**
-   * Return the element that is present in the cache. The cache source will not be called in turn.
+   * Return the element that is present in the cache.
+   * If created via {@link BenchmarkCacheFactory#createLoadingCache(Class, Class, int, BenchmarkCacheSource)}
+   * the source will be called to populate the cache.
    */
-  public T getIfPresent(K key) {
+  public V get(K key) {
     throw new UnsupportedOperationException();
   }
 
   /**
    * Puts an entry in the cache. Needed for read/write benchmark.
    */
-  public void put(K key, T value) {
+  public void put(K key, V value) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * Remove entry from cache. EHCache3 does not support remove with success flag, so
+   * we do not return a boolean.
+   */
+  public void remove(K key) { throw new UnsupportedOperationException();}
+
   /** free up all resources of the cache */
-  public abstract void close();
+  public void close() { }
 
   /** Configured maximum entry count of the cache */
-  public abstract int getCacheSize();
+  public abstract int getCapacity();
 
   /**
    * Return the original implementation. We use this for experimentation to

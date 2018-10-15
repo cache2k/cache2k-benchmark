@@ -30,15 +30,15 @@ public abstract class IntBenchmarkCache<V> extends BenchmarkCache<Integer, V> {
   /**
    * If the cache does not natively support integer key, just wrap.
    */
-  public static <K, V> BenchmarkCache<K, V> wrap(final BenchmarkCache<K, V> c) {
-    return (BenchmarkCache<K, V> ) wrapToInt((BenchmarkCache<Integer, V>) c);
+  public static <V> IntBenchmarkCache<V> wrap(final BenchmarkCache<Integer, V> c) {
+    return wrapToInt(c);
   }
 
   public static <V> IntBenchmarkCache<V> wrapToInt(final BenchmarkCache<Integer, V> c) {
     return new IntBenchmarkCache<V>() {
       @Override
-      public V getIfPresent(final Integer key) {
-        return c.getIfPresent(key);
+      public V get(final Integer key) {
+        return c.get(key);
       }
 
       @Override
@@ -47,13 +47,18 @@ public abstract class IntBenchmarkCache<V> extends BenchmarkCache<Integer, V> {
       }
 
       @Override
+      public void remove(final Integer key) {
+        c.remove(key);
+      }
+
+      @Override
       public void close() {
         c.close();
       }
 
       @Override
-      public int getCacheSize() {
-        return c.getCacheSize();
+      public int getCapacity() {
+        return c.getCapacity();
       }
 
       @Override
@@ -66,7 +71,7 @@ public abstract class IntBenchmarkCache<V> extends BenchmarkCache<Integer, V> {
   /**
    * Return the element that is present in the cache. The cache source will not be called in turn.
    */
-  public V getIfPresent(Integer key) {
+  public V get(Integer key) {
     return getIfPresent((int) key);
   }
 
@@ -81,7 +86,7 @@ public abstract class IntBenchmarkCache<V> extends BenchmarkCache<Integer, V> {
    * Return the element that is present in the cache. The cache source will not be called in turn.
    */
   public V getIfPresent(int key) {
-    return getIfPresent((Integer) key);
+    return get((Integer) key);
   }
 
   /**
@@ -89,6 +94,10 @@ public abstract class IntBenchmarkCache<V> extends BenchmarkCache<Integer, V> {
    */
   public void put(int key, V value) {
     put((Integer) key, value);
+  }
+
+  public void remove(int key) {
+    remove(key);
   }
 
 }

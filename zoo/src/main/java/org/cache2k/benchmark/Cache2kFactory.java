@@ -37,14 +37,19 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
   boolean disableStatistics = true;
 
   @Override
-  public <K, V> BenchmarkCache<K, V> create(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+  protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     final Cache<K, V> c = createInternal(_keyType, _valueType, _maxElements, null);
-    if (c instanceof IntCache) {
-      final IntCache<V> ic = (IntCache<V>) c;
+    return returnCache(c, _maxElements);
+
+  }
+
+  private <K, V> BenchmarkCache<K, V> returnCache(final Cache<K, V> _c, final int _maxElements) {
+    if (_c instanceof IntCache) {
+      final IntCache<V> ic = (IntCache<V>) _c;
       return (BenchmarkCache<K, V>) new IntBenchmarkCache<V>() {
 
         @Override
-        public int getCacheSize() {
+        public int getCapacity() {
           return _maxElements;
         }
 
@@ -59,6 +64,11 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
         }
 
         @Override
+        public void remove(int key) {
+          ic.remove(key);
+        }
+
+        @Override
         public void close() {
           ic.close();
         }
@@ -70,56 +80,57 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
 
         @Override
         public Object getOriginalCache() {
-          return c;
+          return _c;
         }
       };
     }
-    BenchmarkCache<K,V> bc = new BenchmarkCache<K, V>() {
+    return new BenchmarkCache<K, V>() {
 
       @Override
-      public int getCacheSize() {
+      public int getCapacity() {
         return _maxElements;
       }
 
       @Override
-      public V getIfPresent(K key) {
-        return c.peek(key);
+      public V get(K key) {
+        return _c.peek(key);
       }
 
       @Override
       public void put(K key, V value) {
-        c.put(key, value);
+        _c.put(key, value);
+      }
+
+      @Override
+      public void remove(final K key) {
+        _c.remove(key);
       }
 
       @Override
       public void close() {
-        c.close();
+        _c.close();
       }
 
       @Override
       public String toString() {
-        return c.toString();
+        return _c.toString();
       }
 
       @Override
       public Object getOriginalCache() {
-        return c;
+        return _c;
       }
     };
-    if (_keyType == Integer.class) {
-      return IntBenchmarkCache.wrap(bc);
-    }
-    return bc;
   }
 
   @Override
-  public <K, V> LoadingBenchmarkCache<K, V> createLoadingCache(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
+  public <K, V> BenchmarkCache<K, V> createLoadingCache(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
     final Cache<K, V> c = createInternal(_keyType, _valueType, _maxElements, _source);
     if (c instanceof IntCache) {
       final IntCache<V> ic = (IntCache<V>) c;
-      return (LoadingBenchmarkCache<K, V>) new IntLoadingBenchmarkCache<V>() {
+      return (BenchmarkCache<K, V>) new IntBenchmarkCache<V>() {
         @Override
-        public V get(final int key) {
+        public V getIfPresent(final int key) {
           return ic.get(key);
         }
 
@@ -127,6 +138,9 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
         public void put(final int key, final V value) {
           ic.put(key, value);
         }
+
+        @Override
+        public void remove(final int key) { ic.remove(key); }
 
         @Override
         public String toString() {
@@ -144,14 +158,14 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
         }
 
         @Override
-        public int getCacheSize() {
+        public int getCapacity() {
           return _maxElements;
         }
       };
     }
     if (_keyType == Integer.class) {
       final Cache<Integer, V> ic = (Cache<Integer, V>) c;
-      return (LoadingBenchmarkCache<K, V>) new IntLoadingBenchmarkCache<V>() {
+      return (BenchmarkCache<K, V>) new IntBenchmarkCache<V>() {
         @Override
         public V get(final Integer key) {
           return ic.get(key);
@@ -161,6 +175,9 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
         public void put(final Integer key, final V value) {
           ic.put(key, value);
         }
+
+        @Override
+        public void remove(final Integer key) { ic.remove(key); }
 
         @Override
         public String toString() {
@@ -178,12 +195,12 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
         }
 
         @Override
-        public int getCacheSize() {
+        public int getCapacity() {
           return _maxElements;
         }
       };
     }
-    return new LoadingBenchmarkCache<K, V>() {
+    return new BenchmarkCache<K, V>() {
       @Override
       public V get(final K key) {
         return c.get(key);
@@ -192,6 +209,11 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
       @Override
       public void put(final K key, final V value) {
         c.put(key, value);
+      }
+
+      @Override
+      public void remove(final K key) {
+        c.remove(key);
       }
 
       @Override
@@ -210,7 +232,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
       }
 
       @Override
-      public int getCacheSize() {
+      public int getCapacity() {
         return _maxElements;
       }
     };

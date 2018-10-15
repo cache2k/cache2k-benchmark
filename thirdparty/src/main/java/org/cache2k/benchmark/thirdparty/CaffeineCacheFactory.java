@@ -27,8 +27,6 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheSource;
-import org.cache2k.benchmark.IntLoadingBenchmarkCache;
-import org.cache2k.benchmark.LoadingBenchmarkCache;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -54,7 +52,7 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
   }
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createUnspecialized(
+  protected <K, V> BenchmarkCache<K, V> createSpecialized(
     final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
     c.size = _maxElements;
@@ -63,7 +61,7 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
   }
 
   @Override
-  public <K, V> LoadingBenchmarkCache<K, V> createUnspecializedLoadingCache(
+  public <K, V> BenchmarkCache<K, V> createUnspecializedLoadingCache(
     final Class<K> _keyType, final Class<V> _valueType,
     final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
     CacheLoader<K,V> l = new CacheLoader<K, V>() {
@@ -98,18 +96,23 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
     Cache<K, V> cache;
 
     @Override
-    public int getCacheSize() {
+    public int getCapacity() {
       return size;
     }
 
     @Override
-    public V getIfPresent(final K key) {
+    public V get(final K key) {
       return cache.getIfPresent(key);
     }
 
     @Override
     public void put(final K key, final V value) {
       cache.put(key, value);
+    }
+
+    @Override
+    public void remove(final K key) {
+      cache.invalidate(key);
     }
 
     @Override
@@ -124,13 +127,13 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
 
   }
 
-  static class MyLoadingBenchmarkCache<K, V> extends LoadingBenchmarkCache<K, V> {
+  static class MyLoadingBenchmarkCache<K, V> extends BenchmarkCache<K, V> {
 
     int size;
     LoadingCache<K, V> cache;
 
     @Override
-    public int getCacheSize() {
+    public int getCapacity() {
       return size;
     }
 

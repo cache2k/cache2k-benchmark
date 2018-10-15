@@ -51,7 +51,7 @@ public class CaffeineSimulatorCacheFactory extends BenchmarkCacheFactory {
   }
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createUnspecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+  protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     MyBenchmarkCacheAdapter<K, V> c = new MyBenchmarkCacheAdapter<K,V>();
     c.size = _maxElements;
     String _config =
@@ -73,7 +73,7 @@ public class CaffeineSimulatorCacheFactory extends BenchmarkCacheFactory {
     Policy policy;
 
     @Override
-    public int getCacheSize() {
+    public int getCapacity() {
       return size;
     }
 

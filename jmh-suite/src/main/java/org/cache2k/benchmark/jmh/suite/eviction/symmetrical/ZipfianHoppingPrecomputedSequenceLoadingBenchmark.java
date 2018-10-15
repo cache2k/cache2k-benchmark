@@ -22,8 +22,7 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
 
 import it.unimi.dsi.util.XorShift1024StarRandomGenerator;
 import org.apache.commons.math3.random.RandomGenerator;
-import org.cache2k.benchmark.BenchmarkCacheSource;
-import org.cache2k.benchmark.LoadingBenchmarkCache;
+import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.util.ZipfianPattern;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -35,11 +34,9 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
-import org.openjdk.jmh.infra.Blackhole;
 
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Benchmark of a loading cache with penalty on a zipfian sequence.
@@ -80,7 +77,7 @@ public class ZipfianHoppingPrecomputedSequenceLoadingBenchmark extends Benchmark
 
   }
 
-  LoadingBenchmarkCache<Integer, Integer> cache;
+  BenchmarkCache<Integer, Integer> cache;
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {

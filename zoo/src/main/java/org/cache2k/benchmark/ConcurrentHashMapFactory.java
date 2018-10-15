@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConcurrentHashMapFactory extends BenchmarkCacheFactory {
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createUnspecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+  protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     return new MyCache(new ConcurrentHashMap<K, V>(), _maxElements);
   }
 
@@ -58,13 +58,18 @@ public class ConcurrentHashMapFactory extends BenchmarkCacheFactory {
     }
 
     @Override
-    public V getIfPresent(K key) {
+    public V get(K key) {
       return map.get(key);
     }
 
     @Override
-    public int getCacheSize() {
-      return map.size();
+    public void remove(final K key) {
+      map.remove(key);
+    }
+
+    @Override
+    public int getCapacity() {
+      return maxElements;
     }
 
     @Override
