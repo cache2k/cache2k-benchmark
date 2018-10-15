@@ -22,11 +22,13 @@ package org.cache2k.benchmark.thirdparty;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
+import org.cache2k.benchmark.BenchmarkCacheSource;
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.ResourceType;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.spi.loaderwriter.CacheLoaderWriter;
 
 /**
  * @author Jens Wilke; created: 2013-12-08
@@ -44,6 +46,33 @@ public class EhCache3Factory extends BenchmarkCacheFactory {
   protected <K,V> CacheConfiguration<K,V> createCacheConfiguration(final Class<K> _keyType, final Class<V> _valueType, int _maxElements) {
     return CacheConfigurationBuilder.newCacheConfigurationBuilder(_keyType, _valueType,
       ResourcePoolsBuilder.heap(_maxElements)).build();
+  }
+
+  @Override
+  public <K, V> BenchmarkCache<K, V> createUnspecializedLoadingCache(final Class<K> _keyType, final Class<V> _valueType,
+                                                                     final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
+    CacheLoaderWriter<K,V> lw = new CacheLoaderWriter<K, V>() {
+      @Override
+      public V load(final K key) throws Exception {
+        return _source.load(key);
+      }
+
+      @Override
+      public void write(final K key, final V value) throws Exception {
+
+      }
+
+      @Override
+      public void delete(final K key) throws Exception {
+
+      }
+    };
+    CacheConfiguration<K,V> cfg =
+      CacheConfigurationBuilder.newCacheConfigurationBuilder(_keyType, _valueType,
+        ResourcePoolsBuilder.heap(_maxElements))
+        .withLoaderWriter(lw)
+        .build();
+    return new MyBenchmarkCache<K,V>(cfg);
   }
 
   class MyBenchmarkCache<K,V> extends BenchmarkCache<K, V> {
