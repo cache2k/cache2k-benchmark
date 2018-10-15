@@ -68,7 +68,7 @@ test -n "$BENCHMARK_PERFASM_LONG" || BENCHMARK_PERFASM_LONG="-f 1 -wi 1 -w 180s 
 # hs_gc: detailed counters from the GC implementation
 STANDARD_PROFILER="-prof comp -prof gc -prof hs_rt -prof hs_gc";
 
-STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler";
+# STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.LinuxVmProfiler";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.MiscResultRecorderProfiler";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.GcProfiler";
@@ -339,7 +339,7 @@ benchmark=ReadOnlyBenchmark;
     echo;
     echo "## $runid";
     sync
-    limitCores $threads $java -jar $JAR \\.$benchmark -p hitRate=100 -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS -gc true $STANDARD_PROFILER $EXTRA_PROFILER \
+    limitCores $threads $java -jar $JAR \\.$benchmark -p hitRate=100 -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER $EXTRA_PROFILER \
          -t $threads $impl \
          -rf json -rff "$fn.json" \
          2>&1 | tee $fn.out | filterProgress

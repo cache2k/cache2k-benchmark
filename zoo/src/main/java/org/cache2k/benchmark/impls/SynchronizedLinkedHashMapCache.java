@@ -44,15 +44,24 @@ public class SynchronizedLinkedHashMapCache<K,V> extends BenchmarkCache<K,V> {
 		backingMap = new LinkedHashMapCache<>(size);
 	}
 
+	@Override
 	public void put(K key, V value) {
 		synchronized (backingMap) {
 			backingMap.put(key, value);
 		}
 	}
 
+	@Override
 	public V get(K key) {
 		synchronized (backingMap) {
 			return backingMap.get(key);
+		}
+	}
+
+	@Override
+	public void remove(final K key) {
+		synchronized (backingMap) {
+			backingMap.remove(key);
 		}
 	}
 

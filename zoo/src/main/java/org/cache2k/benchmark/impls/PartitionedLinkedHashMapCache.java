@@ -46,6 +46,7 @@ public class PartitionedLinkedHashMapCache<K,V> extends BenchmarkCache<K,V> {
 		}
 	}
 
+	@Override
 	public void put(K key, V value) {
 		LinkedHashMapCache<K,V> backingMap = backingMaps[key.hashCode() & MASK];
 		synchronized (backingMap) {
@@ -53,10 +54,19 @@ public class PartitionedLinkedHashMapCache<K,V> extends BenchmarkCache<K,V> {
 		}
 	}
 
+	@Override
 	public V get(K key) {
 		LinkedHashMapCache<K,V> backingMap = backingMaps[key.hashCode() & MASK];
 		synchronized (backingMap) {
 			return backingMap.get(key);
+		}
+	}
+
+	@Override
+	public void remove(K key) {
+		LinkedHashMapCache<K,V> backingMap = backingMaps[key.hashCode() & MASK];
+		synchronized (backingMap) {
+			backingMap.remove(key);
 		}
 	}
 

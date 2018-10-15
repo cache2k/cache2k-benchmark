@@ -69,6 +69,10 @@ public class BenchmarkBase {
 
   public void recordMemoryAndDestroy(Closeable _closeable) {
     ForcedGcMemoryProfiler.recordUsedMemory();
+    closeIfNeeded(_closeable);
+  }
+
+  public void closeIfNeeded(final Closeable _closeable) {
     if (_closeable != null) {
       System.out.println();
       String _statString = _closeable.toString();

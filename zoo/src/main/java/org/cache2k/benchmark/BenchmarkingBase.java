@@ -49,7 +49,7 @@ public class BenchmarkingBase {
     if (cache != null) {
       throw new IllegalStateException("Two caches in one test? Please call destroyCache() first");
     }
-    return cache = factory.createUnspecialized(_maxElements);
+    return cache = factory.create(Integer.class, Integer.class, _maxElements);
   }
 
   public void destroyCache() {

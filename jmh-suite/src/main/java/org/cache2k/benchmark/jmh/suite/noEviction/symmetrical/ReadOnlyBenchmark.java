@@ -23,11 +23,8 @@ package org.cache2k.benchmark.jmh.suite.noEviction.symmetrical;
 import it.unimi.dsi.util.XorShift1024StarRandomGenerator;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.cache2k.benchmark.BenchmarkCache;
-import org.cache2k.benchmark.IntBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.suite.eviction.symmetrical.Cache2kMetricsRecorder;
-import org.cache2k.benchmark.util.AccessPattern;
-import org.cache2k.benchmark.util.RandomAccessPattern;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Level;
@@ -69,9 +66,10 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
 
   Integer[] ints;
 
-  @Setup(Level.Iteration)
+  @Setup(Level.Trial)
   public void setup() throws Exception {
-    cache = getFactory().createUnspecialized(entryCount * 10);
+    int _SAFETY_ADD = 20000;
+    cache = getFactory().createUnspecialized(entryCount + _SAFETY_ADD);
     Cache2kMetricsRecorder.saveStats(cache.toString());
     ints = new Integer[PATTERN_COUNT];
     RandomGenerator generator = new XorShift1024StarRandomGenerator(1802);
@@ -79,18 +77,47 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
     for (int i = 0; i < PATTERN_COUNT; i++) {
       ints[i] = generator.nextInt(_keyRange);
     }
-    for (int i = 0; i < entryCount; i++) {
+    /*
+     * First round of iteration that exceeds the entry count so the eviction
+     * kicks in. This is needed for Caffeine, otherwise Caffeine does no bookkeeping
+     * during the benchmark.
+     */
+    for (int i = 0; i < entryCount + _SAFETY_ADD * 5; i++) {
       cache.put(i, i);
     }
+    /*
+     * Make sure the cache contains at least the range [ 0 .. entryCount -1 ]
+     */
+    int missing = 0;
+    int tries = 20;
+    do {
+      if (tries-- <= 0) {
+        throw new IllegalStateException("cache does not store at least entryCount elements, missing: " + missing);
+      }
+      if (missing > 0) {
+        Thread.sleep(123);
+      }
+      missing = 0;
+      for (int i = 0; i < entryCount; i++) {
+        if (cache.get(i) == null) {
+          cache.put(i, i);
+          if (cache.get(i) == null) {
+            throw new IllegalStateException("cache does not store the value");
+          }
+          missing++;
+        }
+      }
+    } while (missing > 0);
+
     if (_keyRange > entryCount) {
       throw new IllegalArgumentException("key range to big, check hitrate <= 100");
     }
   }
 
-  @TearDown(Level.Iteration)
+  @TearDown(Level.Trial)
   public void tearDown() {
     Cache2kMetricsRecorder.recordStats(cache.toString());
-    recordMemoryAndDestroy(cache);
+    closeIfNeeded(cache);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
