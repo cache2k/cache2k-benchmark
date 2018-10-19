@@ -248,12 +248,39 @@ traces="Web07 Web12 Cpp Sprite Multi2 Oltp Zipf900 Zipf10k TotalRandom1000 \
        UmassWebSearch1 UmassFinancial1 UmassFinancial2 \
        OrmAccessBusytime OrmAccessNight Glimpse ScarabRecs ScarabProds";
 
-process() {
+clean() {
 rm -rf $RESULT/*.dat;
 rm -rf $RESULT/*.svg;
 rm -rf $RESULT/*.plot;
+}
+
+process() {
+clean;
+header="Size OPT LRU CLOCK EHCache3 Guava Caffeine cache2k RAND";
+impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
+	   org.cache2k.benchmark.LruCacheBenchmark \
+       org.cache2k.benchmark.ClockCacheBenchmark \
+       org.cache2k.benchmark.thirdparty.EhCache3Benchmark \
+       org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
+       org.cache2k.benchmark.thirdparty.CaffeineBenchmark \
+       org.cache2k.benchmark.Cache2kDefaultBenchmark \
+       org.cache2k.benchmark.RandomCacheBenchmark";
+for I in $traces; do
+  f=$RESULT/trace${I}hitrateProducts.dat;
+  (
+  echo $header;
+  printHitrate | grep "^benchmark${I}_" | alongSize | sort -n -k1 -t'|' | \
+    pivot $impls | \
+    stripEmpty
+  ) > $f
+  plot $f "Hitrates for $I trace";
+done
 
 
+
+}
+
+processExtensive() {
 # S/WTLfu S/WTLfu90
 header="Size OPT LRU S/LRU CLOCK Cache2k ARC CAR S/Lirs EHCache2 Guava Caffeine S/Mru S/Lfu RAND";
 #         org.cache2k.benchmark.thirdparty.CaffeineSimulatorWTinyLfuBenchmark \
@@ -282,27 +309,6 @@ for I in $traces; do
   ) > $f
   plot $f "Hitrates for $I trace";
 done
-
-header="Size OPT LRU CLOCK EHCache2 Guava Caffeine cache2k RAND";
-impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
-	   org.cache2k.benchmark.LruCacheBenchmark \
-       org.cache2k.benchmark.ClockCacheBenchmark \
-       org.cache2k.benchmark.thirdparty.EhCache2Benchmark \
-       org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
-       org.cache2k.benchmark.thirdparty.CaffeineBenchmark \
-       org.cache2k.benchmark.Cache2kDefaultBenchmark \
-       org.cache2k.benchmark.RandomCacheBenchmark";
-for I in $traces; do
-  f=$RESULT/trace${I}hitrateProducts.dat;
-  (
-  echo $header;
-  printHitrate | grep "^benchmark${I}_" | alongSize | sort -n -k1 -t'|' | \
-    pivot $impls | \
-    stripEmpty
-  ) > $f
-  plot $f "Hitrates for $I trace";
-done
-
 header="Size OPT LRU CLOCK EHCache2 Guava Caffeine Caffeine- cache2k RAND";
 impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
 	   org.cache2k.benchmark.LruCacheBenchmark \
@@ -323,7 +329,6 @@ for I in $traces; do
   ) > $f
   plot $f "Hitrates for $I trace";
 done
-
 }
 
 processExp() {

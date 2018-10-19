@@ -29,7 +29,7 @@ import org.junit.Test;
  */
 public class BenchmarkCacheTest {
 
-	BenchmarkCacheFactory factory = new CaffeineCacheFactory();
+	BenchmarkCacheFactory factory = new GuavaCacheFactory();
 
 	@Test
 	public void put() {
