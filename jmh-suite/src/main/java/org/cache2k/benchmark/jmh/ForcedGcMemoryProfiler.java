@@ -24,32 +24,32 @@ import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.InternalProfiler;
 import org.openjdk.jmh.results.AggregationPolicy;
+import org.openjdk.jmh.results.Aggregator;
+import org.openjdk.jmh.results.AggregatorUtils;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.Result;
+import org.openjdk.jmh.results.ResultRole;
 import org.openjdk.jmh.results.ScalarResult;
 import org.openjdk.jmh.runner.IterationType;
+import org.openjdk.jmh.util.ListStatistics;
+import org.openjdk.jmh.util.Statistics;
 import org.openjdk.jmh.util.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.PrintStream;
-import java.io.UncheckedIOException;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Record the used heap memory of a benchmark iteration by forcing a full garbage collection.
@@ -110,6 +110,29 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
    * @see org.openjdk.jmh.runner.Runner#runSystemGC()
    */
   private static long getUsedMemory() {
+    if (runSystemGC()) {
+      MemoryUsage _heapUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+      MemoryUsage _nonHeapUsage = ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage();
+      totalMemory = _heapUsage.getCommitted() + _nonHeapUsage.getCommitted();
+      long _usedHeapMemory = _heapUsage.getUsed();
+      long _usedNonHeap = _nonHeapUsage.getUsed();
+      System.err.println("[getMemoryMXBean] usedHeap=" + _usedHeapMemory + ", usedNonHeap=" + _usedNonHeap + ", totalUsed=" + (_usedHeapMemory + _usedNonHeap));
+      System.err.println("[Runtime totalMemory-freeMemory] used memory: " + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+      return _usedHeapMemory + _usedNonHeap;
+    }
+    return -1;
+  }
+
+  /**
+   * Trigger a gc, wait for completion and return used memory. Inspired from JMH approach.
+   *
+   * <p>Before we had the approach of detecting the clearing of
+   * a weak reference. Maybe this is not reliable, since when cleared the GC run may not
+   * be finished.
+   *
+   * @see org.openjdk.jmh.runner.Runner#runSystemGC()
+   */
+  public static boolean forceGcJmhOld() {
     final int MAX_WAIT_MSEC = 20 * 1000;
     List<GarbageCollectorMXBean> _enabledBeans = new ArrayList<GarbageCollectorMXBean>();
     for (GarbageCollectorMXBean b : ManagementFactory.getGarbageCollectorMXBeans()) {
@@ -120,7 +143,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
     }
     if (_enabledBeans.isEmpty()) {
       System.err.println("WARNING: MXBeans can not report GC info. Cannot extract reliable usage metric.");
-      return -1;
+      return false;
     }
     long _beforeGcCount = countGc(_enabledBeans);
     long t0 = System.currentTimeMillis();
@@ -131,20 +154,74 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
-      long _gcCount;
-      if ((_gcCount = countGc(_enabledBeans)) > _beforeGcCount) {
-        MemoryUsage _heapUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
-        MemoryUsage _nonHeapUsage = ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage();
-        totalMemory = _heapUsage.getCommitted() + _nonHeapUsage.getCommitted();
-        long _usedHeapMemory = _heapUsage.getUsed();
-        long _usedNonHeap = _nonHeapUsage.getUsed();
-        System.err.println("[getMemoryMXBean] usedHeap=" + _usedHeapMemory + ", usedNonHeap=" + _usedNonHeap + ", totalUsed=" + (_usedHeapMemory + _usedNonHeap) + ", gcCount=" + _gcCount);
-        System.err.println("[Runtime totalMemory-freeMemory] used memory: " + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
-        return _usedHeapMemory + _usedNonHeap;
+      if ((countGc(_enabledBeans)) > _beforeGcCount) {
+        return true;
       }
     }
     System.err.println("WARNING: System.gc() was invoked but couldn't detect a GC occurring, is System.gc() disabled?");
-    return -1;
+    return false;
+  }
+
+  public static boolean runSystemGC() {
+      List<GarbageCollectorMXBean> enabledBeans = new ArrayList<>();
+
+      for (GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) {
+        long count = bean.getCollectionCount();
+        if (count != -1) {
+          enabledBeans.add(bean);
+        }
+      }
+
+      long beforeGcCount = countGc(enabledBeans);
+
+      System.runFinalization();
+      System.gc();
+      System.runFinalization();
+      System.gc();
+
+      final int MAX_WAIT_MSECS = 20 * 1000;
+      final int STABLE_TIME_MSECS = 500;
+
+      if (enabledBeans.isEmpty()) {
+        System.err.println("WARNING: MXBeans can not report GC info.");
+        return false;
+      }
+
+      boolean gcHappened = false;
+
+      long start = System.nanoTime();
+      long gcHappenedTime = 0;
+      while (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) < MAX_WAIT_MSECS) {
+        try {
+          TimeUnit.MILLISECONDS.sleep(20);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+
+        long afterGcCount = countGc(enabledBeans);
+
+        if (!gcHappened) {
+          if (afterGcCount - beforeGcCount >= 2) {
+            gcHappened = true;
+          }
+        }
+        if (gcHappened) {
+          if (afterGcCount == beforeGcCount) {
+            if (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - gcHappenedTime) > STABLE_TIME_MSECS) {
+              return true;
+            }
+          } else {
+            gcHappenedTime = System.nanoTime();
+            beforeGcCount = afterGcCount;
+          }
+        }
+      }
+      if (gcHappened) {
+        System.err.println("WARNING: System.gc() was invoked but unable to wait while GC stopped, is GC too asynchronous?");
+      } else {
+        System.err.println("WARNING: System.gc() was invoked but couldn't detect a GC occurring, is System.gc() disabled?");
+      }
+      return false;
   }
 
   private static long countGc(final List<GarbageCollectorMXBean> _enabledBeans) {
@@ -232,11 +309,11 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
     }
     List<Result> l = new ArrayList<>();
     l.addAll(Arrays.asList(
-      new ScalarResult("+forced-gc-mem.used.settled", (double) usedMemorySettled, "bytes", AggregationPolicy.AVG),
-      new ScalarResult("+forced-gc-mem.used.after", (double) usedMemory, "bytes", AggregationPolicy.AVG),
-      new ScalarResult("+forced-gc-mem.total", (double) totalMemory, "bytes", AggregationPolicy.AVG),
-      new ScalarResult("+forced-gc-mem.gcTimeMillis", (double) gcTimeMillis, "ms", AggregationPolicy.AVG),
-      new ScalarResult("+forced-gc-mem.usedHeap", (double) usedHeapMemory, "bytes", AggregationPolicy.AVG)
+      new MyScalarResult("+forced-gc-mem.used.settled", (double) usedMemorySettled, "bytes", AggregationPolicy.AVG),
+      new MyScalarResult("+forced-gc-mem.used.after", (double) usedMemory, "bytes", AggregationPolicy.AVG),
+      new MyScalarResult("+forced-gc-mem.total", (double) totalMemory, "bytes", AggregationPolicy.AVG),
+      new MyScalarResult("+forced-gc-mem.gcTimeMillis", (double) gcTimeMillis, "ms", AggregationPolicy.AVG),
+      new MyScalarResult("+forced-gc-mem.usedHeap", (double) usedHeapMemory, "bytes", AggregationPolicy.AVG)
     ));
     keepReference = null;
     return l;
@@ -251,6 +328,56 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
   @Override
   public String getDescription() {
     return "Adds used memory to the result, if recorded via recordUsedMemory()";
+  }
+
+  /**
+   * Same as {@link ScalarResult} but don't fill missing values with 0.
+   */
+  public static class MyScalarResult extends Result<MyScalarResult> {
+
+    public MyScalarResult(String label, double n, String unit, AggregationPolicy policy) {
+      this(label, of(n), unit, policy);
+    }
+
+    MyScalarResult(String label, Statistics s, String unit, AggregationPolicy policy) {
+      super(ResultRole.SECONDARY, label, s, unit, policy);
+    }
+
+    @Override
+    protected Aggregator<MyScalarResult> getThreadAggregator() {
+      return new MyScalarResultAggregator();
+    }
+
+    @Override
+    protected Aggregator<MyScalarResult> getIterationAggregator() {
+      return new MyScalarResultAggregator();
+    }
+
+    @Override
+    protected MyScalarResult getZeroResult() {
+      return null;
+    }
+
+    AggregationPolicy getPolicy() { return policy; }
+
+  }
+
+  static class MyScalarResultAggregator implements Aggregator<MyScalarResult> {
+
+    @Override
+    public MyScalarResult aggregate(Collection<MyScalarResult> results) {
+      ListStatistics stats = new ListStatistics();
+      for (MyScalarResult r : results) {
+        stats.addValue(r.getScore());
+      }
+      MyScalarResult first = results.iterator().next();
+      return new MyScalarResult(
+        first.getLabel(),
+        stats,
+        first.getScoreUnit(),
+        first.getPolicy()
+      );
+    }
   }
 
 }
