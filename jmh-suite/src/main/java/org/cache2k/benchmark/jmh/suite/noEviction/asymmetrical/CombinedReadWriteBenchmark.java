@@ -4,7 +4,7 @@ package org.cache2k.benchmark.jmh.suite.noEviction.asymmetrical;
  * #%L
  * Benchmarks: JMH suite.
  * %%
- * Copyright (C) 2013 - 2018 headissue GmbH, Munich
+ * Copyright (C) 2013 - 2019 headissue GmbH, Munich
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
