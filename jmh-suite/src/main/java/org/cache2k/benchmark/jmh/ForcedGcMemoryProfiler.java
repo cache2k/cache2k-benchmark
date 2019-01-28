@@ -27,6 +27,8 @@ import org.openjdk.jmh.results.AggregationPolicy;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.ScalarResult;
+import org.openjdk.jmh.runner.IterationType;
+import org.openjdk.jmh.util.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -56,6 +58,7 @@ import java.util.List;
  */
 public class ForcedGcMemoryProfiler implements InternalProfiler {
 
+  private static boolean runAfterLastIteration = true;
   @SuppressWarnings("unused")
   private static Object keepReference;
   private static long usedMemory;
@@ -71,6 +74,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
    * consumption measurements.
    */
   public static void keepReference(Object _rootReferenceToKeep) {
+    System.err.println("KEEP REFERENCE!!!");
     if (enabled) {
       keepReference = _rootReferenceToKeep;
     }
@@ -93,9 +97,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       m2 = getUsedMemory();
     } while (m2 < usedMemorySettled);
     gcTimeMillis = System.currentTimeMillis() - t0;
-    if (!PlatformUtil.isJava9()) {
-      usedHeapMemory = printHeapHisto(System.out, 30);
-    }
+    usedHeapMemory = printHeapHistogram(System.out, 30);
   }
 
   /**
@@ -105,7 +107,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
    * a weak reference. Maybe this is not reliable, since when cleared the GC run may not
    * be finished.
    *
-   * @see org.openjdk.jmh.runner.BaseRunner#runSystemGC()
+   * @see org.openjdk.jmh.runner.Runner#runSystemGC()
    */
   private static long getUsedMemory() {
     final int MAX_WAIT_MSEC = 20 * 1000;
@@ -153,43 +155,29 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
     return cnt;
   }
 
-
-  /**
-   * oracles' java doc says that remoteDataDump outputs the same as ctrl-break, however,
-   * heap information is missing and only threads are printed.
-   */
-  private static void dumpThreads(PrintStream out) {
-    Object obj = getJvmVirtualMachine();
-    if (obj == null) {
-      return;
-    }
-    try {
-      Method heapHistoMethod = obj.getClass().getMethod("remoteDataDump", Object[].class);
-      InputStream in = (InputStream) heapHistoMethod.invoke(obj, new Object[] { new Object[] {} });
-      LineNumberReader r = new LineNumberReader(new InputStreamReader(in));
-      String s;
-      while ((s = r.readLine()) != null) {
-        out.println(s);
+  public static String getJmapExcutable() {
+      String javaHome = System.getProperty("java.home");
+      String jreDir = File.separator + "jre";
+      if (javaHome.endsWith(jreDir)) {
+        javaHome = javaHome.substring(0, javaHome.length() - jreDir.length());
       }
-      r.close();
-      in.close();
-    } catch (Exception ex) {
-      System.err.println("ForcedGcMemoryProfiler: error attaching / reading histogram");
-      ex.printStackTrace();
+      return (javaHome +
+              File.separator +
+              "bin" +
+              File.separator +
+              "jmap" +
+              (Utils.isWindows() ? ".exe" : ""));
     }
-    out.println();
-  }
 
-  private static long printHeapHisto(PrintStream out, int _maxLines) {
-    Object obj = getJvmVirtualMachine();
-    if (obj == null) {
-      return 0;
-    }
-    boolean _partial = false;
+  public static long printHeapHistogram(PrintStream out, int _maxLines) {
     long _totalBytes = 0;
+    boolean _partial = false;
     try {
-      Method heapHistoMethod = obj.getClass().getMethod("heapHisto", Object[].class);
-      InputStream in = (InputStream) heapHistoMethod.invoke(obj, new Object[] { new Object[] { "-live" } });
+      Process proc = Runtime.getRuntime().exec(new String[]{
+        getJmapExcutable(),
+        "-histo",
+        Long.toString(Utils.getPid())});
+      InputStream in = proc.getInputStream();
       LineNumberReader r = new LineNumberReader(new InputStreamReader(in));
       String s;
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -226,95 +214,16 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
     return _totalBytes;
   }
 
-  private static boolean attachingTried;
-  private static Object attachedVm;
-
-  /**
-   * Attach to our virtual machine via the attach API and return the
-   * instance of type {@code com.sun.tools.attach.VirtualMachine}
-   */
-  private static synchronized Object getJvmVirtualMachine() {
-    if (attachingTried) {
-      return attachedVm;
-    }
-    attachingTried = true;
-    Class<?> vmClass = findAttachVmClass();
-    Long pid = PlatformUtil.getProcessId();
-    if (vmClass != null && pid != null) {
-      try {
-        Method m = vmClass.getMethod("attach", String.class);
-        attachedVm = m.invoke(vmClass, Long.toString(pid));
-      } catch (Throwable ex) {
-        System.err.println("ForcedGcMemoryProfiler: error attaching via attach API");
-        ex.printStackTrace();
-        return null;
-      }
-    }
-    return attachedVm;
-  }
-
-  /**
-   * Loads java VirtualMachine, expects that tools.jar is reachable via JAVA_HOME environment
-   * variable.
-   */
-  private static Class<?> findAttachVmClass() {
-    final String virtualMachineClassName = "com.sun.tools.attach.VirtualMachine";
-    try {
-      return Class.forName(virtualMachineClassName);
-    } catch (ClassNotFoundException ignore) {
-    }
-    String _javaHome = System.getenv("JAVA_HOME");
-    if (_javaHome == null) {
-      System.err.println("ForcedGcMemoryProfiler: tools.jar missing? Add JAVA_HOME.");
-      return null;
-    }
-    File f = new File(new File(_javaHome, "lib"), "tools.jar");
-    if (!f.exists()) {
-      System.err.println("ForcedGcMemoryProfiler: tools.jar not found in JAVA_HOME/lib/tools.jar.");
-      return null;
-    }
-    try {
-      final URL url = f.toURI().toURL();
-      ClassLoader cl = URLClassLoader.newInstance(new URL[]{url});
-      return Class.forName(virtualMachineClassName, true, cl);
-    } catch (Exception ex) {
-      System.err.println("ForcedGcMemoryProfiler: Cannot load " + virtualMachineClassName + " from " + f);
-      ex.printStackTrace();
-      return null;
-    }
-  }
-
-  /**
-   * Parse the linux {@code /proc/self/status} and add everything prefixed with "Vm" as metric to
-   * the profiling result.
-   */
-  private static void addLinuxVmStats(List<Result> l) {
-    try {
-      LineNumberReader r = new LineNumberReader(new InputStreamReader(new FileInputStream("/proc/self/status")));
-      String _line;
-      while ((_line = r.readLine()) != null) {
-        if (!_line.startsWith("Vm")) {
-          continue;
-        }
-        String[] sa = _line.split("\\s+");
-        if (sa.length != 3) {
-          throw new IOException("Format error: 3 elements expected");
-        }
-        if (!sa[2].equals("kB")) {
-          throw new IOException("Format error: unit kB expected, was: " + sa[2]);
-        }
-        String _name = sa[0].substring(0, sa[0].length() - 1);
-        l.add(
-          new ScalarResult("+forced-gc-mem.used." + _name, (double) Long.parseLong(sa[1]), "kB", AggregationPolicy.AVG)
-        );
-      }
-    } catch (IOException ex) {
-      throw new UncheckedIOException(ex);
-    }
-  }
+  int iterationNumber = 0;
 
   @Override
   public Collection<? extends Result> afterIteration(final BenchmarkParams benchmarkParams, final IterationParams iterationParams, final IterationResult result) {
+    if (runAfterLastIteration) {
+      if (iterationParams.getType() != IterationType.MEASUREMENT
+      || iterationParams.getCount() != ++iterationNumber) {
+        return Collections.emptyList();
+      }
+    }
     if (usedMemory <= 0) {
       recordUsedMemory();
       if (usedMemory <= 0) {
@@ -322,7 +231,6 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       }
     }
     List<Result> l = new ArrayList<>();
-    addLinuxVmStats(l);
     l.addAll(Arrays.asList(
       new ScalarResult("+forced-gc-mem.used.settled", (double) usedMemorySettled, "bytes", AggregationPolicy.AVG),
       new ScalarResult("+forced-gc-mem.used.after", (double) usedMemory, "bytes", AggregationPolicy.AVG),
