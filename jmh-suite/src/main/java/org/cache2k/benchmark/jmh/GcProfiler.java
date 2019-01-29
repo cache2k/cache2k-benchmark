@@ -214,14 +214,14 @@ public class GcProfiler implements InternalProfiler {
       Defaults.PREFIX + "gc.count",
       gcCount - beforeGCCount,
       "counts",
-      AggregationPolicy.SUM));
+      AggregationPolicy.AVG));
 
     if (gcCount != beforeGCCount || gcTime != beforeGCTime) {
       results.add(new ScalarResult(
         Defaults.PREFIX + "gc.time",
         gcTime - beforeGCTime,
         "ms",
-        AggregationPolicy.SUM));
+        AggregationPolicy.AVG));
     }
 
     for (String space : churn.keys()) {
