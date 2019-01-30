@@ -56,11 +56,13 @@ import java.util.List;
  */
 public class LinuxVmProfiler implements InternalProfiler {
 
+  private static final String PREFIX = "+linux.proc.status";
+
   /**
    * Parse the linux {@code /proc/self/status} and add everything prefixed with "Vm" as metric to
    * the profiling result.
    */
-  private static void addLinuxVmStats(List<Result> l) {
+  public static void addLinuxVmStats(String prefix, List<Result> l) {
     try {
       LineNumberReader r = new LineNumberReader(new InputStreamReader(new FileInputStream("/proc/self/status")));
       String _line;
@@ -77,7 +79,7 @@ public class LinuxVmProfiler implements InternalProfiler {
         }
         String _name = sa[0].substring(0, sa[0].length() - 1);
         l.add(
-          new ScalarResult("+linux.proc.status." + _name, (double) Long.parseLong(sa[1]), "kB", AggregationPolicy.AVG)
+          new OptionalScalarResult(prefix + "." + _name, (double) Long.parseLong(sa[1]), "kB", AggregationPolicy.AVG)
         );
       }
     } catch (IOException ex) {
@@ -88,7 +90,7 @@ public class LinuxVmProfiler implements InternalProfiler {
   @Override
   public Collection<? extends Result> afterIteration(final BenchmarkParams benchmarkParams, final IterationParams iterationParams, final IterationResult result) {
     List<Result> l = new ArrayList<>();
-    addLinuxVmStats(l);
+    addLinuxVmStats(PREFIX, l);
     return l;
   }
 
