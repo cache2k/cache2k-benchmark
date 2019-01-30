@@ -60,7 +60,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @Param({"5", "20"})
   public int factor = 0;
 
-  @Param({"100000", "1000000"})
+  @Param({"100000", "1000000", "10000000"})
   public int entryCount = 100_000;
 
   @Param({"false"})
@@ -111,7 +111,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     }
     String _statString = cache.toString();
     System.out.println("Cache stats after seeding: " + _statString);
-    Cache2kMetricsRecorder.saveStats(_statString);
+    Cache2kMetricsRecorder.saveStatsAfterSetup(_statString);
   }
 
   @Setup(Level.Iteration)
@@ -126,7 +126,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     String _statString = cache.toString();
     System.out.println(_statString);
     System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
-    Cache2kMetricsRecorder.recordStats(_statString);
+    Cache2kMetricsRecorder.recordStatsAfterIteration(_statString);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

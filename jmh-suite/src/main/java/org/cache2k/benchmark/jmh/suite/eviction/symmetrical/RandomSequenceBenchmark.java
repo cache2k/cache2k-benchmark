@@ -21,7 +21,6 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
  */
 
 import it.unimi.dsi.util.XorShift1024StarRandomGenerator;
-import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.IntBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
@@ -80,7 +79,7 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
     }
     String _statString = cache.toString();
     System.out.println("Cache stats after seeding: " + _statString);
-    Cache2kMetricsRecorder.saveStats(_statString);
+    Cache2kMetricsRecorder.saveStatsAfterSetup(_statString);
   }
 
   @TearDown(Level.Iteration)
@@ -89,7 +88,7 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
     String _statString = cache.toString();
     System.out.println(_statString);
     System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
-    Cache2kMetricsRecorder.recordStats(_statString);
+    Cache2kMetricsRecorder.recordStatsAfterIteration(_statString);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

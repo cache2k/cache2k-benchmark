@@ -39,10 +39,10 @@ public class Cache2kMetricsRecorder {
   public final static String RESULT_PREFIX = "+c2k.stat.";
 
   static Stat extract(String _statisticsString) {
-    Stat x = new Stat();
     if (!_statisticsString.startsWith("Cache") && !_statisticsString.contains("integrityState=")) {
-      return x;
+      return null;
     }
+    Stat x = new Stat();
     String[] sa = _statisticsString.split(", |\\(|\\), ");
     for (String s : sa) {
       if (s.startsWith("coldScanCnt=") || s.startsWith("hotScanCnt=")) {
@@ -68,15 +68,18 @@ public class Cache2kMetricsRecorder {
 
   static volatile Stat before;
 
-  public static void saveStats(String _statisticsString) {
+  public static void saveStatsAfterSetup(String _statisticsString) {
     before = extract(_statisticsString);
   }
 
-  public static void recordStats(String _statisticsString) {
+  public static void recordStatsAfterIteration(String _statisticsString) {
+    Stat now = extract(_statisticsString);
+    if (now == null) {
+      return;
+    }
     if (before == null) {
       throw new IllegalStateException("saveStats() needs to be called before iteration.");
     }
-    Stat now = extract(_statisticsString);
     long _scanCount = now.scanCount - before.scanCount;
     long _evictCount = now.evictCount - before.evictCount;
     long _getCount = now.getCount - before.getCount;

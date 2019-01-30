@@ -71,7 +71,7 @@ public class IntReadOnlyBenchmark extends BenchmarkBase {
   @Setup(Level.Iteration)
   public void setup() throws Exception {
     cache = getFactory().create(entryCount);
-    Cache2kMetricsRecorder.saveStats(cache.toString());
+    Cache2kMetricsRecorder.saveStatsAfterSetup(cache.toString());
     ints = new int[PATTERN_COUNT];
     AccessPattern _pattern =
       new RandomAccessPattern((int) (entryCount * (100D / hitRate)));
@@ -85,7 +85,7 @@ public class IntReadOnlyBenchmark extends BenchmarkBase {
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    Cache2kMetricsRecorder.recordStats(cache.toString());
+    Cache2kMetricsRecorder.recordStatsAfterIteration(cache.toString());
     recordMemoryAndDestroy(cache);
   }
 

@@ -23,7 +23,6 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheSource;
-import org.cache2k.benchmark.IntBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
 import org.cache2k.benchmark.util.ZipfianPattern;
@@ -39,21 +38,16 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.infra.ThreadParams;
 
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Penetrate loading cache with a Zipfian pattern with distribution sizes
  * (entry count times factor). The cache loader has a penalty by burning CPU cycles.
  *
- * <p>This implementation uses a separate zipfian pattern generator in each thread,
- * since the generation is not thread safe.
- *
- * <p>Generating the pattern during the benchmark run has some overhead, but when
- * the pattern is precomputed we cannot run the benchmark with bigger cache sizes.
- * This benchmark is about 40% slower then {@link ZipfianLoopingPrecomputedSequenceLoadingBenchmark}
- * with 100k entry count.
+ * <p>This implementation uses precalculated zipfian sequence. To avoid adaption of the
+ * cache to the repeating sequence the sequence lenght is much longer than the cache size.
+ * Each thread increments the sequnce index by a unique prime number, so that each sequence
+ * used by each thread is unique as well.
  *
  * @author Jens Wilke
  */
@@ -108,17 +102,16 @@ public class PrecalculatedZipfianSequenceLoadingBenchmark extends BenchmarkBase 
     ZipfianPattern pattern = new ZipfianPattern(1802, range);
     sequenceLen = entryCount * 10;
     sequence = new Integer[sequenceLen];
-    for (int i = 0; i < entryCount * 3; i++) {
-      Integer v = pattern.next();
-      cache.put(v, v);
-      sequence[i] = v;
-    }
-    for (int i = entryCount * 3; i < sequenceLen; i++) {
+    for (int i = 0; i < sequenceLen; i++) {
       sequence[i] = pattern.next();
+    }
+    for (int i = 0; i < entryCount; i++) {
+      Integer v = sequence[i];
+      cache.put(v, v);
     }
     String _statString = cache.toString();
     System.out.println("Cache stats after seeding: " + _statString);
-    Cache2kMetricsRecorder.saveStats(_statString);
+    Cache2kMetricsRecorder.saveStatsAfterSetup(_statString);
   }
 
   @Setup(Level.Iteration)
@@ -133,7 +126,7 @@ public class PrecalculatedZipfianSequenceLoadingBenchmark extends BenchmarkBase 
     String _statString = cache.toString();
     System.out.println(_statString);
     System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
-    Cache2kMetricsRecorder.recordStats(_statString);
+    Cache2kMetricsRecorder.recordStatsAfterIteration(_statString);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

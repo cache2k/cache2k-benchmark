@@ -70,7 +70,7 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
   public void setup() throws Exception {
     int _SAFETY_ADD = 20000;
     cache = getFactory().createUnspecialized(entryCount + _SAFETY_ADD);
-    Cache2kMetricsRecorder.saveStats(cache.toString());
+    Cache2kMetricsRecorder.saveStatsAfterSetup(cache.toString());
     ints = new Integer[PATTERN_COUNT];
     RandomGenerator generator = new XorShift1024StarRandomGenerator(1802);
     int _keyRange = entryCount * 100 / hitRate;
@@ -116,7 +116,7 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
 
   @TearDown(Level.Trial)
   public void tearDown() {
-    Cache2kMetricsRecorder.recordStats(cache.toString());
+    Cache2kMetricsRecorder.recordStatsAfterIteration(cache.toString());
     closeIfNeeded(cache);
   }
 
