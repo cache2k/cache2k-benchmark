@@ -37,7 +37,7 @@ test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 1 -w 3s -i 2 -r 3s -foe 
 # -f 2 / -i 2 has not enough confidence, there is sometime one outlier
 # 2 full warmups otherwise there is big jitter with G1
 # -gc true: careful with -gc true, this seems to influence the measures performance significantly
-test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 2 -wi 2 -w 15s -i 3 -r 15s";
+test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 3 -wi 2 -w 15s -i 3 -r 15s";
 
 # longer test run for expiry tests
 test -n "$BENCHMARK_DILIGENT_LONG" || BENCHMARK_DILIGENT_LONG="-f 2 -wi 1 -w 180s -i 2 -r 180s";
@@ -353,10 +353,11 @@ done
 }
 
 suiteZipfian() {
-benchmarks="PrecalculatedZipfianSequenceLoadingBenchmark";
+# benchmarks="PrecalculatedZipfianSequenceLoadingBenchmark";
+benchmarks="ZipfianSequenceLoadingBenchmark PrecalculatedZipfianSequenceLoadingBenchmark";
 for impl in $COMPLETE; do
   for benchmark in $benchmarks; do
-    for threads in 1 2 4; do
+    for threads in 4; do
       runid="$impl-$benchmark-$threads";
       fn="$TARGET/result-$runid";
       echo;
