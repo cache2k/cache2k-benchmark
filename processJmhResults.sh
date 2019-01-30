@@ -4,7 +4,9 @@
 
 # Copyright 2013-2016 headissue GmbH, Jens Wilke
 
-# This script processes the benchmark results into svg graphics. Needed tools: gnuplot and jq.
+# This script processes the benchmark results into svg graphics.
+#
+# Needed tools: asciidoctor gnuplot jq pandoc
 # 
 # Run it with the following subcommands: 
 #
