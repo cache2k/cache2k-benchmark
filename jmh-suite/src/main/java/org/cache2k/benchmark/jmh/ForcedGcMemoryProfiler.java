@@ -25,14 +25,10 @@ import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.InternalProfiler;
 import org.openjdk.jmh.results.AggregationPolicy;
 import org.openjdk.jmh.results.Aggregator;
-import org.openjdk.jmh.results.AggregatorUtils;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.Result;
-import org.openjdk.jmh.results.ResultRole;
-import org.openjdk.jmh.results.ScalarResult;
 import org.openjdk.jmh.runner.IterationType;
 import org.openjdk.jmh.util.ListStatistics;
-import org.openjdk.jmh.util.Statistics;
 import org.openjdk.jmh.util.Utils;
 
 import java.io.ByteArrayOutputStream;
@@ -309,12 +305,13 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
     }
     List<Result> l = new ArrayList<>();
     l.addAll(Arrays.asList(
-      new MyScalarResult("+forced-gc-mem.used.settled", (double) usedMemorySettled, "bytes", AggregationPolicy.AVG),
-      new MyScalarResult("+forced-gc-mem.used.after", (double) usedMemory, "bytes", AggregationPolicy.AVG),
-      new MyScalarResult("+forced-gc-mem.total", (double) totalMemory, "bytes", AggregationPolicy.AVG),
-      new MyScalarResult("+forced-gc-mem.gcTimeMillis", (double) gcTimeMillis, "ms", AggregationPolicy.AVG),
-      new MyScalarResult("+forced-gc-mem.usedHeap", (double) usedHeapMemory, "bytes", AggregationPolicy.AVG)
+      new OptionalScalarResult("+forced-gc-mem.used.settled", (double) usedMemorySettled, "bytes", AggregationPolicy.AVG),
+      new OptionalScalarResult("+forced-gc-mem.used.after", (double) usedMemory, "bytes", AggregationPolicy.AVG),
+      new OptionalScalarResult("+forced-gc-mem.total", (double) totalMemory, "bytes", AggregationPolicy.AVG),
+      new OptionalScalarResult("+forced-gc-mem.gcTimeMillis", (double) gcTimeMillis, "ms", AggregationPolicy.AVG),
+      new OptionalScalarResult("+forced-gc-mem.usedHeap", (double) usedHeapMemory, "bytes", AggregationPolicy.AVG)
     ));
+    LinuxVmProfiler.addLinuxVmStats("+forced-gc-mem.linuxVm", l);
     keepReference = null;
     return l;
   }
@@ -330,48 +327,16 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
     return "Adds used memory to the result, if recorded via recordUsedMemory()";
   }
 
-  /**
-   * Same as {@link ScalarResult} but don't fill missing values with 0.
-   */
-  public static class MyScalarResult extends Result<MyScalarResult> {
-
-    public MyScalarResult(String label, double n, String unit, AggregationPolicy policy) {
-      this(label, of(n), unit, policy);
-    }
-
-    MyScalarResult(String label, Statistics s, String unit, AggregationPolicy policy) {
-      super(ResultRole.SECONDARY, label, s, unit, policy);
-    }
+  static class MyScalarResultAggregator implements Aggregator<OptionalScalarResult> {
 
     @Override
-    protected Aggregator<MyScalarResult> getThreadAggregator() {
-      return new MyScalarResultAggregator();
-    }
-
-    @Override
-    protected Aggregator<MyScalarResult> getIterationAggregator() {
-      return new MyScalarResultAggregator();
-    }
-
-    @Override
-    protected MyScalarResult getZeroResult() {
-      return null;
-    }
-
-    AggregationPolicy getPolicy() { return policy; }
-
-  }
-
-  static class MyScalarResultAggregator implements Aggregator<MyScalarResult> {
-
-    @Override
-    public MyScalarResult aggregate(Collection<MyScalarResult> results) {
+    public OptionalScalarResult aggregate(Collection<OptionalScalarResult> results) {
       ListStatistics stats = new ListStatistics();
-      for (MyScalarResult r : results) {
+      for (OptionalScalarResult r : results) {
         stats.addValue(r.getScore());
       }
-      MyScalarResult first = results.iterator().next();
-      return new MyScalarResult(
+      OptionalScalarResult first = results.iterator().next();
+      return new OptionalScalarResult(
         first.getLabel(),
         stats,
         first.getScoreUnit(),
