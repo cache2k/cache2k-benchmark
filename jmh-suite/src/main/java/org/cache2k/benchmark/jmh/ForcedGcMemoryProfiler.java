@@ -54,108 +54,61 @@ import java.util.concurrent.TimeUnit;
  */
 public class ForcedGcMemoryProfiler implements InternalProfiler {
 
-  private static boolean runAfterLastIteration = true;
+  private static boolean runOnlyAfterLastIteration = true;
   @SuppressWarnings("unused")
   private static Object keepReference;
-  private static long usedMemory;
-  private static long usedMemorySettled;
-  private static long totalMemory;
-  private static long gcTimeMillis;
-  private static long usedHeapMemory = -1;
+  private static long gcTimeMillis = -1;
+  private static long usedHeapViaHistogram = -1;
   private static volatile boolean enabled = false;
+  private static UsageTuple usageAfterIteration;
+	private static UsageTuple usageAfterSettled;
 
   /**
-   * When benchmarking caches that don't have a cache manager we need to ensure that
-   * the reference to the cache/benchmark is kept until we are finished with memory
-   * consumption measurements.
+   * The benchmark needs to hand over the reference so the memory is kept after
+   * the shutdown of the benchmark and can be measured.
    */
   public static void keepReference(Object _rootReferenceToKeep) {
-    System.err.println("KEEP REFERENCE!!!");
     if (enabled) {
       keepReference = _rootReferenceToKeep;
     }
   }
 
+  public static UsageTuple getUsage() {
+		MemoryUsage _heapUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+		MemoryUsage _nonHeapUsage = ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage();
+		long _usedHeapMemory = _heapUsage.getUsed();
+		long _usedNonHeap = _nonHeapUsage.getUsed();
+		System.err.println("[getMemoryMXBean] usedHeap=" + _usedHeapMemory + ", usedNonHeap=" + _usedNonHeap + ", totalUsed=" + (_usedHeapMemory + _usedNonHeap));
+		System.err.println("[Runtime totalMemory-freeMemory] used memory: " + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+		return new UsageTuple(_heapUsage, _nonHeapUsage);
+	}
+
   /**
    * Called from the benchmark when the objects are still referenced to record the
-   * used memory. This enforces a full garbage collection.
+   * used memory. Enforces a full garbage collection and records memory usage.
+	 * Waits and triggers GC again, as long as the memory is still reducing. Some workloads
+	 * needs some time until they drain queues and finish all the work.
    */
   public static void recordUsedMemory() {
     long t0 = System.currentTimeMillis();
-    long m2 = usedMemory = getUsedMemory();
-    do {
-      try {
-        Thread.sleep(567);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-      usedMemorySettled = m2;
-      m2 = getUsedMemory();
-    } while (m2 < usedMemorySettled);
-    gcTimeMillis = System.currentTimeMillis() - t0;
-    usedHeapMemory = printHeapHistogram(System.out, 30);
-  }
-
-  /**
-   * Trigger a gc, wait for completion and return used memory. Inspired from JMH approach.
-   *
-   * <p>Before we had the approach of detecting the clearing of
-   * a weak reference. Maybe this is not reliable, since when cleared the GC run may not
-   * be finished.
-   *
-   * @see org.openjdk.jmh.runner.Runner#runSystemGC()
-   */
-  private static long getUsedMemory() {
+    long usedMemorySettled;
     if (runSystemGC()) {
-      MemoryUsage _heapUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
-      MemoryUsage _nonHeapUsage = ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage();
-      totalMemory = _heapUsage.getCommitted() + _nonHeapUsage.getCommitted();
-      long _usedHeapMemory = _heapUsage.getUsed();
-      long _usedNonHeap = _nonHeapUsage.getUsed();
-      System.err.println("[getMemoryMXBean] usedHeap=" + _usedHeapMemory + ", usedNonHeap=" + _usedNonHeap + ", totalUsed=" + (_usedHeapMemory + _usedNonHeap));
-      System.err.println("[Runtime totalMemory-freeMemory] used memory: " + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
-      return _usedHeapMemory + _usedNonHeap;
+    	usageAfterIteration = getUsage();
+      long m2 = usageAfterIteration.getTotalUsed();
+      do {
+        try {
+          Thread.sleep(567);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+        runSystemGC();
+        usedMemorySettled = m2;
+        usageAfterSettled = getUsage();
+        m2 = usageAfterSettled.getTotalUsed();
+      } while (m2 < usedMemorySettled);
+      gcTimeMillis = System.currentTimeMillis() - t0;
     }
-    return -1;
-  }
-
-  /**
-   * Trigger a gc, wait for completion and return used memory. Inspired from JMH approach.
-   *
-   * <p>Before we had the approach of detecting the clearing of
-   * a weak reference. Maybe this is not reliable, since when cleared the GC run may not
-   * be finished.
-   *
-   * @see org.openjdk.jmh.runner.Runner#runSystemGC()
-   */
-  public static boolean forceGcJmhOld() {
-    final int MAX_WAIT_MSEC = 20 * 1000;
-    List<GarbageCollectorMXBean> _enabledBeans = new ArrayList<GarbageCollectorMXBean>();
-    for (GarbageCollectorMXBean b : ManagementFactory.getGarbageCollectorMXBeans()) {
-      long count = b.getCollectionCount();
-      if (count != -1) {
-        _enabledBeans.add(b);
-      }
-    }
-    if (_enabledBeans.isEmpty()) {
-      System.err.println("WARNING: MXBeans can not report GC info. Cannot extract reliable usage metric.");
-      return false;
-    }
-    long _beforeGcCount = countGc(_enabledBeans);
-    long t0 = System.currentTimeMillis();
-    System.gc();
-    while (System.currentTimeMillis() - t0 < MAX_WAIT_MSEC) {
-      try {
-        Thread.sleep(234);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-      if ((countGc(_enabledBeans)) > _beforeGcCount) {
-        return true;
-      }
-    }
-    System.err.println("WARNING: System.gc() was invoked but couldn't detect a GC occurring, is System.gc() disabled?");
-    return false;
+    usedHeapViaHistogram = printHeapHistogram(System.out, 30);
   }
 
   public static boolean runSystemGC() {
@@ -291,26 +244,34 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
 
   @Override
   public Collection<? extends Result> afterIteration(final BenchmarkParams benchmarkParams, final IterationParams iterationParams, final IterationResult result) {
-    if (runAfterLastIteration) {
+    if (runOnlyAfterLastIteration) {
       if (iterationParams.getType() != IterationType.MEASUREMENT
       || iterationParams.getCount() != ++iterationNumber) {
         return Collections.emptyList();
       }
     }
-    if (usedMemory <= 0) {
-      recordUsedMemory();
-      if (usedMemory <= 0) {
-        return Collections.emptyList();
-      }
-    }
+    recordUsedMemory();
     List<Result> l = new ArrayList<>();
     l.addAll(Arrays.asList(
-      new OptionalScalarResult("+forced-gc-mem.used.settled", (double) usedMemorySettled, "bytes", AggregationPolicy.AVG),
-      new OptionalScalarResult("+forced-gc-mem.used.after", (double) usedMemory, "bytes", AggregationPolicy.AVG),
-      new OptionalScalarResult("+forced-gc-mem.total", (double) totalMemory, "bytes", AggregationPolicy.AVG),
       new OptionalScalarResult("+forced-gc-mem.gcTimeMillis", (double) gcTimeMillis, "ms", AggregationPolicy.AVG),
-      new OptionalScalarResult("+forced-gc-mem.usedHeap", (double) usedHeapMemory, "bytes", AggregationPolicy.AVG)
+      new OptionalScalarResult("+forced-gc-mem.usedHeap", (double) usedHeapViaHistogram, "bytes", AggregationPolicy.AVG)
     ));
+    if (usageAfterIteration != null) {
+    	// old metrics, t.b. removed
+			l.addAll(Arrays.asList(
+				new OptionalScalarResult("+forced-gc-mem.used.settled", (double) usageAfterSettled.getTotalUsed(), "bytes", AggregationPolicy.AVG),
+				new OptionalScalarResult("+forced-gc-mem.used.after", (double) usageAfterIteration.getTotalUsed(), "bytes", AggregationPolicy.AVG),
+				new OptionalScalarResult("+forced-gc-mem.total", (double) usageAfterSettled.getTotalCommitted(), "bytes", AggregationPolicy.AVG)
+			));
+			l.addAll(Arrays.asList(
+				new OptionalScalarResult("+forced-gc-mem.totalUsed", (double) usageAfterSettled.getTotalUsed(), "bytes", AggregationPolicy.AVG),
+				new OptionalScalarResult("+forced-gc-mem.totalUsed.after", (double) usageAfterIteration.getTotalUsed(), "bytes", AggregationPolicy.AVG),
+				new OptionalScalarResult("+forced-gc-mem.totalCommitted", (double) usageAfterSettled.getTotalCommitted(), "bytes", AggregationPolicy.AVG),
+				new OptionalScalarResult("+forced-gc-mem.totalCommitted.after", (double) usageAfterIteration.getTotalCommitted(), "bytes", AggregationPolicy.AVG),
+				new OptionalScalarResult("+forced-gc-mem.heapUsed", (double) usageAfterSettled.heap.getUsed(), "bytes", AggregationPolicy.AVG),
+				new OptionalScalarResult("+forced-gc-mem.heapUsed.after", (double) usageAfterIteration.heap.getUsed(), "bytes", AggregationPolicy.AVG)
+			));
+		}
     LinuxVmProfiler.addLinuxVmStats("+forced-gc-mem.linuxVm", l);
     keepReference = null;
     return l;
@@ -318,7 +279,7 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
 
   @Override
   public void beforeIteration(final BenchmarkParams benchmarkParams, final IterationParams iterationParams) {
-    usedMemory = -1;
+		usageAfterIteration = usageAfterSettled = null;
     enabled = true;
   }
 
@@ -344,5 +305,23 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
       );
     }
   }
+
+  static class UsageTuple {
+  	MemoryUsage heap;
+  	MemoryUsage nonHeap;
+
+		public UsageTuple(final MemoryUsage _heapUsage, final MemoryUsage _nonHeapUsage) {
+			heap = _heapUsage; nonHeap = _nonHeapUsage;
+		}
+
+		public long getTotalUsed() {
+			return heap.getUsed() + nonHeap.getUsed();
+		}
+
+		public long getTotalCommitted() {
+			return heap.getCommitted() + nonHeap.getCommitted();
+		}
+
+	}
 
 }
