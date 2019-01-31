@@ -72,6 +72,8 @@ processCommandLine() {
   while true; do
     case "$1" in
       --dir) RESULT="$2"; shift 1;;
+      --debug) set -x;;
+      --interactive) set +e;;
       -*) echo "unknown option: $1"; exit 1;;
       *) break;;
     esac
@@ -450,7 +452,7 @@ $plot "$in" $startIndex $endIndex;
 gnuplot "${in}-notitle-print.plot";
 }
 
-# example:
+# example output:
 # 1-20,org.cache2k.benchmark.Cache2kFactory,0.00,65.72,993.08,614.8539540861144
 # 1-20,org.cache2k.benchmark.thirdparty.CaffeineCacheFactory,0.00,71.27,1000.42,852.382233323991
 # 1-20,org.cache2k.benchmark.thirdparty.EhCache2Factory,0.00,58.28,606.75,204.83546236165807
@@ -482,22 +484,22 @@ local query=`cat << EOF
     .["secondaryMetrics"]["+c2k.gc.maximumCommittedAfterGc"].scoreError,
     .["secondaryMetrics"]["+c2k.gc.maximumCommittedAfterGc"].scoreConfidence[0],
     .["secondaryMetrics"]["+c2k.gc.maximumCommittedAfterGc"].scoreConfidence[1],
-    .["secondaryMetrics"]["+forced-gc-mem.used.VmRSS"].score * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.used.VmRSS"].scoreError * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.used.VmRSS"].scoreConfidence[0] * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.used.VmRSS"].scoreConfidence[1] * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].score * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreError * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreConfidence[0] * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreConfidence[1] * 1000,
-    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].score * 1000 * 1000,
-    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreError * 1000 * 1000,
-    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreConfidence[0] * 1000 * 1000,
-    .["secondaryMetrics"]["+c2k.gc.alloc.rate"].scoreConfidence[1] * 1000 * 1000,
-    .["secondaryMetrics"]["+c2k.gc.alloc.rate.norm"].score,
-    .["secondaryMetrics"]["+c2k.gc.alloc.rate.norm"].scoreError,
-    .["secondaryMetrics"]["+c2k.gc.alloc.rate.norm"].scoreConfidence[0],
-    .["secondaryMetrics"]["+c2k.gc.alloc.rate.norm"].scoreConfidence[1]
+    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmRSS"].score * 1000,
+    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmRSS"].scoreError * 1000,
+    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmRSS"].scoreConfidence[0] * 1000,
+    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmRSS"].scoreConfidence[1] * 1000,
+    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmHWM"].score * 1000,
+    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmHWM"].scoreError * 1000,
+    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmHWM"].scoreConfidence[0] * 1000,
+    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmHWM"].scoreConfidence[1] * 1000,
+    .["secondaryMetrics"]["·gc.alloc.rate"].score * 1000 * 1000,
+    .["secondaryMetrics"]["·gc.alloc.rate"].scoreError * 1000 * 1000,
+    .["secondaryMetrics"]["·gc.alloc.rate"].scoreConfidence[0] * 1000 * 1000,
+    .["secondaryMetrics"]["·gc.alloc.rate"].scoreConfidence[1] * 1000 * 1000,
+    .["secondaryMetrics"]["·gc.alloc.rate.norm"].score,
+    .["secondaryMetrics"]["·gc.alloc.rate.norm"].scoreError,
+    .["secondaryMetrics"]["·gc.alloc.rate.norm"].scoreConfidence[0],
+    .["secondaryMetrics"]["·gc.alloc.rate.norm"].scoreConfidence[1]
   ] | @csv
 EOF
 `
@@ -1157,13 +1159,21 @@ spec="`cat << EOF
 factor
 $name / Memory
 $name
-1-1M-10 (at 1 threads, factor 10)
-4-1M-10 (at 4 threads, factor 10)
-8-1M-10 (at 8 threads, factor 10)
 1-100K-10 (at 1 threads, factor 10)
 2-100K-10 (at 2 threads, factor 10)
 4-100K-10 (at 4 threads, factor 10)
 8-100K-10 (at 8 threads, factor 10)
+1-1M-5 (at 1 threads, factor 5)
+4-1M-5 (at 4 threads, factor 5)
+8-1M-5 (at 8 threads, factor 5)
+1-1M-10 (at 1 threads, factor 10)
+4-1M-10 (at 4 threads, factor 10)
+8-1M-10 (at 8 threads, factor 10)
+1-1M-20 (at 1 threads, factor 20)
+4-1M-20 (at 4 threads, factor 20)
+8-1M-20 (at 8 threads, factor 20)
+4-10M-5 (at 4 threads, factor 5)
+4-10M-20 (at 4 threads, factor 20)
 EOF
 `"
 # echo "$spec" | plotMemoryGraphsSettled

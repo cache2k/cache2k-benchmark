@@ -22,7 +22,7 @@ set -e;
 
 # biased locking delay is 4000 by default, enable from the start to minimize effects on the first benchmark iteration
 # (check with: ava  -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal 2>/dev/null | grep BiasedLockingStartupDelay)
-test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedLockingStartupDelay=0 -verbose:gc";
+test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedLockingStartupDelay=0 -verbose:gc -XX:+UseParallelGC";
 # extra G1 args
 # BENCHMARK_JVM_ARGS="$BENCHMARK_JVM_ARGS -XX:+UseG1GC -XX:-G1UseAdaptiveConcRefinement -XX:G1ConcRefinementGreenZone=2G -XX:G1ConcRefinementThreads=0";
 
@@ -37,7 +37,7 @@ test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 1 -w 3s -i 2 -r 3s -foe 
 # -f 2 / -i 2 has not enough confidence, there is sometime one outlier
 # 2 full warmups otherwise there is big jitter with G1
 # -gc true: careful with -gc true, this seems to influence the measures performance significantly
-test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 3 -wi 2 -w 15s -i 3 -r 15s";
+test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 3 -wi 2 -w 60s -i 3 -r 60s";
 
 # longer test run for expiry tests
 test -n "$BENCHMARK_DILIGENT_LONG" || BENCHMARK_DILIGENT_LONG="-f 2 -wi 1 -w 180s -i 2 -r 180s";
@@ -175,7 +175,7 @@ fi
 # Implementations with complete caching features
 COMPLETE="Cache2kFactory"
 
-TARGET="/run/shm/jmh-result";
+TARGET="$HOME/jmh-result";
 test -d $TARGET || mkdir -p $TARGET;
 
 if test -n "$backends"; then
@@ -354,7 +354,8 @@ done
 
 suiteZipfian() {
 # benchmarks="PrecalculatedZipfianSequenceLoadingBenchmark";
-benchmarks="ZipfianSequenceLoadingBenchmark PrecalculatedZipfianSequenceLoadingBenchmark";
+# benchmarks="ZipfianSequenceLoadingBenchmark PrecalculatedZipfianSequenceLoadingBenchmark";
+benchmarks="ZipfianSequenceLoadingBenchmark";
 for impl in $COMPLETE; do
   for benchmark in $benchmarks; do
     for threads in 4; do
