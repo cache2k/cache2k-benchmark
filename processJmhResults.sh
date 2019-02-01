@@ -452,6 +452,15 @@ $plot "$in" $startIndex $endIndex;
 gnuplot "${in}-notitle-print.plot";
 }
 
+
+extractMemoryThreadsHitRateHead() {
+echo -n "product";
+for I in heapUsedHisto heapUsedMx.fin totalUsedMx.fin maxUsed.gcEnd totalCommitted.fin maxCommitted.gcEnd VmRSS.fin VmHWM "allocRate(byte/s)" "allocRate(byte/op)"; do
+  echo -n " $I error lower upper";
+done
+echo;
+}
+
 # example output:
 # 1-20,org.cache2k.benchmark.Cache2kFactory,0.00,65.72,993.08,614.8539540861144
 # 1-20,org.cache2k.benchmark.thirdparty.CaffeineCacheFactory,0.00,71.27,1000.42,852.382233323991
@@ -464,22 +473,22 @@ local query=`cat << EOF
     .["secondaryMetrics"]["+forced-gc-mem.usedHeap"].scoreError,
     .["secondaryMetrics"]["+forced-gc-mem.usedHeap"].scoreConfidence[0],
     .["secondaryMetrics"]["+forced-gc-mem.usedHeap"].scoreConfidence[1],
-    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].score,
-    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].scoreError,
-    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].scoreConfidence[0],
-    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].scoreConfidence[1],
-    .["secondaryMetrics"]["+forced-gc-mem.used.after"].score,
-    .["secondaryMetrics"]["+forced-gc-mem.used.after"].scoreError,
-    .["secondaryMetrics"]["+forced-gc-mem.used.after"].scoreConfidence[0],
-    .["secondaryMetrics"]["+forced-gc-mem.used.after"].scoreConfidence[1],
+    .["secondaryMetrics"]["+forced-gc-mem.heapUsed"].score,
+    .["secondaryMetrics"]["+forced-gc-mem.heapUsed"].scoreError,
+    .["secondaryMetrics"]["+forced-gc-mem.heapUsed"].scoreConfidence[0],
+    .["secondaryMetrics"]["+forced-gc-mem.heapUsed"].scoreConfidence[1],
+    .["secondaryMetrics"]["+forced-gc-mem.totalUsed"].score,
+    .["secondaryMetrics"]["+forced-gc-mem.totalUsed"].scoreError,
+    .["secondaryMetrics"]["+forced-gc-mem.totalUsed"].scoreConfidence[0],
+    .["secondaryMetrics"]["+forced-gc-mem.totalUsed"].scoreConfidence[1],
     .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].score,
     .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].scoreError,
     .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].scoreConfidence[0],
     .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].scoreConfidence[1],
-    .["secondaryMetrics"]["+forced-gc-mem.total"].score,
-    .["secondaryMetrics"]["+forced-gc-mem.total"].scoreError,
-    .["secondaryMetrics"]["+forced-gc-mem.total"].scoreConfidence[0],
-    .["secondaryMetrics"]["+forced-gc-mem.total"].scoreConfidence[1],
+    .["secondaryMetrics"]["+forced-gc-mem.totalCommitted"].score,
+    .["secondaryMetrics"]["+forced-gc-mem.totalCommitted"].scoreError,
+    .["secondaryMetrics"]["+forced-gc-mem.totalCommitted"].scoreConfidence[0],
+    .["secondaryMetrics"]["+forced-gc-mem.totalCommitted"].scoreConfidence[1],
     .["secondaryMetrics"]["+c2k.gc.maximumCommittedAfterGc"].score,
     .["secondaryMetrics"]["+c2k.gc.maximumCommittedAfterGc"].scoreError,
     .["secondaryMetrics"]["+c2k.gc.maximumCommittedAfterGc"].scoreConfidence[0],
@@ -542,8 +551,7 @@ read benchmark;
 while read key description; do
   f=$RESULT/${benchmark}Memory$key.dat
   (
-#    echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper totalMem_settled error lower upper totalMem_max error lower upper VmRSS error lower upper VmHWM error lower upper allocRate(byte/s) error lower upper allocRate(byte/op) error lower upper ";
-    echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper totalMem_settled error lower upper totalMem_max error lower upper VmRSS error lower upper VmHWM error lower upper";
+    extractMemoryThreadsHitRateHead;
     local tmp="$RESULT/tmp-plotMemoryGraphs-$benchmark-$param.data"
     test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
     cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames
@@ -579,7 +587,7 @@ local param="$2";
 local key="$3";
   f=$RESULT/${benchmark}Memory$key$variant.dat
   (
-    echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper totalMem_settled error lower upper totalMem_max error lower upper VmRSS error lower upper VmHWM error lower upper allocRate(byte/s) error lower upper allocRate(byte/op) error lower upper";
+    extractMemoryThreadsHitRateHead;
     local tmp="$RESULT/tmp-plotMemoryGraphs-$benchmark-$param.data"
     test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
     cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames \
@@ -651,7 +659,7 @@ read benchmark;
 while read key description; do
   f=$RESULT/${benchmark}MemoryUsed$key.dat
   (
-    echo "product usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper usedMem_max error lower upper";
+    echo "product usedHeapHisto error lower upper heapUsedMx.fin error lower upper totalUsedMx.fin error lower upper";
     local tmp="$RESULT/tmp-plotMemoryGraphsUsed-$benchmark-$param.data"
     test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
     cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames
