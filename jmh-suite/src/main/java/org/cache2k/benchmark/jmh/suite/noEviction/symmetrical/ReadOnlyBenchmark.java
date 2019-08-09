@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Prepopulate cache with 100k entries and access it in a random pattern
  * with different miss rates. The main aim of this benchmark is to check
- * how different miss rations influence the throughput.
+ * how different miss ratios influence the throughput.
  *
  * @author Jens Wilke
  */
@@ -80,7 +80,7 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
     /*
      * First round of iteration that exceeds the entry count so the eviction
      * kicks in. This is needed for Caffeine, otherwise Caffeine does no bookkeeping
-     * during the benchmark.
+     * of cache accesses during the complete benchmark.
      */
     for (int i = 0; i < entryCount + _SAFETY_ADD * 5; i++) {
       cache.put(i, i);
