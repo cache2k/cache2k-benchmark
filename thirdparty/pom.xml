@@ -14,7 +14,7 @@
   <name>Benchmarks: third party products.</name>
 
   <properties>
-    <caffeine.version>2.6.2</caffeine.version>
+    <caffeine.version>2.8.0</caffeine.version>
   </properties>
 
   <dependencies>
@@ -72,7 +72,7 @@
           <artifactId>*</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>com.github.brianfrankcooper.ycsb</groupId>
+          <groupId>com.github.brianfrankcooper.YCSB</groupId>
           <artifactId>*</artifactId>
         </exclusion>
         <exclusion>
@@ -94,6 +94,10 @@
         <exclusion>
           <groupId>systems.comodal</groupId>
           <artifactId>collision</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.github.FastFilter</groupId>
+          <artifactId>*</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
