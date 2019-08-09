@@ -33,13 +33,13 @@ public abstract class AccessPattern {
    */
   public abstract boolean isEternal();
 
-  public abstract boolean hasNext() throws Exception;
+  public abstract boolean hasNext();
 
-  public abstract int next() throws Exception;
+  public abstract int next();
 
   /**
    * Needs to be called after pattern is read to free up resources.
    */
-  public void close() throws Exception { }
+  public void close() { }
 
 }

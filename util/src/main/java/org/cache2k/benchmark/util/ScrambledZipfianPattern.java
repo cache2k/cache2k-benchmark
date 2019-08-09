@@ -125,7 +125,7 @@ public class ScrambledZipfianPattern extends AbstractEternalAccessPattern {
   }
 
   @Override
-  public int next() throws Exception {
+  public int next() {
     return nextInt();
   }
 

@@ -63,7 +63,7 @@ public class NormalizeTraceReader extends AccessPattern {
   }
 
   @Override
-  public boolean hasNext() throws Exception {
+  public boolean hasNext() {
     if (index < 0) {
       readAll();
       index = 0;
@@ -72,21 +72,25 @@ public class NormalizeTraceReader extends AccessPattern {
   }
 
   @Override
-  public int next() throws Exception {
+  public int next() {
     return trace.get(index++);
   }
 
-  void readAll() throws Exception {
-    String s;
-    while ((s = reader.readLine()) != null) {
-      Integer t = mapping.get(s);
-      if (t == null) {
-        t = value++;
-        mapping.put(s, t);
+  void readAll() {
+    try {
+      String s;
+      while ((s = reader.readLine()) != null) {
+        Integer t = mapping.get(s);
+        if (t == null) {
+          t = value++;
+          mapping.put(s, t);
+        }
+        trace.add(t);
       }
-      trace.add(t);
+      reader.close();
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
     }
-    reader.close();
   }
 
 }

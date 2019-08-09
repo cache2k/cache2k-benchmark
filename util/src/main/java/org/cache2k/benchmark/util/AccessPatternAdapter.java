@@ -39,12 +39,12 @@ public class AccessPatternAdapter extends AccessPattern {
   }
 
   @Override
-  public boolean hasNext() throws Exception {
+  public boolean hasNext() {
     return pattern.hasNext();
   }
 
   @Override
-  public int next() throws Exception {
+  public int next() {
     return pattern.next();
   }
 

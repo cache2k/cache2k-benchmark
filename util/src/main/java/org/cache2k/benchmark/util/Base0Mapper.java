@@ -47,7 +47,7 @@ class Base0Mapper extends AccessPattern {
   }
 
   @Override
-  public boolean hasNext() throws Exception {
+  public boolean hasNext() {
     if (index < 0) {
       readAll();
       index = 0;
@@ -56,14 +56,14 @@ class Base0Mapper extends AccessPattern {
   }
 
   @Override
-  public int next() throws Exception {
+  public int next() {
     if (index < 0) {
-      throw new IllegalAccessException("first call hasNext()");
+      throw new IllegalStateException("first call hasNext()");
     }
     return trace.get(index++);
   }
 
-  void readAll() throws Exception {
+  void readAll() {
     while (pattern.hasNext()) {
       int v = pattern.next();
       Integer t = mapping.get(v);

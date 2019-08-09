@@ -52,34 +52,44 @@ public class LisTraceReader extends AccessPattern {
   }
 
   @Override
-  public boolean hasNext() throws Exception {
-    if (--count > 0) { return true; }
-    String s;
-    do {
-      s = reader.readLine();
-      if (s == null) {
-        return false;
-      }
-    } while (s.startsWith("#") || s.trim().length() == 0);
+  public boolean hasNext() {
     try {
-      String[] sa = s.split(" ");
-      value = Integer.parseInt(sa[0]);
-      count = Integer.parseInt(sa[1]);
-    } catch(NumberFormatException e) {
-      System.err.println("parse error line " + reader.getLineNumber() + ": " + s);
-      return hasNext();
+      if (--count > 0) {
+        return true;
+      }
+      String s;
+      do {
+        s = reader.readLine();
+        if (s == null) {
+          return false;
+        }
+      } while (s.startsWith("#") || s.trim().length() == 0);
+      try {
+        String[] sa = s.split(" ");
+        value = Integer.parseInt(sa[0]);
+        count = Integer.parseInt(sa[1]);
+      } catch (NumberFormatException e) {
+        System.err.println("parse error line " + reader.getLineNumber() + ": " + s);
+        return hasNext();
+      }
+      return true;
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
     }
-    return true;
   }
 
   @Override
-  public int next() throws IOException {
+  public int next() {
     return value;
   }
 
   @Override
-  public void close() throws IOException {
-    reader.close();
+  public void close() {
+    try {
+      reader.close();
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
 }

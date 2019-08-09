@@ -31,6 +31,10 @@ import java.util.Random;
  */
 public class Patterns {
 
+  public static AccessPattern explode(AccessPattern p, int _factor) {
+    return new Explode(p, _factor);
+  }
+
   /**
    * Sequence from 0 to size (exclusive)
    */
@@ -76,11 +80,11 @@ public class Patterns {
       return false;
     }
 
-    public boolean hasNext() throws Exception {
+    public boolean hasNext() {
       return pos < end;
     }
 
-    public int next() throws Exception {
+    public int next() {
       return pos++;
     }
 
@@ -112,7 +116,7 @@ public class Patterns {
       return false;
     }
 
-    public boolean hasNext() throws Exception {
+    public boolean hasNext() {
       if (pos >= end) {
         start += step;
         end += step;
@@ -122,7 +126,7 @@ public class Patterns {
       return sequenceCount > 0;
     }
 
-    public int next() throws Exception {
+    public int next() {
       return pos += increment;
     }
 
@@ -133,15 +137,13 @@ public class Patterns {
     AccessPattern pattern;
     int size;
     int pos;
-    boolean once = true;
     int[] buffer;
-    int count = -1;
+    int count;
+    int minValue = Integer.MAX_VALUE;
+    int maxValue = 0;
 
     Loop(AccessPattern _pattern) {
-      if (_pattern.isEternal()) {
-        throw new IllegalArgumentException("pattern is eternal");
-      }
-      this.pattern = _pattern;
+      this(_pattern, -1);
     }
 
     Loop(AccessPattern pattern, int _count) {
@@ -150,6 +152,22 @@ public class Patterns {
       }
       this.pattern = pattern;
       count = _count;
+      int i = 0;
+      int ia[] = new int[10000];
+      while (pattern.hasNext()) {
+        int v = pattern.next();
+        if (v > maxValue) { maxValue = v; }
+        if (v < minValue) { minValue = v; }
+        ia[i++] = v;
+        if (i >= ia.length) {
+          int ia2[] = new int[ia.length * 2];
+          System.arraycopy(ia, 0, ia2, 0, ia.length);
+          ia = ia2;
+        }
+      }
+      buffer = ia;
+      size = i;
+      pos = 0;
     }
 
     @Override
@@ -157,28 +175,42 @@ public class Patterns {
       return count < 0;
     }
 
-    public boolean hasNext() throws Exception {
-      if (once) {
-        int i = 0;
-        int ia[] = new int[10000];
-        while (pattern.hasNext()) {
-          ia[i++] = pattern.next();
-          if (i >= ia.length) {
-            int ia2[] = new int[ia.length * 2];
-            System.arraycopy(ia, 0, ia2, 0, ia.length);
-            ia = ia2;
-          }
-        }
-        buffer = ia;
-        size = i;
-        pos = 0;
-        once = false;
-      }
-      return count>0;
+    public boolean hasNext() {
+      return count > 0;
     }
 
     public int next() {
       int v = buffer[pos++];
+      if (pos >= size) {
+        pos = 0;
+        count--;
+      }
+      return v;
+    }
+
+  }
+
+  /**
+   * Creates a pattern which is
+   */
+  public static class Explode extends Loop {
+
+    int factor;
+    int index = 0;
+
+    public Explode(final AccessPattern pattern, final int _factor) {
+      super(pattern, 1);
+      factor = _factor;
+    }
+
+    public int next() {
+      int v = buffer[pos];
+      v += maxValue * index;
+      if (v < 0) {
+        throw new IllegalArgumentException("Integer overflow, is input pattern flattened? maxValue=" + maxValue);
+      }
+      index++;
+      if (index >= factor) { pos++; index = 0; }
       if (pos >= size) {
         pos = 0;
         count--;
@@ -198,6 +230,10 @@ public class Patterns {
       super(_pattern, _count);
     }
 
+    public boolean hasNext() {
+      return pos != 0;
+    }
+
     public int next() {
       pos--;
       if (pos < 0) {
@@ -212,19 +248,7 @@ public class Patterns {
   public static class Revert extends RevertLoop {
 
     Revert(AccessPattern pattern) {
-      super(pattern);
-    }
-
-    public boolean isEternal() {
-      return false;
-    }
-
-    public boolean hasNext() throws Exception {
-      if (once) {
-        super.hasNext();
-        return true;
-      }
-      return pos != 0;
+      super(pattern, 1);
     }
 
   }
@@ -310,7 +334,7 @@ public class Patterns {
       return pattern.isEternal();
     }
 
-    public boolean hasNext() throws Exception {
+    public boolean hasNext() {
       if (count > 0) {
         count--;
         return true;
@@ -323,7 +347,7 @@ public class Patterns {
       return true;
     }
 
-    public int next() throws Exception {
+    public int next() {
       return buffer.get(random.nextInt(buffer.size()));
     }
 
@@ -353,7 +377,7 @@ public class Patterns {
       return pattern1.isEternal() || pattern2.isEternal();
     }
 
-    public boolean hasNext() throws Exception {
+    public boolean hasNext() {
       if (pattern1 == pattern2) {
         return pattern1.hasNext();
       }
@@ -370,7 +394,7 @@ public class Patterns {
       return pattern2.hasNext();
     }
 
-    public int next() throws Exception {
+    public int next() {
       return pattern1.next();
     }
 
@@ -399,7 +423,7 @@ public class Patterns {
       return pattern1.isEternal() || pattern2.isEternal();
     }
 
-    public boolean hasNext() throws Exception {
+    public boolean hasNext() {
       if (pattern1 == pattern2) {
         return pattern.hasNext();
       }
@@ -420,7 +444,7 @@ public class Patterns {
       return pattern.hasNext();
     }
 
-    public int next() throws Exception {
+    public int next() {
       return pattern.next();
     }
 
@@ -442,7 +466,7 @@ public class Patterns {
       return true;
     }
 
-    public boolean hasNext() throws Exception {
+    public boolean hasNext() {
       while (pos < pattern.length) {
         if (pattern[pos].hasNext()) {
           return true;
@@ -452,11 +476,11 @@ public class Patterns {
       return false;
     }
 
-    public int next() throws Exception {
+    public int next() {
       return pattern[pos].next();
     }
 
-    public void close() throws Exception {
+    public void close() {
       if (pattern != null) {
         for (AccessPattern p : pattern) {
           if (p != null) {
@@ -483,7 +507,7 @@ public class Patterns {
       return false;
     }
 
-    public boolean hasNext() throws Exception {
+    public boolean hasNext() {
       if (count > 0) {
         count--;
         return pattern.hasNext();
@@ -495,11 +519,11 @@ public class Patterns {
       return false;
     }
 
-    public int next() throws Exception {
+    public int next() {
       return pattern.next();
     }
 
-    public void close() throws Exception {
+    public void close() {
       if (pattern != null) {
         pattern.close();
         pattern = null;
@@ -523,11 +547,11 @@ public class Patterns {
       return pattern.isEternal();
     }
 
-    public boolean hasNext() throws Exception {
+    public boolean hasNext() {
       return pattern.hasNext();
     }
 
-    public int next() throws Exception {
+    public int next() {
       return pattern.next();
     }
   }

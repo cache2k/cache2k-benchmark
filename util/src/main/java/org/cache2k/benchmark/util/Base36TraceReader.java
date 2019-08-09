@@ -51,31 +51,34 @@ public class Base36TraceReader extends AccessPattern {
   }
 
   @Override
-  public boolean hasNext() throws Exception {
-    String s;
-    do {
-      s = reader.readLine();
-      if (s == null) {
-        return false;
-      }
-    } while (s.startsWith("#"));
+  public boolean hasNext() {
     try {
-      value = Integer.parseInt(s, 36);
-    } catch(NumberFormatException e) {
-      System.err.println("parse error line " + reader.getLineNumber() + ": " + s);
-      return hasNext();
+      String s;
+      do {
+        s = reader.readLine();
+        if (s == null) {
+          return false;
+        }
+      } while (s.startsWith("#"));
+        value = Integer.parseInt(s, 36);
+    } catch(Exception ex) {
+      throw new RuntimeException(ex);
     }
     return true;
   }
 
   @Override
-  public int next() throws IOException {
+  public int next() {
     return value;
   }
 
   @Override
-  public void close() throws IOException {
-    reader.close();
+  public void close() {
+    try {
+      reader.close();
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
 }

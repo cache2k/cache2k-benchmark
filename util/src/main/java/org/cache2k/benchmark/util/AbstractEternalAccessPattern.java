@@ -37,7 +37,7 @@ public abstract class AbstractEternalAccessPattern extends AccessPattern {
   /**
    * Always true.
    */
-  public final boolean hasNext() throws Exception {
+  public final boolean hasNext() {
     return true;
   }
 

@@ -30,7 +30,7 @@ import java.util.Map;
  *
  * @author Jens Wilke
  */
-class ObjectToIntegerMapper extends AccessPattern {
+public class ObjectToIntegerMapper extends AccessPattern {
 
   private int value = 0;
   private Iterator<?> iterator;
@@ -46,12 +46,12 @@ class ObjectToIntegerMapper extends AccessPattern {
   }
 
   @Override
-  public boolean hasNext() throws Exception {
+  public boolean hasNext() {
     return iterator.hasNext();
   }
 
   @Override
-  public int next() throws Exception {
+  public int next() {
     Object v = iterator.next();
     Integer t = mapping.get(v);
     if (t == null) {

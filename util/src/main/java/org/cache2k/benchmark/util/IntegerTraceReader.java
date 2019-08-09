@@ -49,31 +49,39 @@ public class IntegerTraceReader extends AccessPattern {
   }
 
   @Override
-  public boolean hasNext() throws Exception {
-    String s;
-    do {
-      s = reader.readLine();
-      if (s == null) {
-        return false;
-      }
-    } while (s.startsWith("#") || s.trim().length() == 0);
+  public boolean hasNext() {
     try {
-      value = Integer.parseInt(s);
-    } catch(NumberFormatException e) {
-      System.err.println("parse error line " + reader.getLineNumber() + ": " + s);
-      return hasNext();
+      String s;
+      do {
+        s = reader.readLine();
+        if (s == null) {
+          return false;
+        }
+      } while (s.startsWith("#") || s.trim().length() == 0);
+      try {
+        value = Integer.parseInt(s);
+      } catch (NumberFormatException e) {
+        System.err.println("parse error line " + reader.getLineNumber() + ": " + s);
+        return hasNext();
+      }
+      return true;
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
     }
-    return true;
   }
 
   @Override
-  public int next() throws IOException {
+  public int next() {
     return value;
   }
 
   @Override
-  public void close() throws IOException {
-    reader.close();
+  public void close() {
+    try {
+      reader.close();
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
 }

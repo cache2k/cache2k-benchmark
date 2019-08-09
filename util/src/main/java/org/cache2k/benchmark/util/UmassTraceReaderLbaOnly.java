@@ -44,22 +44,22 @@ public class UmassTraceReaderLbaOnly extends AccessPattern {
   }
 
   @Override
-  public boolean hasNext() throws Exception {
-    char rw = ' ';
-    do {
-      String s = reader.readLine();
-      if (s == null) {
-        return false;
-      }
-      try {
-        String[] sa = s.split(",", 5);
-        if (sa.length < 4) { continue; }
-        lba = Integer.parseInt(sa[1]);
-        rw = Character.toLowerCase(sa[3].charAt(0));
-      } catch (Exception ex) {
-        throw new IOException("Error at line number " + reader.getLineNumber(), ex);
-      }
-    } while (rw == 'w');
+  public boolean hasNext() {
+    try {
+      char rw = ' ';
+      do {
+        String s = reader.readLine();
+        if (s == null) {
+          return false;
+        }
+          String[] sa = s.split(",", 5);
+          if (sa.length < 4) { continue; }
+          lba = Integer.parseInt(sa[1]);
+          rw = Character.toLowerCase(sa[3].charAt(0));
+      } while (rw == 'w');
+    } catch (Exception ex) {
+      throw new RuntimeException("Error at line number " + reader.getLineNumber(), ex);
+    }
     return true;
   }
 
@@ -69,7 +69,7 @@ public class UmassTraceReaderLbaOnly extends AccessPattern {
   }
 
   @Override
-  public int next() throws Exception {
+  public int next() {
     return lba;
   }
 

@@ -196,12 +196,12 @@ public class AccessTrace implements Iterable<Integer> {
       }
 
       @Override
-      public boolean hasNext() throws Exception {
+      public boolean hasNext() {
         return idx < ia.length;
       }
 
       @Override
-      public int next() throws Exception {
+      public int next() {
         return ia[idx++];
       }
     };
