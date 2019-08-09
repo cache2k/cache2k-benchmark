@@ -37,7 +37,7 @@ public class BenchmarkingBase {
 
   static Map<String,String> benchmarkName2csv = new TreeMap<>();
   static HashSet<String> onlyOneResult = new HashSet<>();
-  protected BenchmarkCacheFactory factory = new Cache2kFactory();
+  protected BenchmarkCacheFactory factory = new Cache2kForEvictionBenchmark();
 
   BenchmarkCache<Integer, Integer> cache = null;
 

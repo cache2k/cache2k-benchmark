@@ -25,10 +25,11 @@ package org.cache2k.benchmark;
  *
  * @author Jens Wilke
  */
-public class Cache2kWithStatisticsFactory extends Cache2kFactory {
+public class Cache2kForEvictionBenchmark extends Cache2kFactory {
 
   {
     disableStatistics = false;
+    strictEviction = true;
   }
 
 }

@@ -35,6 +35,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
 
   AtomicInteger counter = new AtomicInteger();
   boolean disableStatistics = true;
+  boolean strictEviction = false;
 
   @Override
   protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
@@ -243,7 +244,8 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
       Cache2kBuilder.of(_keyType, _valueType)
         .name("testCache-" + counter.incrementAndGet())
         .entryCapacity(_maxElements)
-        .refreshAhead(false);
+        .refreshAhead(false)
+        .strictEviction(strictEviction);
     if (withExpiry) {
       b.expireAfterWrite(2 * 60, TimeUnit.SECONDS);
     } else {

@@ -20,6 +20,7 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import org.cache2k.benchmark.traces.CacheAccessTraceCordaSmall;
 import org.cache2k.benchmark.traces.CacheAccessTraceCpp;
 import org.cache2k.benchmark.traces.CacheAccessTraceOrmAccessBusy;
 import org.cache2k.benchmark.traces.CacheAccessTraceGlimpse;
@@ -268,6 +269,11 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   }
 
   @Test
+  public void benchmarkUmassFinancial1_8192() throws Exception {
+    runBenchmark(CacheAccessTraceUmassFinancial1.getInstance(), 8192);
+  }
+
+  @Test
   public void benchmarkUmassFinancial2_5000() throws Exception {
     runBenchmark(CacheAccessTraceUmassFinancial2.getInstance(), 5000);
   }
@@ -398,6 +404,19 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   public void benchmarkScarabProds_100000() throws Exception {
     runBenchmark(CacheAccessTraceScarabProds.getInstance(), 100000);
   }
+
+  @Test
+  public void benchmarkCordaSmall_512() throws Exception {
+    runBenchmark(CacheAccessTraceCordaSmall.getInstance(), 512);
+  }
+
+  @Test
+  public void benchmarkCordaSmall10x_5000() throws Exception {
+    runBenchmark(cordaSmall10x, 5000);
+  }
+
+  static final AccessTrace cordaSmall10x =
+    new AccessTrace(Patterns.explode(CacheAccessTraceCordaSmall.getInstance().newPattern(), 10));
 
   public static final int TRACE_LENGTH = 3 * 1000 * 1000;
 
