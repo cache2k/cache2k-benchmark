@@ -21,12 +21,15 @@ package org.cache2k.benchmark;
  */
 
 /**
- * @author Jens Wilke; created: 2013-06-13
+ * Used for eviction benchmarks.
+ *
+ * @author Jens Wilke
  */
-public class Cache2kDefaultBenchmark extends BenchmarkCollection {
+public class Cache2kForEvictionBenchmarkFactory extends Cache2kFactory {
 
   {
-    factory = new Cache2kForEvictionBenchmarkFactory();
+    disableStatistics = false;
+    strictEviction = true;
   }
 
 }

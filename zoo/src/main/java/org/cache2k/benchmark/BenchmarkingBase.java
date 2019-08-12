@@ -37,7 +37,7 @@ public class BenchmarkingBase {
 
   static Map<String,String> benchmarkName2csv = new TreeMap<>();
   static HashSet<String> onlyOneResult = new HashSet<>();
-  protected BenchmarkCacheFactory factory = new Cache2kForEvictionBenchmark();
+  protected BenchmarkCacheFactory factory = new Cache2kForEvictionBenchmarkFactory();
 
   BenchmarkCache<Integer, Integer> cache = null;
 
@@ -64,7 +64,7 @@ public class BenchmarkingBase {
     destroyCache();
   }
 
-  public final long runBenchmark(BenchmarkCache<Integer, Integer> c, AccessTrace t) {
+  public static final long runBenchmark(BenchmarkCache<Integer, Integer> c, AccessTrace t) {
     Integer[] _trace = t.getObjectTrace();
     if (c instanceof SimulatorPolicy) {
       SimulatorPolicy p = (SimulatorPolicy) c;
@@ -79,6 +79,32 @@ public class BenchmarkingBase {
       if (v == null) {
         c.put(k, k);
         _missCount++;
+      }
+    }
+    return _missCount;
+  }
+
+  public static final long runBenchmark(BenchmarkCache<Integer, Integer> c, AccessTrace t, int _steps) {
+    Integer[] _trace = t.getObjectTrace();
+    if (c instanceof SimulatorPolicy) {
+      SimulatorPolicy p = (SimulatorPolicy) c;
+      for (Integer k : _trace) {
+        ((SimulatorPolicy) c).record(k);
+        if (_steps-- == 0) {
+          return p.getMissCount();
+        }
+      }
+      return p.getMissCount();
+    }
+    long _missCount =  0;
+    for (Integer k : _trace) {
+      Integer v = c.get(k);
+      if (v == null) {
+        c.put(k, k);
+        _missCount++;
+      }
+      if (_steps-- == 0) {
+        return _missCount;
       }
     }
     return _missCount;

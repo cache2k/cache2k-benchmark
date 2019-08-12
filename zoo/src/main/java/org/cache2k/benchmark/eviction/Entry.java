@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.eviction;
 
 /*
  * #%L
@@ -21,12 +21,11 @@ package org.cache2k.benchmark;
  */
 
 /**
- * @author Jens Wilke; created: 2013-06-13
+ * A cached entry holds a key and value.
+ *
+ * @author Jens Wilke
  */
-public class Cache2kDefaultBenchmark extends BenchmarkCollection {
-
-  {
-    factory = new Cache2kForEvictionBenchmarkFactory();
-  }
-
+public class Entry<K, V> {
+	K key;
+	V value;
 }

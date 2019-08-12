@@ -20,13 +20,17 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-/**
- * @author Jens Wilke; created: 2013-06-13
- */
-public class Cache2kDefaultBenchmark extends BenchmarkCollection {
+import org.cache2k.benchmark.eviction.ClockProPlusCache2kV14Eviction;
 
-  {
-    factory = new Cache2kForEvictionBenchmarkFactory();
-  }
+/**
+ * @author Jens Wilke
+ */
+public class ClockProPlusCache2kV14Benchmark extends BenchmarkCollection {
+
+	{
+		factory =
+			new ExperimentalEvictionCacheFactory()
+				.eviction(ClockProPlusCache2kV14Eviction::new);
+	}
 
 }

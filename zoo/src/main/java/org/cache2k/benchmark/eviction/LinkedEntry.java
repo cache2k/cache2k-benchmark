@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.eviction;
 
 /*
  * #%L
@@ -21,12 +21,9 @@ package org.cache2k.benchmark;
  */
 
 /**
- * @author Jens Wilke; created: 2013-06-13
+ * Cached entry with linked list.
+ *
+ * @author Jens Wilke
  */
-public class Cache2kDefaultBenchmark extends BenchmarkCollection {
-
-  {
-    factory = new Cache2kForEvictionBenchmarkFactory();
-  }
-
+public class LinkedEntry<K,V> extends Entry<K,V> {
 }

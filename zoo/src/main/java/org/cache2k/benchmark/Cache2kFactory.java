@@ -22,7 +22,9 @@ package org.cache2k.benchmark;
 
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
+import org.cache2k.CacheEntry;
 import org.cache2k.IntCache;
+import org.cache2k.event.CacheEntryEvictedListener;
 import org.cache2k.integration.CacheLoader;
 
 import java.util.concurrent.TimeUnit;
@@ -36,6 +38,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
   AtomicInteger counter = new AtomicInteger();
   boolean disableStatistics = true;
   boolean strictEviction = false;
+  boolean printEvictions = false;
 
   @Override
   protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
@@ -44,6 +47,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
 
   }
 
+  @SuppressWarnings("unchecked")
   private <K, V> BenchmarkCache<K, V> returnCache(final Cache<K, V> _c, final int _maxElements) {
     if (_c instanceof IntCache) {
       final IntCache<V> ic = (IntCache<V>) _c;
@@ -124,6 +128,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
     };
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <K, V> BenchmarkCache<K, V> createLoadingCache(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
     final Cache<K, V> c = createInternal(_keyType, _valueType, _maxElements, _source);
@@ -239,7 +244,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
     };
   }
 
-  <K,V> Cache<K, V> createInternal(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
+  private <K,V> Cache<K, V> createInternal(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
     Cache2kBuilder<K, V> b =
       Cache2kBuilder.of(_keyType, _valueType)
         .name("testCache-" + counter.incrementAndGet())
@@ -252,9 +257,21 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
       b.eternal(true);
     }
     if (disableStatistics) {
-      b.disableStatistics(true).strictEviction(false).boostConcurrency(true).disableLastModificationTime(true);
+      b.disableStatistics(true).strictEviction(false).boostConcurrency(true);
     } else {
       b.strictEviction(true);
+    }
+    final AtomicInteger _evictCount = new AtomicInteger();
+    if (printEvictions) {
+      b.addListener(new CacheEntryEvictedListener<K, V>() {
+        @Override
+        public void onEntryEvicted(final Cache<K, V> cache, final CacheEntry<K, V> entry) {
+          System.out.println("EVICT " + _evictCount.getAndIncrement() + ": " + entry.getKey());
+          if (_evictCount.get() == 19) {
+            System.out.println("BREAK");
+          }
+        }
+      });
     }
     if (_source != null) {
       b.loader(new CacheLoader<K, V>() {
