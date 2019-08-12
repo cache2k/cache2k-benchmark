@@ -78,7 +78,13 @@ function flushRow() {
  printf ("%s ", row);
  for (k = 1; k <= keysCnt; k++) {
    key=colKeys[k];
-   printf ("%s ", data[key]);
+   v=data[key];
+   # missing data points need to have a ?
+   if (v=="") {
+     printf ("? ");
+   } else {
+     printf ("%s ", v);
+   }
  }
  printf "\n";
 }
@@ -143,6 +149,10 @@ printCacheCsv() {
 for I in $RESULT/*.csv; do
   cat $I;
 done
+}
+
+printImplementations() {
+printCacheCsv | awk -F "|" '{print $2; }' | sort | uniq
 }
 
 onlySpeed() {
@@ -347,6 +357,45 @@ for I in $traces; do
   plot $f "Hitrates for $I trace";
 done
 }
+
+processFour() {
+header="Size OPT LRU CLOCK EHCache3 Guava Caffeine cache2k RAND";
+impls="org.cache2k.benchmark.thirdparty.CaffeineSimulatorOptBenchmark \
+	   org.cache2k.benchmark.LruCacheBenchmark \
+       org.cache2k.benchmark.ClockCacheBenchmark \
+       org.cache2k.benchmark.thirdparty.EhCache3Benchmark \
+       org.cache2k.benchmark.thirdparty.GuavaCacheBenchmark \
+       org.cache2k.benchmark.thirdparty.CaffeineBenchmark \
+       org.cache2k.benchmark.Cache2kDefaultBenchmark \
+       org.cache2k.benchmark.RandomCacheBenchmark";
+for I in $traces; do
+  f=$RESULT/trace${I}hitrateProductsCaffeineRegular.dat;
+  (
+  echo $header;
+  printHitrate | grep "^benchmark${I}_" | alongSize | sort -n -k1 -t'|' | \
+    pivot $impls | \
+    stripEmpty
+  ) > $f
+  plot $f "Hitrates for $I trace";
+done
+}
+
+processPresent() {
+impls="`printImplementations`";
+header="Size "$impls;
+for I in $traces; do
+  f=$RESULT/trace${I}hitrateProductsPresent.dat;
+  (
+  echo $header;
+  printHitrate | grep "^benchmark${I}_" | alongSize | sort -n -k1 -t'|' | \
+    pivot $impls | \
+    stripEmpty
+  ) > $f
+  plot $f "Hitrates for $I trace";
+done
+}
+
+
 
 processCommandLine "$@";
 

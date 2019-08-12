@@ -20,17 +20,17 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.eviction.ClockProPlusCache2kV14Eviction;
+import org.cache2k.benchmark.eviction.Cache2kV12Eviction;
 
 /**
  * @author Jens Wilke
  */
-public class ClockProPlusCache2kV14Benchmark extends BenchmarkCollection {
+public class Cache2kV12Benchmark extends BenchmarkCollection {
 
 	{
 		factory =
 			new ExperimentalEvictionCacheFactory()
-				.eviction(ClockProPlusCache2kV14Eviction::new);
+				.eviction(Cache2kV12Eviction::new);
 	}
 
 }

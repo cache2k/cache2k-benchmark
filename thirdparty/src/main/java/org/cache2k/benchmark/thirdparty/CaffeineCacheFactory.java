@@ -27,8 +27,6 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheSource;
-
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**

@@ -32,30 +32,31 @@ import java.util.Map;
  *
  * @author Jens Wilke
  */
+@SuppressWarnings("FieldCanBeLocal")
 public class BaseCache<E extends Entry<K,V>, K,V>
 	extends BenchmarkCache<K,V> {
 
-	private final EvictionPolicy<K, E> eviction;
+	private final EvictionPolicy<K, V, E> eviction;
 	private final Map<K, E> content = new HashMap<>();
 	private boolean debugEvictions = false;
+	private boolean debugHits = false;
 	private int evictionStep = 0;
 
-	public BaseCache(final EvictionPolicy<K, E> eviction) {
+	public BaseCache(final EvictionPolicy<K, V, E> eviction) {
 		this.eviction = eviction;
 	}
 
 	@Override
 	public void put(final K key, final V value) {
+		// DEBUG System.out.println(key);
 		if (content.size() >= eviction.getCapacity()) {
 			E e = eviction.evict();
 			if (debugEvictions) {
-				System.out.println("EVICT" + (evictionStep++) + ": " + e.key);
+				System.out.println("EVICT " + (evictionStep++) + ": " + e.getKey());
 			}
-			content.remove(e.key);
+			content.remove(e.getKey());
 		}
-		E e = eviction.newEntry(key);
-		e.key = key;
-		e.value = value;
+		E e = eviction.newEntry(key, value);
 		content.put(key, e);
 	}
 
@@ -63,8 +64,11 @@ public class BaseCache<E extends Entry<K,V>, K,V>
 	public V get(final K key) {
 		E e = content.get(key);
 		if (e != null) {
+			if (debugHits) {
+				System.out.println("HIT " + key);
+			}
 			eviction.recordHit(e);
-			return e.value;
+			return e.getValue();
 		}
 		return null;
 	}

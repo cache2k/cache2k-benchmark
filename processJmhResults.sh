@@ -155,7 +155,7 @@ function flushRow() {
    if (v=="") {
      printf ("? ");
    } else {
-     printf ("%s ", data[key]);
+     printf ("%s ", v);
    }
  }
  printf "\n";

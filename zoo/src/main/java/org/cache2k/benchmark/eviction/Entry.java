@@ -26,6 +26,21 @@ package org.cache2k.benchmark.eviction;
  * @author Jens Wilke
  */
 public class Entry<K, V> {
-	K key;
-	V value;
+
+	private K key;
+	private V value;
+
+	public Entry(final K _key, final V _value) {
+		key = _key;
+		value = _value;
+	}
+
+	public K getKey() {
+		return key;
+	}
+
+	public V getValue() {
+		return value;
+	}
+
 }

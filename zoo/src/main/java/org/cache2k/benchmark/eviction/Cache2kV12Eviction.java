@@ -22,7 +22,9 @@ package org.cache2k.benchmark.eviction;
 
 /**
  * Eviction policy based on the Clock-Pro idea with changes as used in cache2k V1.2.
- * This code is retained as-is and doesn't get improvements.
+ * This code is retained as-is and doesn't get improvements. The eviction results are
+ * not 100% identical to cache2k V1.2, since the V1.2 version is triggering eviction
+ * after an insert.
  *
  * <p>The Clock-Pro algorithm is explained by the authors in
  * <a href="http://www.ece.eng.wayne.edu/~sjiang/pubs/papers/jiang05_CLOCK-Pro.pdf">CLOCK-Pro:
@@ -41,7 +43,8 @@ package org.cache2k.benchmark.eviction;
  *
  * @author Jens Wilke
  */
-public class ClockProPlusCache2kV14Eviction<K> extends EvictionPolicy<K, ClockProPlusCache2kV14Eviction.Entry> {
+@SuppressWarnings({"Duplicates", "WeakerAccess"})
+public class Cache2kV12Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV12Eviction.Entry> {
 
 	private long hotHits;
 	private long coldHits;
@@ -60,17 +63,17 @@ public class ClockProPlusCache2kV14Eviction<K> extends EvictionPolicy<K, ClockPr
 	private Entry handCold;
 	private Entry handHot;
 
-	private ClockProPlusCache2kV14Eviction.Ghost[] ghosts;
-	private ClockProPlusCache2kV14Eviction.Ghost ghostHead = new Ghost().shortCircuit();
+	private Cache2kV12Eviction.Ghost[] ghosts;
+	private Cache2kV12Eviction.Ghost ghostHead = new Ghost().shortCircuit();
 	private int ghostSize = 0;
 	private static final int GHOST_LOAD_PERCENT = 63;
 	private Tunable tunable;
 
-	public ClockProPlusCache2kV14Eviction() {
+	public Cache2kV12Eviction() {
 		this(new Tunable());
 	}
 
-	public ClockProPlusCache2kV14Eviction(Tunable t) {
+	public Cache2kV12Eviction(Tunable t) {
 		tunable = t;
 		coldSize = 0;
 		hotSize = 0;
@@ -80,9 +83,8 @@ public class ClockProPlusCache2kV14Eviction<K> extends EvictionPolicy<K, ClockPr
 	}
 
 	@Override
-	public Entry newEntry(K key) {
-		Entry e = new Entry();
-		e.key = key;
+	public Entry newEntry(K key, V value) {
+		Entry e = new Entry(key, value);
 		insertIntoReplacementList(e);
 		return e;
 	}
@@ -467,14 +469,17 @@ public class ClockProPlusCache2kV14Eviction<K> extends EvictionPolicy<K, ClockPr
 
 	}
 
-	static class Entry extends org.cache2k.benchmark.eviction.Entry {
+	static class Entry extends LinkedEntry<Entry, Object, Object> {
+
 		long hitCnt;
-		Entry next;
-		Entry prev;
 		boolean hot;
 
+		private Entry(final Object _key, final Object _value) {
+			super(_key, _value);
+		}
+
 		public int getHashCode() {
-			int hc = key.hashCode();
+			int hc = getKey().hashCode();
 			return hc ^ hc >>> 16;
 		}
 
@@ -484,64 +489,6 @@ public class ClockProPlusCache2kV14Eviction<K> extends EvictionPolicy<K, ClockPr
 
 		boolean isHot() {
 			return hot;
-		}
-
-		/*
-		 * **************************************** LRU list operation *******************************************
-		 */
-
-		private static final Entry LIST_REMOVED_MARKER = new Entry();
-
-		/**
-		 * Reset next as a marker
-		 */
-		public final void removedFromList() {
-			next = LIST_REMOVED_MARKER;
-			// we need to clear the pre link also, otherwise it is a mem leak,
-			// there are canceled timer tasks hold by the timer thread, that link via the prev
-			// reference to all other entries previously evicted!
-			prev = null;
-		}
-
-		public Entry shortCircuit() {
-			return next = prev = this;
-		}
-
-		public static <E extends Entry> E insertIntoTailCyclicList(final E _head, final E e) {
-			if (_head == null) {
-				return (E) e.shortCircuit();
-			}
-			e.next = _head;
-			e.prev = _head.prev;
-			_head.prev = e;
-			e.prev.next = e;
-			return _head;
-		}
-
-		public static <E extends Entry> E removeFromCyclicList(final E _head, E e) {
-			assert (!(e == e.prev) || (e == e.next));
-			assert (!(e == e.next) || (e == e.prev));
-			assert (!(e.prev == e) || (e == _head));
-			// assert(!(e.next == e) || (e == _head)); always true checked above ;jw
-			if (e.next == e) {
-				e.removedFromList();
-				return null;
-			}
-			Entry _eNext = e.next;
-			e.prev.next = _eNext;
-			e.next.prev = e.prev;
-			e.removedFromList();
-			return e == _head ? (E) _eNext : _head;
-		}
-
-		public static Entry removeFromCyclicList(final Entry e) {
-			assert (!(e == e.prev) || (e == e.next));
-			assert (!(e == e.next) || (e == e.prev));
-			Entry _eNext = e.next;
-			e.prev.next = _eNext;
-			e.next.prev = e.prev;
-			e.removedFromList();
-			return _eNext == e ? null : _eNext;
 		}
 
 	}

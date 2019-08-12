@@ -20,7 +20,7 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.eviction.ClockProPlusCache2kV14Eviction;
+import org.cache2k.benchmark.eviction.Cache2kV12Eviction;
 import org.cache2k.benchmark.traces.CacheAccessTraceOrmAccessNight;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -47,7 +47,7 @@ public class CompareTwoTest {
 	public void test2() {
 		BenchmarkCache<Integer, Integer> c =
 			new ExperimentalEvictionCacheFactory()
-				.eviction(ClockProPlusCache2kV14Eviction::new).createUnspecialized(50);
+				.eviction(Cache2kV12Eviction::new).createUnspecialized(50);
 		TracesAndTestsCollection.runBenchmark(c, CacheAccessTraceOrmAccessNight.getInstance(), steps);
 		System.out.println(c);
 	}

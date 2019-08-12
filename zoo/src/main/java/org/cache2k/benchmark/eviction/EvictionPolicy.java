@@ -25,16 +25,17 @@ package org.cache2k.benchmark.eviction;
  *
  * @author Jens Wilke
  */
-public abstract class EvictionPolicy<K, E extends Entry> {
+public abstract class EvictionPolicy<K, V, E extends Entry> {
 
-	protected int capacity;
+	private boolean capacitySet;
+	private int capacity;
 
 	/**
 	 * Construct a new entry in the eviction policy data structures.
 	 * Takes the key, so the policy can lookup in the history whether this entry
 	 * was seen before.
 	 */
-	public abstract E newEntry(K key);
+	public abstract E newEntry(K key, V value);
 
 	/**
 	 * Record a hit for this entry.
@@ -53,7 +54,11 @@ public abstract class EvictionPolicy<K, E extends Entry> {
 
 	public int getCapacity() { return capacity;	}
 	public void setCapacity(int v) {
+		if (capacitySet) {
+			throw new IllegalStateException();
+		}
 		capacity = v;
+		capacitySet = true;
 	}
 
 }
