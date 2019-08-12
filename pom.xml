@@ -31,7 +31,7 @@
   </properties>
 
   <modules>
-    <module>zoo</module>
+    <module>variants</module>
     <module>util</module>
     <module>traces</module>
     <module>thirdparty</module>
