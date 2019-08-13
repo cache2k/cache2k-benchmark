@@ -20,8 +20,6 @@ package org.cache2k.benchmark.util;
  * #L%
  */
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
@@ -33,12 +31,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Random;
-import java.util.Set;
 
 /**
  * A finite list of requests to a cache with some calculated properties.
@@ -47,14 +40,12 @@ import java.util.Set;
  */
 public class AccessTrace implements Iterable<Integer> {
 
-  AccessPattern pattern;
+  private AccessPattern pattern;
   private int[] trace = null;
   private Integer[] objectTrace = null;
-  int valueCount = -1;
-  int lowValue = -Integer.MAX_VALUE;
-  int highValue = Integer.MIN_VALUE;
-  HashMap<Integer, Integer> size2opt = new HashMap<>();
-  HashMap<Integer, Integer> size2random = new HashMap<>();
+  private int valueCount = -1;
+  private int lowValue = -Integer.MAX_VALUE;
+  private int highValue = Integer.MIN_VALUE;
 
   /**
    * Read in access trace from file. The file format is binary integer
@@ -65,7 +56,7 @@ public class AccessTrace implements Iterable<Integer> {
     ByteBuffer buf = in.map(FileChannel.MapMode.READ_ONLY, 0, in.size());
     trace = new int[(int) (in.size() / 4)];
     buf.order(ByteOrder.BIG_ENDIAN);
-    buf.asIntBuffer().get(getTrace());
+    buf.asIntBuffer().get(trace);
     in.close();
   }
 
@@ -78,7 +69,7 @@ public class AccessTrace implements Iterable<Integer> {
     ByteBuffer buf = ByteBuffer.wrap(ba);
     trace = new int[(int) (ba.length / 4)];
     buf.order(ByteOrder.BIG_ENDIAN);
-    buf.asIntBuffer().get(getTrace());
+    buf.asIntBuffer().get(trace);
     in.close();
   }
 
@@ -131,11 +122,11 @@ public class AccessTrace implements Iterable<Integer> {
     pattern = Patterns.strip(p, _maxSize);
   }
 
-  public Integer[] getObjectTrace() {
+  public Integer[] getObjectArray() {
     if (objectTrace != null) {
       return objectTrace;
     }
-    int[] _trace = getTrace();
+    int[] _trace = getArray();
     Integer[] ia = new Integer[_trace.length];
     for (int i = 0; i < _trace.length; i++) {
       ia[i] = _trace[i];
@@ -143,7 +134,12 @@ public class AccessTrace implements Iterable<Integer> {
     return objectTrace = ia;
   }
 
-  public int[] getTrace() {
+  /**
+   * Return the array of the trace. It is not allowed to modify the array, since this
+   * is the trace data itself. This is a poor API, however, when used in benchmarking we
+   * don't want to have to array copy in the timing.
+   */
+  public int[] getArray() {
     if (trace != null) {
       return trace;
     }
@@ -155,30 +151,11 @@ public class AccessTrace implements Iterable<Integer> {
     return trace;
   }
 
-  /**
-   * Opt calculation is extremely slow for traces with no hits at all.
-   * This is used to predefine the opt hit count to a known value.
-   */
-  public AccessTrace setOptHitCount(int _size, int _count) {
-    size2opt.put(_size, _count);
-    return this;
-  }
-
-  public AccessTrace setRandomHitCount(int _size, int _count) {
-    size2random.put(_size, _count);
-    return this;
-  }
-
-  public AccessTrace disableOptHitCount() {
-    size2opt = null;
-    return this;
-  }
-
   public void write(File f) throws IOException {
     FileChannel out = new RandomAccessFile(f, "rw").getChannel();
-    ByteBuffer buf = out.map(FileChannel.MapMode.READ_WRITE, 0, getTrace().length * 4);
+    ByteBuffer buf = out.map(FileChannel.MapMode.READ_WRITE, 0, getArray().length * 4);
     buf.order(ByteOrder.BIG_ENDIAN);
-    buf.asIntBuffer().put(getTrace());
+    buf.asIntBuffer().put(getArray());
     out.close();
   }
 
@@ -186,7 +163,7 @@ public class AccessTrace implements Iterable<Integer> {
    * Return an access pattern which starts at the beginning of the trace.
    */
   public AccessPattern newPattern() {
-    final int[] ia = getTrace();
+    final int[] ia = getArray();
     return new AccessPattern() {
       int idx = 0;
 
@@ -205,78 +182,6 @@ public class AccessTrace implements Iterable<Integer> {
         return ia[idx++];
       }
     };
-  }
-
-  /**
-   * Return the array of the trace. It is not allowed to modify the array, since this
-   * is the trace data itself. This is a poor API, however, when used in benchmarking we
-   * don't want to have to array copy in the timing.
-   */
-  public int[] getArray() {
-    return getTrace();
-  }
-
-  /**
-   * Returns the hits according to Beladys optimal algorithm for the given cache size.
-   * The calculation is done only once for a trace and a size.
-   */
-  public int getOptHitCount(int _size) {
-    if (_size <= 0) {
-      throw new IllegalArgumentException("size must be greater 0");
-    }
-    if (size2opt == null) {
-      return 0;
-    }
-    Integer v = size2opt.get(_size);
-    if (v != null) {
-      return v;
-    }
-    OptimumReplacementCalculation c = new OptimumReplacementCalculation(_size, getTrace());
-    size2opt.put(_size, c.getHitCount());
-    return c.getHitCount();
-  }
-
-  public HitRate getOptHitRate(int _size) {
-    return new HitRate(getOptHitCount(_size));
-  }
-
-  public HitRate getRandomHitRate(int _size) {
-    if (_size <= 0) {
-      throw new IllegalArgumentException("size must be greater 0");
-    }
-    Integer v = size2random.get(_size);
-    if (v == null) {
-      v = calcRandomHits(_size);
-      size2random.put(_size, v);
-    }
-    return new HitRate(v);
-  }
-
-  int calcRandomHits(int _size, int _seed) {
-    IntSet _cache = new IntOpenHashSet();
-    IntList _list = new IntArrayList();
-    Random _random = new Random(_seed);
-    int _hitCnt = 0;
-    for (int v : getTrace()) {
-      if(_cache.contains(v)) {
-        _hitCnt++;
-      } else {
-        if (_cache.size() == _size) {
-          int cnt = _random.nextInt(_cache.size());
-          _cache.remove(_list.get(cnt));
-          _list.remove(cnt);
-        }
-        _cache.add(v);
-        _list.add(v);
-      }
-    }
-    return _hitCnt;
-  }
-
-  int calcRandomHits(int _size) {
-    return
-      (calcRandomHits(_size, 1802) +
-      calcRandomHits(_size, 4711)) / 2;
   }
 
   /**
@@ -304,12 +209,12 @@ public class AccessTrace implements Iterable<Integer> {
   }
 
   public int getTraceLength() {
-    return getTrace().length;
+    return getArray().length;
   }
 
   private void initStatistics() {
     IntSet _values = new IntOpenHashSet();
-    for (int v : getTrace()) {
+    for (int v : getArray()) {
       _values.add(v);
       if (v < lowValue) {
         lowValue = v;
@@ -322,10 +227,9 @@ public class AccessTrace implements Iterable<Integer> {
   }
 
   public String toString() {
-    return String.format("AccessTrace(length=%d, values=%d, maxHitRate=%.2f)",
+    return String.format("AccessTrace(length=%d, values=%d)",
       getTraceLength(),
-      getValueCount(),
-      getRandomHitRate(getValueCount()).getFactor() * 100);
+      getValueCount());
   }
 
   private static int[] prepareTrace(AccessPattern p, int _maxSize) throws Exception {
@@ -351,59 +255,21 @@ public class AccessTrace implements Iterable<Integer> {
     return prepareTrace(p, Integer.MAX_VALUE);
   }
 
-  public class HitRate {
-    int hitCount;
-
-    public HitRate(int hitCount) {
-      this.hitCount = hitCount;
-    }
-
-    public int getCount() {
-      return hitCount;
-    }
-
-    public double getFactor() {
-      return hitCount * 1D / getTraceLength();
-    }
-
-    /** Hitrate in percent from 0 to 100 */
-    public int getPercent() {
-      return getPer(100);
-    }
-
-    /** Hitrate in millis from 0 to 1000 */
-    public int get3digit() {
-      return getPer(1000);
-    }
-
-    /** Hitrate from 0 to 10000 */
-    public int get4digit() {
-      return getPer(10000);
-    }
-
-    public int getPer(long v) {
-      if (getTraceLength() == 0) {
-        throw new IllegalStateException("empty trace");
-      }
-      return (int) ((hitCount * v + getTraceLength() / 2) / getTraceLength());
-    }
-
-  }
-
   @Override
   public Iterator<Integer> iterator() {
+    final int[] array = trace;
     return new Iterator<Integer>() {
 
       int idx = 0;
 
       @Override
       public boolean hasNext() {
-        return idx < getTrace().length;
+        return idx < array.length;
       }
 
       @Override
       public Integer next() {
-        return getTrace()[idx++];
+        return array[idx++];
       }
 
       @Override

@@ -58,6 +58,9 @@ public class Patterns {
     return new Concat(p);
   }
 
+  /**
+   * Return the first {@param _stripCount} elements.
+   */
   public static AccessPattern strip(AccessPattern p, int _stripCount) {
     return new Strip(p, _stripCount);
   }
@@ -142,6 +145,7 @@ public class Patterns {
     int minValue = Integer.MAX_VALUE;
     int maxValue = 0;
 
+    /** Loop pattern endlessly */
     Loop(AccessPattern _pattern) {
       this(_pattern, -1);
     }
@@ -223,24 +227,25 @@ public class Patterns {
   public static class RevertLoop extends Loop {
 
     public RevertLoop(AccessPattern _pattern) {
-      super(_pattern);
+      this(_pattern, -1);
     }
 
     public RevertLoop(AccessPattern _pattern, int _count) {
       super(_pattern, _count);
+      pos = size - 1;
     }
 
     public boolean hasNext() {
-      return pos != 0;
+      return count > 0;
     }
 
     public int next() {
-      pos--;
+      int v = buffer[pos--];
       if (pos < 0) {
         pos = size - 1;
         count--;
       }
-      return buffer[pos];
+      return v;
     }
 
   }

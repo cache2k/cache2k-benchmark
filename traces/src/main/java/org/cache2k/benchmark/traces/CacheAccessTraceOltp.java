@@ -32,12 +32,7 @@ import org.cache2k.benchmark.util.AccessTrace;
 public class CacheAccessTraceOltp {
 
   public static AccessTrace getInstance() {
-    return TraceCache.getTraceLazy("trace-oltp.trc.bin.gz")
-      .setOptHitCount(1000, 490093)
-      .setOptHitCount(2000, 552149)
-      .setOptHitCount(5000, 624076)
-      .setOptHitCount(10000, 667490)
-      .setOptHitCount(15000, 686870);
+    return TraceCache.getTraceLazy("trace-oltp.trc.bin.gz");
   }
 
 }

@@ -51,8 +51,7 @@ public class CacheAccessTraceUmassFinancial1 {
             new BZip2CompressorInputStream(
               new FileInputStream(
                 TraceResourceDirectory.TRACE_DIRECTORY +
-                  "/umass.edu/" + s))), LIMIT_LENGTH))
-      .disableOptHitCount();
+                  "/umass.edu/" + s))), LIMIT_LENGTH));
   }
 
   static final TraceCache.Provider PROVIDER = new TraceCache.Provider() {

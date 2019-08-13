@@ -20,7 +20,9 @@ package org.cache2k.benchmark.util;
  * #L%
  */
 
+import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Process a trace to calculate the percentage for the optimum
@@ -36,9 +38,17 @@ import java.util.TreeMap;
  */
 public class OptimumReplacementCalculation {
 
-  private int size;
-  private int hit;
-  private int step = 0;
+  private static Map<CacheKey, Long> trace2opt = new ConcurrentHashMap<>();
+
+  public static long getCached(AccessTrace t, long cacheSize) {
+    CacheKey k = new CacheKey(t, cacheSize);
+    return trace2opt.computeIfAbsent(k,
+      x -> new OptimumReplacementCalculation(k.cacheSize, k.trace).getHitCount());
+  }
+
+  private long size;
+  private long hit;
+  private int step;
   private int[] trace;
   private int almostMax = Integer.MAX_VALUE;
 
@@ -49,7 +59,11 @@ public class OptimumReplacementCalculation {
    */
   private TreeMap<Integer, Integer> pos2value = new TreeMap<>();
 
-  public OptimumReplacementCalculation(int _size, int[] _trace) {
+  public OptimumReplacementCalculation(long _size, AccessTrace t) {
+    this(_size, t.getArray());
+  }
+
+  public OptimumReplacementCalculation(long _size, int[] _trace) {
     size = _size;
     trace = _trace;
     for (step = 0; step < trace.length;  step++) {
@@ -80,8 +94,37 @@ public class OptimumReplacementCalculation {
     return almostMax--;
   }
 
-  public int getHitCount() {
+  public long getHitCount() {
     return hit;
+  }
+
+  private static class CacheKey {
+    private AccessTrace trace;
+    private long cacheSize;
+
+    public CacheKey(final AccessTrace _trace, final long _cacheSize) {
+      trace = _trace;
+      cacheSize = _cacheSize;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      CacheKey __cacheKey = (CacheKey) o;
+
+      if (cacheSize != __cacheKey.cacheSize) return false;
+      return trace.equals(__cacheKey.trace);
+
+    }
+
+    @Override
+    public int hashCode() {
+      int res = trace.hashCode();
+      res = 31 * res + (int) (cacheSize ^ (cacheSize >>> 32));
+      return res;
+    }
   }
 
 }

@@ -32,9 +32,7 @@ import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 
 /**
- * Caches all traces that are read into memory already. We hold the traces so that
- * we don't need to recalculate the Belady opt efficiency and other metrics
- * again and again.
+ * Caches all traces that are read into memory already.
  *
  * @author Jens Wilke; created: 2013-11-20
  */

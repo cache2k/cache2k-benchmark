@@ -31,17 +31,6 @@ import static org.junit.Assert.assertEquals;
  */
 public class Base0MapperTest {
 
-  @Test
-  public void testBasicProperties() throws Exception {
-    AccessTrace t = new AccessTrace(getAccessPattern());
-    assertEquals(718, t.getValueCount());
-    assertEquals(717, t.getHighValue());
-    assertEquals(1570, t.getTraceLength());
-    assertEquals(848, t.getOptHitCount(100));
-    assertEquals(54, t.getOptHitRate(100).getPercent());
-    assertEquals(540, t.getOptHitRate(100).get3digit());
-  }
-
   private AccessPattern getAccessPattern() {
     return new NormalizeTraceReader(
       this.getClass().getResourceAsStream("/trace-mt-20121220-partial.txt"),

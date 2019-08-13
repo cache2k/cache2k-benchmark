@@ -65,7 +65,7 @@ public class BenchmarkingBase {
   }
 
   public static final long runBenchmark(BenchmarkCache<Integer, Integer> c, AccessTrace t) {
-    Integer[] _trace = t.getObjectTrace();
+    Integer[] _trace = t.getObjectArray();
     if (c instanceof SimulatorPolicy) {
       SimulatorPolicy p = (SimulatorPolicy) c;
       for (Integer k : _trace) {
@@ -85,7 +85,7 @@ public class BenchmarkingBase {
   }
 
   public static final long runBenchmark(BenchmarkCache<Integer, Integer> c, AccessTrace t, int _steps) {
-    Integer[] _trace = t.getObjectTrace();
+    Integer[] _trace = t.getObjectArray();
     if (c instanceof SimulatorPolicy) {
       SimulatorPolicy p = (SimulatorPolicy) c;
       for (Integer k : _trace) {
