@@ -20,30 +20,33 @@ package org.cache2k.benchmark.util;
  * #L%
  */
 
+import it.unimi.dsi.fastutil.longs.Long2IntMap;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.function.LongToIntFunction;
+import java.util.stream.LongStream;
+
 /**
- * Requests to a cache as a stream of integer numbers, which represent
- * the cache key.
+ * Maps a stream of longs to integers.
  *
- * @author Jens Wilke; created: 2013-08-25
+ * @author Jens Wilke
  */
-public abstract class AccessPattern {
+public class LongToIntMapper implements LongToIntFunction {
 
-  /**
-   * The pattern does never end, {@link #hasNext()} always returns true.
-   */
-  public abstract boolean isEternal();
+  private int counter = 0;
+  private Long2IntMap mapping = new Long2IntOpenHashMap();
 
-  public abstract boolean hasNext();
-
-  public abstract int next();
-
-  /**
-   * Needs to be called after pattern is read to free up resources.
-   */
-  public void close() { }
-
-  public AccessPattern strip(int length) {
-    return Patterns.strip(this, length);
+  @Override
+  public int applyAsInt(final long value) {
+    if (mapping.containsKey(value)) {
+      return mapping.get(value);
+    }
+    int t = counter++;
+    mapping.put(value, t);
+    return t;
   }
 
 }

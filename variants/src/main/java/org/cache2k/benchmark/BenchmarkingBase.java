@@ -20,6 +20,7 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import org.cache2k.benchmark.util.TraceSupplier;
 import org.junit.After;
 import org.cache2k.benchmark.util.AccessTrace;
 
@@ -108,6 +109,10 @@ public class BenchmarkingBase {
       }
     }
     return _missCount;
+  }
+
+  public final int runBenchmark(TraceSupplier sup, int _cacheSize) {
+    return runBenchmark(sup.get(), _cacheSize);
   }
 
   public final int runBenchmark(AccessTrace t, int _cacheSize) {

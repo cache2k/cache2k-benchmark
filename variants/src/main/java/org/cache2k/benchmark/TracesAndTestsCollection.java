@@ -35,11 +35,10 @@ import org.cache2k.benchmark.traces.CacheAccessTraceUmassFinancial2;
 import org.cache2k.benchmark.traces.CacheAccessTraceUmassWebSearch1;
 import org.cache2k.benchmark.traces.CacheAccessTraceWeb07;
 import org.cache2k.benchmark.traces.CacheAccessTraceWeb12;
+import org.cache2k.benchmark.traces.Traces;
 import org.cache2k.benchmark.util.AccessTrace;
-import org.cache2k.benchmark.util.DistAccessPattern;
 import org.cache2k.benchmark.util.Patterns;
 import org.cache2k.benchmark.util.RandomAccessPattern;
-import org.cache2k.benchmark.util.ZipfianPattern;
 import org.junit.Test;
 
 /**
@@ -48,7 +47,7 @@ import org.junit.Test;
 public class TracesAndTestsCollection extends BenchmarkingBase {
 
   public static final AccessTrace traceRandomForSize1Replacement =
-    new AccessTrace(new RandomAccessPattern(10), 1000);
+    new AccessTrace(Patterns.strip(new RandomAccessPattern(10), 1000));
 
   /**
    * Check whether the cache does a correct replacement and holds at most the
@@ -155,7 +154,7 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
 
   @Test
   public void benchmarkCpp_20() {
-    runBenchmark(CacheAccessTraceCpp.getInstance(), 20);
+    runBenchmark(Traces.CPP, 20);
   }
 
   @Test
@@ -407,7 +406,7 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
 
   @Test
   public void benchmarkCordaSmall_512() throws Exception {
-    runBenchmark(CacheAccessTraceCordaSmall.getInstance(), 512);
+    runBenchmark(Traces.CORDA_SMALL, 512);
   }
 
   @Test
@@ -418,106 +417,77 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
   static final AccessTrace cordaSmall10x =
     new AccessTrace(Patterns.explode(CacheAccessTraceCordaSmall.getInstance().newPattern(), 10));
 
-  public static final int TRACE_LENGTH = 3 * 1000 * 1000;
-
-  static final AccessTrace zipf900Trace =
-    new AccessTrace(new ZipfianPattern(1802, 900), TRACE_LENGTH);
-
   @Test
   public void benchmarkZipf900_50() throws Exception {
-    runBenchmark(zipf900Trace, 50);
+    runBenchmark(Traces.ZIPFIAN_900_3M, 50);
   }
 
   @Test
   public void benchmarkZipf900_100() throws Exception {
-    runBenchmark(zipf900Trace, 100);
+    runBenchmark(Traces.ZIPFIAN_900_3M, 100);
   }
 
   @Test
   public void benchmarkZipf900_300() throws Exception {
-    runBenchmark(zipf900Trace, 300);
+    runBenchmark(Traces.ZIPFIAN_900_3M, 300);
   }
 
   @Test
   public void benchmarkZipf900_500() throws Exception {
-    runBenchmark(zipf900Trace, 500);
+    runBenchmark(Traces.ZIPFIAN_900_3M, 500);
   }
 
   @Test
   public void benchmarkZipf900_700() throws Exception {
-    runBenchmark(zipf900Trace, 700);
+    runBenchmark(Traces.ZIPFIAN_900_3M, 700);
   }
-
-  public static final int ZIPF10K_TRACE_LENGTH = 10 * 1000 * 1000;
-
-  static final AccessTrace zipf10kTrace =
-    new AccessTrace(new ZipfianPattern(1802,10000), ZIPF10K_TRACE_LENGTH);
 
 
   @Test
   public void benchmarkZipf10k_500() throws Exception {
-    runBenchmark(zipf10kTrace, 500);
+    runBenchmark(Traces.ZIPFIAN_10K_10M, 500);
   }
 
 
   @Test
   public void benchmarkZipf10k_2000() throws Exception {
-    runBenchmark(zipf10kTrace, 2000);
+    runBenchmark(Traces.ZIPFIAN_10K_10M, 2000);
   }
 
 
   @Test
   public void benchmarkZipf10k_8000() throws Exception {
-    runBenchmark(zipf10kTrace, 8000);
+    runBenchmark(Traces.ZIPFIAN_10K_10M, 8000);
   }
-
-  static final AccessTrace effective95Trace =
-    new AccessTrace(new DistAccessPattern(900), TRACE_LENGTH);
-
-  @Test
-  public void benchmarkEff95_500() throws Exception {
-    runBenchmark(effective95Trace, 500);
-  }
-
-  static final AccessTrace effective90Trace =
-    new AccessTrace(new DistAccessPattern(1000), TRACE_LENGTH);
-
-  @Test
-  public void benchmarkEff90_500() throws Exception {
-    runBenchmark(effective90Trace, 500);
-  }
-
-  public static final AccessTrace randomTrace1000 =
-    new AccessTrace(new RandomAccessPattern(1000), TRACE_LENGTH);
 
   @Test
   public void benchmarkRandom1000_500()  throws Exception {
-    runBenchmark(randomTrace1000, 500);
+    runBenchmark(Traces.RANDOM_1000_10K, 500);
   }
 
   @Test
   public void benchmarkTotalRandom1000_100() {
-    runBenchmark(BenchmarkCollection.randomTrace1000, 100);
+    runBenchmark(Traces.RANDOM_1000_10K, 100);
   }
 
   @Test
   public void benchmarkTotalRandom1000_200() {
-    runBenchmark(BenchmarkCollection.randomTrace1000, 200);
+    runBenchmark(Traces.RANDOM_1000_10K, 200);
   }
 
   @Test
   public void benchmarkTotalRandom1000_350() {
-    runBenchmark(BenchmarkCollection.randomTrace1000, 350);
+    runBenchmark(Traces.RANDOM_1000_10K, 350);
   }
 
   @Test
   public void benchmarkTotalRandom1000_500() {
-    runBenchmark(BenchmarkCollection.randomTrace1000, 500);
+    runBenchmark(Traces.RANDOM_1000_10K, 500);
   }
 
   @Test
   public void benchmarkTotalRandom1000_800() {
-    runBenchmark(BenchmarkCollection.randomTrace1000, 800);
+    runBenchmark(Traces.RANDOM_1000_10K, 800);
   }
 
 }

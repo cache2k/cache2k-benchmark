@@ -22,6 +22,8 @@ package org.cache2k.benchmark.util;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import org.tukaani.xz.XZInputStream;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,6 +34,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.Iterator;
+import java.util.zip.GZIPInputStream;
 
 /**
  * A finite list of requests to a cache with some calculated properties.
@@ -46,6 +49,29 @@ public class AccessTrace implements Iterable<Integer> {
   private int valueCount = -1;
   private int lowValue = -Integer.MAX_VALUE;
   private int highValue = Integer.MIN_VALUE;
+  private String name;
+
+  /**
+   * Read in a compressed trace
+   */
+  public AccessTrace(String _fileName) {
+    InputStream _resourceInput = AccessTrace.class.getResourceAsStream(
+      "/org/cache2k/benchmark/traces/" +
+      _fileName);
+    try {
+      InputStream _inputForTrace;
+      if (_fileName.endsWith(".bz2")) {
+        _inputForTrace = new BZip2CompressorInputStream(_resourceInput);
+      } else if (_fileName.endsWith(".xz")) {
+        _inputForTrace = new XZInputStream(_resourceInput);
+      } else {
+        _inputForTrace = new GZIPInputStream(_resourceInput);
+      }
+      readFromStream(_inputForTrace);
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
+    }
+  }
 
   /**
    * Read in access trace from file. The file format is binary integer
@@ -65,9 +91,17 @@ public class AccessTrace implements Iterable<Integer> {
    * values (4 bytes) in sequence, the order is big endian.
    */
   public AccessTrace(InputStream in) throws IOException {
+    readFromStream(in);
+  }
+
+  public AccessTrace(int[] trace) {
+    this.trace = trace;
+  }
+
+  private void readFromStream(final InputStream in) throws IOException {
     byte[] ba = readToByteArray(in);
     ByteBuffer buf = ByteBuffer.wrap(ba);
-    trace = new int[(int) (ba.length / 4)];
+    trace = new int[ba.length / 4];
     buf.order(ByteOrder.BIG_ENDIAN);
     buf.asIntBuffer().get(trace);
     in.close();
@@ -106,20 +140,12 @@ public class AccessTrace implements Iterable<Integer> {
     pattern = p;
   }
 
-  /**
-   * New trace of complete pattern.
-   */
-  public AccessTrace(int _maxSize, AccessPattern... ps) {
-    AccessPattern p = Patterns.concat(ps);
-    pattern = Patterns.strip(p, _maxSize);
-  }
-
-  /**
-   * New trace from partial pattern. Reads the pattern to the end but at most
-   * the maximum size.
-   */
-  public AccessTrace(AccessPattern p, int _maxSize) {
-    pattern = Patterns.strip(p, _maxSize);
+  public AccessTrace name(String s) {
+    if (name != null) {
+      throw new IllegalStateException();
+    }
+    name = s;
+    return this;
   }
 
   public Integer[] getObjectArray() {
