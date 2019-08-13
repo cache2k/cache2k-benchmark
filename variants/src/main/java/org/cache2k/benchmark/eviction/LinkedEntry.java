@@ -55,6 +55,39 @@ public class LinkedEntry<E extends LinkedEntry,K,V> extends Entry<K,V> {
 		return next = prev = (E) this;
 	}
 
+	@SuppressWarnings("unchecked")
+	public final E removeFromList() {
+		assert this != prev;
+		assert next != this;
+		assert next != null;
+		assert prev != null;
+		prev.next = next;
+		next.prev = prev;
+		removedFromList();
+		return (E) this;
+	}
+
+	public final void insertInList(final E e) {
+		e.prev = this;
+		e.next = next;
+		e.next.prev = e;
+		next = e;
+	}
+
+	public final void moveToFront(final E e) {
+		e.removeFromList();
+		insertInList(e);
+	}
+
+	@SuppressWarnings("unchecked")
+	public final long size() {
+		return entryCountFromCyclicList((E) this) - 1;
+	}
+
+	/*
+	 * Operations for cyclic lists
+	 */
+
 	@SuppressWarnings({"Duplicates", "unchecked"})
 	public static <E extends LinkedEntry> E insertIntoTailCyclicList(final E _head, final E e) {
 		if (_head == null) {
@@ -93,6 +126,17 @@ public class LinkedEntry<E extends LinkedEntry,K,V> extends Entry<K,V> {
 		e.next.prev = e.prev;
 		e.removedFromList();
 		return _eNext == e ? null : _eNext;
+	}
+
+	public static <E extends LinkedEntry<E,?,?>> int entryCountFromCyclicList(final E _head) {
+		if (_head == null) { return 0; }
+		E e = _head;
+		int cnt = 0;
+		do {
+			cnt++;
+			e = e.next;
+		} while (e != _head);
+		return cnt;
 	}
 
 }

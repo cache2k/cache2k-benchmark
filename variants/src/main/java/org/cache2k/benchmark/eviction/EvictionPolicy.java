@@ -61,4 +61,6 @@ public abstract class EvictionPolicy<K, V, E extends Entry> {
 		capacitySet = true;
 	}
 
+	public void close(long expectedSize) { }
+
 }

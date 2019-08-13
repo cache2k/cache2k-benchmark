@@ -26,37 +26,46 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Implements the basic cache functions with a hash map and delegates to a
+ * Simple cache based on a hash map witch delegates to a
  * {@link EvictionPolicy} policy for eviction decisions. Not thread safe. This is
  * just for evaluating and experimentation with different eviction strategies.
  *
  * @author Jens Wilke
  */
 @SuppressWarnings("FieldCanBeLocal")
-public class BaseCache<E extends Entry<K,V>, K,V>
+public class EvaluationCache<E extends Entry<K,V>, K,V>
 	extends BenchmarkCache<K,V> {
 
 	private final EvictionPolicy<K, V, E> eviction;
 	private final Map<K, E> content = new HashMap<>();
-	private boolean debugEvictions = false;
-	private boolean debugHits = false;
-	private int evictionStep = 0;
+	private final boolean evictAfter = true;
+	private long evictSpinCnt = 0;
 
-	public BaseCache(final EvictionPolicy<K, V, E> eviction) {
+	public EvaluationCache(final EvictionPolicy<K, V, E> eviction) {
 		this.eviction = eviction;
 	}
 
 	@Override
 	public void put(final K key, final V value) {
-		// DEBUG System.out.println(key);
-		if (content.size() >= eviction.getCapacity()) {
-			E e = eviction.evict();
-			if (debugEvictions) {
-				System.out.println("EVICT " + (evictionStep++) + ": " + e.getKey());
-			}
-			content.remove(e.getKey());
+		if (!evictAfter && content.size() >= eviction.getCapacity()) {
+			E e0 = eviction.evict();
+			getEvictionListeners().forEach(l -> l.evicted(e0.getKey()));
+			content.remove(e0.getKey());
 		}
 		E e = eviction.newEntry(key, value);
+		if (evictAfter && content.size() >= eviction.getCapacity()) {
+			for(;;) {
+				E e0 = eviction.evict();
+				getEvictionListeners().forEach(l -> l.evicted(e0.getKey()));
+				if (e0.getKey().equals(key)) {
+					e = eviction.newEntry(key, value);
+					evictSpinCnt++;
+					continue;
+				}
+				content.remove(e0.getKey());
+				break;
+			}
+		}
 		content.put(key, e);
 	}
 
@@ -64,9 +73,6 @@ public class BaseCache<E extends Entry<K,V>, K,V>
 	public V get(final K key) {
 		E e = content.get(key);
 		if (e != null) {
-			if (debugHits) {
-				System.out.println("HIT " + key);
-			}
 			eviction.recordHit(e);
 			return e.getValue();
 		}
@@ -88,10 +94,18 @@ public class BaseCache<E extends Entry<K,V>, K,V>
 	}
 
 	@Override
+	public void close() {
+		eviction.close(content.size());
+	}
+
+	@Override
 	public String toString() {
-		return "ExperimentalCache{" +
-			"eviction=" + eviction +
-			'}';
+		return
+		  "EvaluationCache(size=" + content.size() +
+				", capacity=" + getCapacity() +
+				( evictAfter ? ", evictAfter=true, evictSpinCnt=" + evictSpinCnt : "" ) +
+				", eviction=" + eviction.toString() +
+				")";
 	}
 
 }

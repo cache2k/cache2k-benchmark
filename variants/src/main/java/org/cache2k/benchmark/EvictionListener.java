@@ -20,29 +20,13 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.eviction.EvictionPolicy;
-import org.cache2k.benchmark.eviction.EvaluationCache;
-
-import java.util.function.Supplier;
-
 /**
+ * Notification of an eviction
+ *
  * @author Jens Wilke
  */
-public class ExperimentalEvictionCacheFactory extends BenchmarkCacheFactory {
+public interface EvictionListener<K> {
 
-	private Supplier<EvictionPolicy> evictionSupplier;
-
-	public ExperimentalEvictionCacheFactory eviction(Supplier<EvictionPolicy> es) {
-		evictionSupplier = es;
-		return this;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-		EvictionPolicy e = evictionSupplier.get();
-		e.setCapacity(_maxElements);
-		return (BenchmarkCache<K,V>) new EvaluationCache<>(e);
-	}
+	void evicted(K key);
 
 }

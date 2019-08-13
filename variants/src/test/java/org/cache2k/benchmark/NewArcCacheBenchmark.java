@@ -20,29 +20,17 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.eviction.EvictionPolicy;
-import org.cache2k.benchmark.eviction.EvaluationCache;
-
-import java.util.function.Supplier;
+import org.cache2k.benchmark.eviction.ArcEviction;
 
 /**
- * @author Jens Wilke
+ * @author Jens Wilke; created: 2013-06-13
  */
-public class ExperimentalEvictionCacheFactory extends BenchmarkCacheFactory {
+public class NewArcCacheBenchmark extends BenchmarkCollection {
 
-	private Supplier<EvictionPolicy> evictionSupplier;
-
-	public ExperimentalEvictionCacheFactory eviction(Supplier<EvictionPolicy> es) {
-		evictionSupplier = es;
-		return this;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-		EvictionPolicy e = evictionSupplier.get();
-		e.setCapacity(_maxElements);
-		return (BenchmarkCache<K,V>) new EvaluationCache<>(e);
-	}
+  {
+    factory =
+      new ExperimentalEvictionCacheFactory()
+        .eviction(ArcEviction::new);
+  }
 
 }
