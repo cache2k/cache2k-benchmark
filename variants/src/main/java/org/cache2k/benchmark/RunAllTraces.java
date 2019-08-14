@@ -20,17 +20,25 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 /**
- * Used for eviction benchmarks.
- *
  * @author Jens Wilke
  */
-public class Cache2kForEvictionBenchmarkFactory extends Cache2kFactory {
+@RunWith(Parameterized.class)
+public class RunAllTraces extends EvictionMatrixTestBase {
 
-  {
-    disableStatistics = false;
-    strictEviction = true;
-    name("cache2k*");
-  }
+	final static VariationBuilder caches = new VariationBuilder()
+		.add(new Cache2kStarFactory());
+
+	@Parameterized.Parameters(name="{0}")
+	public static Iterable<? extends Object> data() {
+		return new VariationBuilder().merge(caches).merge(TraceCollections.ALL_TRACES).build();
+	}
+
+	public RunAllTraces(final Object point) {
+		super((TestVariation) point);
+	}
 
 }

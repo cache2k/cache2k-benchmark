@@ -1,8 +1,8 @@
-package org.cache2k.benchmark.util;
+package org.cache2k.benchmark;
 
 /*
  * #%L
- * Benchmarks: utilities
+ * Benchmarks: Implementation and eviction variants
  * %%
  * Copyright (C) 2013 - 2019 headissue GmbH, Munich
  * %%
@@ -21,26 +21,18 @@ package org.cache2k.benchmark.util;
  */
 
 /**
- * Random generated access pattern, that follows a gaussian distribution
- * between 0 and upper (exclusive).
+ * Build a cache2k cache that is tuned towards optimal eviction.
+ * Normally cache2k build multiple segments in multi core environments
+ * to increase throughput. This will create only a single cache segment.
  *
- * @author Jens Wilke; created: 2013-11-24
+ * @author Jens Wilke
  */
-public class DistAccessPattern extends RandomAccessPattern {
+public class Cache2kStarFactory extends Cache2kFactory {
 
-  public DistAccessPattern(int upper) {
-    super(upper);
-  }
-
-  @Override
-  public int next() {
-    double d = rng.nextGaussian();
-    d = Math.abs(d);
-    int v = (int) (d / 4 * upper);
-    if (v >= upper) {
-      v = 0;
-    }
-    return v;
+  {
+    disableStatistics = false;
+    strictEviction = true;
+    name("cache2k*");
   }
 
 }

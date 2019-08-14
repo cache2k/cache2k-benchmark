@@ -23,9 +23,6 @@ package org.cache2k.benchmark.util;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * @author Jens Wilke; created: 2013-11-14
  */
@@ -126,7 +123,7 @@ public class OptimumReplacementCalculationTest {
         1000));
     assertEquals(1000, upDownTrace.getValueCount());
     assertEquals(999, upDownTrace.getHighValue());
-    assertEquals(2000 * 1000 , upDownTrace.getTraceLength());
+    assertEquals(2000 * 1000 , upDownTrace.getLength());
 
   }
 

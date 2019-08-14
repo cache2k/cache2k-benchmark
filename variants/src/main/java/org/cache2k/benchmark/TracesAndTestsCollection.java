@@ -445,49 +445,49 @@ public class TracesAndTestsCollection extends BenchmarkingBase {
 
   @Test
   public void benchmarkZipf10k_500() throws Exception {
-    runBenchmark(Traces.ZIPFIAN_10K_10M, 500);
+    runBenchmark(Traces.ZIPFIAN_10K_3M, 500);
   }
 
 
   @Test
   public void benchmarkZipf10k_2000() throws Exception {
-    runBenchmark(Traces.ZIPFIAN_10K_10M, 2000);
+    runBenchmark(Traces.ZIPFIAN_10K_3M, 2000);
   }
 
 
   @Test
   public void benchmarkZipf10k_8000() throws Exception {
-    runBenchmark(Traces.ZIPFIAN_10K_10M, 8000);
+    runBenchmark(Traces.ZIPFIAN_10K_3M, 8000);
   }
 
   @Test
   public void benchmarkRandom1000_500()  throws Exception {
-    runBenchmark(Traces.RANDOM_1000_10K, 500);
+    runBenchmark(Traces.RANDOM_1000_100K, 500);
   }
 
   @Test
   public void benchmarkTotalRandom1000_100() {
-    runBenchmark(Traces.RANDOM_1000_10K, 100);
+    runBenchmark(Traces.RANDOM_1000_100K, 100);
   }
 
   @Test
   public void benchmarkTotalRandom1000_200() {
-    runBenchmark(Traces.RANDOM_1000_10K, 200);
+    runBenchmark(Traces.RANDOM_1000_100K, 200);
   }
 
   @Test
   public void benchmarkTotalRandom1000_350() {
-    runBenchmark(Traces.RANDOM_1000_10K, 350);
+    runBenchmark(Traces.RANDOM_1000_100K, 350);
   }
 
   @Test
   public void benchmarkTotalRandom1000_500() {
-    runBenchmark(Traces.RANDOM_1000_10K, 500);
+    runBenchmark(Traces.RANDOM_1000_100K, 500);
   }
 
   @Test
   public void benchmarkTotalRandom1000_800() {
-    runBenchmark(Traces.RANDOM_1000_10K, 800);
+    runBenchmark(Traces.RANDOM_1000_100K, 800);
   }
 
 }

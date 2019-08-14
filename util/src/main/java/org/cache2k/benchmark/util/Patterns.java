@@ -258,24 +258,6 @@ public class Patterns {
 
   }
 
-  static class MyPattern extends PatternProxy {
-
-    MyPattern() {
-      AccessPattern _iseqs =
-        new Strip(new ScatterMix(
-          80, new Patterns.InterleavedSequence(10, 500, 3, 1,3),
-          20, new RandomAccessPattern(1000)
-        ), 50000
-      );
-      AccessPattern _hotterStuff =
-        new Hotter(13, 4, new DistAccessPattern(999999));
-      pattern = new ScatterMix(
-          80, new Loop(_iseqs),
-          20, _hotterStuff);
-    }
-
-  }
-
   /**
    * Buffer that writes to an array. When the buffer is full the least element
    * inserted gets overwritten.

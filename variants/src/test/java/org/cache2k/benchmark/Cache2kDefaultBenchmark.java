@@ -26,7 +26,7 @@ package org.cache2k.benchmark;
 public class Cache2kDefaultBenchmark extends BenchmarkCollection {
 
   {
-    factory = new Cache2kForEvictionBenchmarkFactory();
+    factory = new Cache2kStarFactory();
   }
 
 }

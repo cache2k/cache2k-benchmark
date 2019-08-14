@@ -234,7 +234,7 @@ public class AccessTrace implements Iterable<Integer> {
     return lowValue;
   }
 
-  public int getTraceLength() {
+  public int getLength() {
     return getArray().length;
   }
 
@@ -259,7 +259,7 @@ public class AccessTrace implements Iterable<Integer> {
   public String toString() {
     return String.format("AccessTrace(name=%s, length=%d, values=%d)",
       getName(),
-      getTraceLength(),
+      getLength(),
       getValueCount());
   }
 

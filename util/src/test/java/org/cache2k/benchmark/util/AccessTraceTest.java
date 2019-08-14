@@ -38,7 +38,7 @@ public class AccessTraceTest {
     File f = new File("tmp-" + System.currentTimeMillis());
     t.write(f);
     AccessTrace t2 = new AccessTrace(f);
-    assertEquals(t.getTraceLength(), t2.getTraceLength());
+    assertEquals(t.getLength(), t2.getLength());
     assertEquals(t.getHighValue(), t2.getHighValue());
     assertEquals(t.getLowValue(), t2.getLowValue());
     assertEquals(t.getValueCount(), t2.getValueCount());
@@ -56,7 +56,7 @@ public class AccessTraceTest {
           this.getClass().getResourceAsStream("/xy.txt"),
           Charset.forName("UTF-8"));
     AccessTrace t = new AccessTrace(p);
-    System.err.println("Access count: " + t.getTraceLength());
+    System.err.println("Access count: " + t.getLength());
     File f = new File("xy.trc.bin");
     t.write(f);
   }
@@ -66,7 +66,7 @@ public class AccessTraceTest {
           this.getClass().getResourceAsStream("/xy.txt"),
           Charset.forName("UTF-8"));
     AccessTrace t = new AccessTrace(p);
-    System.err.println("Access count: " + t.getTraceLength());
+    System.err.println("Access count: " + t.getLength());
     File f = new File("xy.trc.bin");
     t.write(f);
   }

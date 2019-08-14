@@ -47,7 +47,7 @@ public class Base0MapperTest {
     AccessTrace t2 = new AccessTrace(new Base0Mapper(p));
     assertEquals(t1.getValueCount(), t2.getValueCount());
     assertEquals(t1.getHighValue(), t2.getHighValue());
-    assertEquals(t1.getTraceLength(), t2.getTraceLength());
+    assertEquals(t1.getLength(), t2.getLength());
     assertEquals(t1.getArray()[0], t2.getArray()[0]);
     assertEquals(t1.getArray()[1], t2.getArray()[1]);
     assertEquals(t1.getArray()[7], t2.getArray()[7]);

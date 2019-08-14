@@ -44,10 +44,12 @@ package org.cache2k.benchmark.util;
  * LICENSE file.
  */
 
+import it.unimi.dsi.util.XoShiRo256StarStarRandom;
 import it.unimi.dsi.util.XorShift1024StarRandomGenerator;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * A generator of a zipfian distribution. It produces a sequence of items, such that some items are more popular than others, according
@@ -92,7 +94,7 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
    */
   double alpha,zetan,eta,theta,zeta2theta;
 
-  XorShift1024StarRandomGenerator randomGenerator;
+  Random randomGenerator;
 
   /******************************* Constructors **************************************/
 
@@ -154,7 +156,7 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
     zetan = _zetan;
 
     eta = (1 - Math.pow(2.0/items,1-theta))/(1-zeta2theta/zetan);
-    randomGenerator = new XorShift1024StarRandomGenerator(_randomSeed);
+    randomGenerator = new XoShiRo256StarStarRandom(_randomSeed);
   }
 
   /**************************************************************************/
@@ -166,6 +168,7 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
    */
   static {
     zetaStaticMap.put("2|0.99", 1.5034777750283594);
+    zetaStaticMap.put("10000|0.99", 10.224361459595578);
     zetaStaticMap.put("1000000|0.99", 15.391849746037371);
     zetaStaticMap.put("8000000|0.99", 17.80436406783243);
     zetaStaticMap.put("10000000|0.99", 18.066242574968303);

@@ -33,7 +33,7 @@ import java.io.PrintWriter;
  */
 public class BenchmarkingBase {
 
-  protected BenchmarkCacheFactory factory = new Cache2kForEvictionBenchmarkFactory();
+  protected BenchmarkCacheFactory factory = new Cache2kStarFactory();
 
   BenchmarkCache<Integer, Integer> cache = null;
 
@@ -91,46 +91,41 @@ public class BenchmarkingBase {
     logHitRate(c, t, _missCount);
     c.close();
     return
-      ((t.getTraceLength() - (int) _missCount) * 10000 + t.getTraceLength() / 2) / t.getTraceLength();
+      ((t.getLength() - (int) _missCount) * 10000 + t.getLength() / 2) / t.getLength();
   }
 
   public void logHitRate(BenchmarkCache c, AccessTrace _trace, long _missCount) {
-    int _optHitRate = -1;
-    int _optHitCount = -1;
-    String _testName = _trace.getName();
-    saveHitRate(_testName, c.getCapacity(), _trace, _optHitRate,_optHitCount, _missCount, 0);
+    saveHitRate(_trace, _missCount);
     String _cacheStatistics = c.toString();
     System.out.println(_cacheStatistics);
     System.out.flush();
   }
 
-  void saveHitRate(String _testName, int _cacheSize, AccessTrace _trace, int _optHitRate, int _optHitCount, long _missCount, long _usedMem) {
-    double _hitRateTimes100 =
-      (_trace.getTraceLength() - _missCount) * 100D / _trace.getTraceLength();
-    String _hitRate = String.format("%.2f", _hitRateTimes100);
+  void saveHitRate(AccessTrace _trace, long _missCount) {
+    double hitRatePercent =
+      (_trace.getLength() - _missCount) * 100D / _trace.getLength();
+    String _traceName = _trace.getName();
+    String _hitRate = String.format("%.3f", hitRatePercent);
     String s = "";
+    long _cacheSize = cache.getCapacity();
     if (_cacheSize > 0) {
       s += "size=" + _cacheSize + ", ";
     }
-    s += "accessCount=" + _trace.getTraceLength();
+    s += "accessCount=" + _trace.getLength();
     s += ", missCount=" + _missCount + ", hitRatePercent=" + _hitRate;
-    if (_optHitRate >= 0) {
-      s += ", optHitRatePercent=" + String.format("%.2f", _optHitRate * 1D / 100);
-      s += ", optHitCount=" + _optHitCount;
-    }
     s += ", uniqueValues=" + _trace.getValueCount();
     String _cacheImplementation = factory.getName();
-    System.out.println(_cacheImplementation + "@" + _testName + ": " + s);
-    String _benchmarkName = _testName;
+    System.out.println(_cacheImplementation + "@" + _traceName + ": " + s);
     String _csvLine =
-      _benchmarkName + "|" +  // 1
-      _cacheImplementation + "|" + // 2
-        String.format("%.2f", _hitRateTimes100) + "|" + // 3
-        _cacheSize + "|" + // 4
-        _missCount + "|" + // 5
-      _trace.getTraceLength() + "|" + // 6
-      _trace.getValueCount(); // 7
-
+      _traceName + "|" +  // 1
+      factory.getName() + "|" + // 2
+      _cacheSize + "|" + // 3
+      String.format("%.3f", hitRatePercent) + "|" + // 4
+      _trace.getLength() + "|" + // 5
+      _missCount + "|" + // 6
+      0 + "| "  + // 7
+      -1 +  "| " + // 8
+      cache.toString(); // 9
     writeCsv(_csvLine);
   }
 

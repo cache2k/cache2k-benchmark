@@ -33,6 +33,7 @@ public class TraceSupplier implements Supplier<AccessTrace> {
 	private AccessTrace trace;
 	private Callable<AccessTrace> supplier;
 	private String name;
+	private int[] sizes = null;
 
 	public static TraceSupplier fromLongStream(Callable<LongStream> supplier) {
 		return new TraceSupplier(() ->
@@ -63,6 +64,15 @@ public class TraceSupplier implements Supplier<AccessTrace> {
 		return this;
 	}
 
+	public TraceSupplier sizes(int... sizes) {
+		this.sizes = sizes;
+		return this;
+	}
+
+	public int[] getSizes() {
+		return sizes;
+	}
+
 	@Override
 	public AccessTrace get() {
 		if (trace != null) {
@@ -77,7 +87,8 @@ public class TraceSupplier implements Supplier<AccessTrace> {
 		return trace;
 	}
 
-	public static <E extends Throwable> void sneakyThrow(Throwable e) throws E {
+	@SuppressWarnings("unchecked")
+	private static <E extends Throwable> void sneakyThrow(Throwable e) throws E {
 		throw (E) e;
 	}
 

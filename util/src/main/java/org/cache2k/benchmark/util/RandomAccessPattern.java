@@ -20,6 +20,8 @@ package org.cache2k.benchmark.util;
  * #L%
  */
 
+import it.unimi.dsi.util.XoShiRo256StarStarRandom;
+
 import java.util.Random;
 
 /**
@@ -30,7 +32,7 @@ import java.util.Random;
  */
 public class RandomAccessPattern extends AbstractEternalAccessPattern {
 
-  protected Random rng = new Random(1802);
+  protected Random rng = new XoShiRo256StarStarRandom();
 
   protected int upper;
 

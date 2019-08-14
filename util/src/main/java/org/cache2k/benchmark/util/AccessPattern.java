@@ -20,13 +20,36 @@ package org.cache2k.benchmark.util;
  * #L%
  */
 
+import java.util.PrimitiveIterator;
+import java.util.stream.IntStream;
+
 /**
  * Requests to a cache as a stream of integer numbers, which represent
  * the cache key.
  *
- * @author Jens Wilke; created: 2013-08-25
+ * @author Jens Wilke
  */
 public abstract class AccessPattern {
+
+  public static AccessPattern of(IntStream stream) {
+    final PrimitiveIterator.OfInt it = stream.iterator();
+    return new AccessPattern() {
+      @Override
+      public boolean isEternal() {
+        return false;
+      }
+
+      @Override
+      public boolean hasNext() {
+        return it.hasNext();
+      }
+
+      @Override
+      public int next() {
+        return it.next();
+      }
+    };
+  }
 
   /**
    * The pattern does never end, {@link #hasNext()} always returns true.
