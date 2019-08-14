@@ -30,6 +30,7 @@ public class Cache2kForEvictionBenchmarkFactory extends Cache2kFactory {
   {
     disableStatistics = false;
     strictEviction = true;
+    name("cache2k*");
   }
 
 }

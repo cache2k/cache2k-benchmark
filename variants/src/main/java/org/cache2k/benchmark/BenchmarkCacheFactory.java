@@ -20,11 +20,14 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import scala.concurrent.java8.FuturesConvertersImpl;
+
 /**
  * @author Jens Wilke
  */
 public abstract class BenchmarkCacheFactory {
 
+  private String name;
   protected boolean withExpiry;
 
   public final IntBenchmarkCache<Integer> create(int _maxElements) {
@@ -67,6 +70,11 @@ public abstract class BenchmarkCacheFactory {
     return c;
   }
 
+  public BenchmarkCacheFactory name(String name) {
+    this.name = name;
+    return this;
+  }
+
   public BenchmarkCacheFactory withExpiry(boolean v) {
     withExpiry = v;
     return this;
@@ -78,6 +86,29 @@ public abstract class BenchmarkCacheFactory {
    */
   protected <K,V> BenchmarkCache<K, V> createSpecialized(Class<K> _keyType, Class<V> _valueType, int _maxElements) {
     throw new UnsupportedOperationException();
+  }
+
+  public String getName() {
+    if (name != null) {
+      return name;
+    }
+    String s = this.getClass().getSimpleName();
+    String[] _stripSuffixes = new String[]{"CacheFactory", "Factory"};
+    for (String _suffix : _stripSuffixes) {
+      if (s.endsWith(_suffix)) {
+        s = s.substring(0, s.length() - _suffix.length());
+      }
+    }
+    s = s.toLowerCase();
+    return s;
+  }
+
+  @Override
+  public String toString() {
+    return "BenchmarkCacheFactory{" +
+      "name='" + getName() + '\'' +
+      ", withExpiry=" + withExpiry +
+      '}';
   }
 
 }

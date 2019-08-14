@@ -81,8 +81,12 @@ public class TraceSupplier implements Supplier<AccessTrace> {
 		throw (E) e;
 	}
 
-	public String toString() {
+	public String getName() {
 		return name;
+	}
+
+	public String toString() {
+		return TraceSupplier.class.getSimpleName() + "(" + name + ")";
 	}
 
 }

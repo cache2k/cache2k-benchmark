@@ -27,17 +27,12 @@ import org.cache2k.benchmark.util.AccessTrace;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * @author Jens Wilke; created: 2013-12-08
  */
 public class BenchmarkingBase {
 
-  static Map<String,String> benchmarkName2csv = new TreeMap<>();
-  static HashSet<String> onlyOneResult = new HashSet<>();
   protected BenchmarkCacheFactory factory = new Cache2kForEvictionBenchmarkFactory();
 
   BenchmarkCache<Integer, Integer> cache = null;
@@ -85,32 +80,6 @@ public class BenchmarkingBase {
     return _missCount;
   }
 
-  public static final long runBenchmark(BenchmarkCache<Integer, Integer> c, AccessTrace t, int _steps) {
-    Integer[] _trace = t.getObjectArray();
-    if (c instanceof SimulatorPolicy) {
-      SimulatorPolicy p = (SimulatorPolicy) c;
-      for (Integer k : _trace) {
-        ((SimulatorPolicy) c).record(k);
-        if (_steps-- == 0) {
-          return p.getMissCount();
-        }
-      }
-      return p.getMissCount();
-    }
-    long _missCount =  0;
-    for (Integer k : _trace) {
-      Integer v = c.get(k);
-      if (v == null) {
-        c.put(k, k);
-        _missCount++;
-      }
-      if (_steps-- == 0) {
-        return _missCount;
-      }
-    }
-    return _missCount;
-  }
-
   public final int runBenchmark(TraceSupplier sup, int _cacheSize) {
     return runBenchmark(sup.get(), _cacheSize);
   }
@@ -128,13 +97,8 @@ public class BenchmarkingBase {
   public void logHitRate(BenchmarkCache c, AccessTrace _trace, long _missCount) {
     int _optHitRate = -1;
     int _optHitCount = -1;
-    String _testName = extractTestName();
-    if (onlyOneResult.contains(_testName)) {
-      return;
-    }
-    onlyOneResult.add(_testName);
-    long _usedMem = -1;
-    saveHitRate(_testName, c.getCapacity(), _trace, _optHitRate,_optHitCount, _missCount, _usedMem);
+    String _testName = _trace.getName();
+    saveHitRate(_testName, c.getCapacity(), _trace, _optHitRate,_optHitCount, _missCount, 0);
     String _cacheStatistics = c.toString();
     System.out.println(_cacheStatistics);
     System.out.flush();
@@ -155,10 +119,9 @@ public class BenchmarkingBase {
       s += ", optHitCount=" + _optHitCount;
     }
     s += ", uniqueValues=" + _trace.getValueCount();
-    System.out.println(_testName + ": " + s);
-    int idx = _testName.lastIndexOf('.');
-    String _cacheImplementation = _testName.substring(0, idx);
-    String _benchmarkName = _testName.substring(idx + 1);
+    String _cacheImplementation = factory.getName();
+    System.out.println(_cacheImplementation + "@" + _testName + ": " + s);
+    String _benchmarkName = _testName;
     String _csvLine =
       _benchmarkName + "|" +  // 1
       _cacheImplementation + "|" + // 2
@@ -168,10 +131,7 @@ public class BenchmarkingBase {
       _trace.getTraceLength() + "|" + // 6
       _trace.getValueCount(); // 7
 
-    if (!benchmarkName2csv.containsKey(_testName)) {
-      benchmarkName2csv.put(_testName, _csvLine);
-      writeCsv(_csvLine);
-    }
+    writeCsv(_csvLine);
   }
 
   void writeCsv(String _csvLine) {
@@ -186,19 +146,6 @@ public class BenchmarkingBase {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  String extractTestName() {
-    Exception e = new Exception();
-    int idx = 1;
-    StackTraceElement[] _stackTrace = e.getStackTrace();
-    do {
-      String n = _stackTrace[idx].getMethodName();
-      idx++;
-      if (n.startsWith("benchmark") || n.startsWith("test")) {
-        return this.getClass().getName() + "." + _stackTrace[idx - 1].getMethodName();
-      }
-    } while (true);
   }
 
 }

@@ -252,8 +252,13 @@ public class AccessTrace implements Iterable<Integer> {
     valueCount = _values.size();
   }
 
+  public String getName() {
+    return name;
+  }
+
   public String toString() {
-    return String.format("AccessTrace(length=%d, values=%d)",
+    return String.format("AccessTrace(name=%s, length=%d, values=%d)",
+      getName(),
       getTraceLength(),
       getValueCount());
   }

@@ -8,7 +8,7 @@
     <version>0.22-SNAPSHOT</version>
   </parent>
 
-  <artifactId>zoo</artifactId>
+  <artifactId>variants</artifactId>
   <version>0.22-SNAPSHOT</version>
 
   <name>Benchmarks: Implementation and eviction variants</name>
