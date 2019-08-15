@@ -36,84 +36,16 @@ import java.util.Set;
  */
 public class EvictionMatrixTestBase extends BenchmarkingBase {
 
-  private TestVariation variation;
+  private EvictionTestVariation variation;
 
-  public EvictionMatrixTestBase(TestVariation variation) {
+  public EvictionMatrixTestBase(EvictionTestVariation variation) {
     this.variation = variation;
-    factory = variation.cacheFactory;
+    factory = variation.getCacheFactory();
   }
 
   @Test
   public void test() {
-    runBenchmark(variation.traceSupplier, variation.cacheSize);
-  }
-
-  public static class TestVariation {
-    private final TraceSupplier traceSupplier;
-    private final BenchmarkCacheFactory cacheFactory;
-    private final int cacheSize;
-
-    public TestVariation(final TraceSupplier traceSupplier, final BenchmarkCacheFactory cacheFactory, final int cacheSize) {
-      this.traceSupplier = traceSupplier;
-      this.cacheFactory = cacheFactory;
-      this.cacheSize = cacheSize;
-    }
-
-    public TraceSupplier getTraceSupplier() {
-      return traceSupplier;
-    }
-
-    public BenchmarkCacheFactory getCacheFactory() {
-      return cacheFactory;
-    }
-
-    public int getCacheSize() {
-      return cacheSize;
-    }
-
-    @Override
-    public String toString() {
-      return cacheFactory.getName() + "#" + cacheSize + "@" + traceSupplier.getName();
-    }
-  }
-
-  public static class VariationBuilder {
-
-    private Set<BenchmarkCacheFactory> caches = new HashSet<>();
-    private Map<TraceSupplier, Set<Integer>> trace2sizes = new HashMap<>();
-
-    public VariationBuilder add(BenchmarkCacheFactory factory) {
-      caches.add(factory);
-      return this;
-    }
-
-    public VariationBuilder add(TraceSupplier trace, int... cacheSizes) {
-      Set<Integer> sizes = trace2sizes.computeIfAbsent(trace, x -> new HashSet<>());
-      for (int i : (cacheSizes.length == 0 ? trace.getSizes() : cacheSizes)) { sizes.add(i); }
-      return this;
-    }
-
-    public VariationBuilder merge(VariationBuilder builder) {
-      caches.addAll(builder.caches);
-      builder.trace2sizes.forEach((trace, sizes) ->
-        {
-          Set<Integer> ourSizes = trace2sizes.computeIfAbsent(trace, x -> new HashSet<>());
-          ourSizes.addAll(sizes);
-        }
-      );
-      return this;
-    }
-
-    public Collection<TestVariation> build() {
-      final List<TestVariation> result = new ArrayList<>();
-      caches.forEach(cache ->
-        trace2sizes.forEach((trace, sizes) ->
-          sizes.forEach(size ->
-            result.add(new TestVariation(trace, cache, size))
-          )));
-      return result;
-    }
-
+    runBenchmark(variation.getTraceSupplier(), variation.getCacheSize());
   }
 
 }

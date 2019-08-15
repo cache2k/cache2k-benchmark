@@ -20,6 +20,9 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import org.cache2k.benchmark.traces.Traces;
+import org.junit.ClassRule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -27,18 +30,33 @@ import org.junit.runners.Parameterized;
  * @author Jens Wilke
  */
 @RunWith(Parameterized.class)
-public class RunAllTraces extends EvictionMatrixTestBase {
+public class RunAllTraces {
 
-	final static VariationBuilder caches = new VariationBuilder()
+	@ClassRule
+	public static EvictionBenchmarkRunnerRule rule = new EvictionBenchmarkRunnerRule()
+		.peers("cache2kV12", "caffeine*");
+
+	public final static EvictionTestVariation.Builder caches = new EvictionTestVariation.Builder()
 		.add(new Cache2kStarFactory());
+
+	public final static EvictionTestVariation.Builder traces = new EvictionTestVariation.Builder()
+		.add(Traces.OLTP)
+		.add(Traces.ORM_BUSY);
 
 	@Parameterized.Parameters(name="{0}")
 	public static Iterable<? extends Object> data() {
-		return new VariationBuilder().merge(caches).merge(TraceCollections.ALL_TRACES).build();
+		return new EvictionTestVariation.Builder().merge(caches).merge(traces).build();
 	}
 
-	public RunAllTraces(final Object point) {
-		super((TestVariation) point);
+	private EvictionTestVariation variation;
+
+	public RunAllTraces(final EvictionTestVariation variation) {
+		this.variation = variation;
+	}
+
+	@Test
+	public void run() {
+		rule.runBenchmark(variation);
 	}
 
 }

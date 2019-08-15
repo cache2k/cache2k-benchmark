@@ -27,8 +27,8 @@ import org.cache2k.benchmark.traces.Traces;
  */
 public class TraceCollections {
 
-	public final static EvictionMatrixTestBase.VariationBuilder ALL_TRACES =
-		new EvictionMatrixTestBase.VariationBuilder()
+	public final static EvictionTestVariation.Builder ALL_TRACES =
+		new EvictionTestVariation.Builder()
 			.add(Traces.SPRITE)
 			.add(Traces.CPP)
 			.add(Traces.MULTI2)

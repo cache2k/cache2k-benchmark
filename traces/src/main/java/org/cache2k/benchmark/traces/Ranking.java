@@ -26,59 +26,84 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
+import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
+ * Collects results of eviction benchmarks and is able to print a comparison summary.
+ * Can also read results from previous test runs.
+ *
  * @author Jens Wilke
  */
+@SuppressWarnings("WeakerAccess")
 public class Ranking {
 
-	private Map<String, Map<Long, List<Result>>> trace2size2resultList = new HashMap<>();
+	public static final String EVALUATION_RESULTS_DIR = "evaluation-results";
+	private final Map<String, Map<Long, List<Result>>> trace2size2resultList = new HashMap<>();
 
-	public void readEvaluationResults() {
-		File dir = new File("evaluation-results");
+	/**
+	 * Read results for comparison from directory {@value EVALUATION_RESULTS_DIR}. Either
+	 * in current directory or in parent directory.
+	 */
+	public synchronized void readEvaluationResults() {
+		readEvaluationResults(EVALUATION_RESULTS_DIR);
+	}
+
+	/**
+	 * Read evaluation results
+	 *
+	 * @param directory directory of CSV files to read.
+	 */
+	public synchronized void readEvaluationResults(String directory) {
+		File dir = new File(directory);
 		if (dir.exists() || dir.isDirectory()) {
 			readFromDir(dir);
 		} else {
-			dir = new File("../evaluation-results");
+			dir = new File("../" + directory);
 			if (dir.exists() || dir.isDirectory()) {
 				readFromDir(dir);
 			}
 		}
 	}
 
-	private void readFromDir(final File _dir) {
-		for (File f : _dir.listFiles()) {
+	private void readFromDir(final File directory) {
+		for (File f : Objects.requireNonNull(directory.listFiles())) {
 			readCsvFile(f);
 		}
 	}
 
+	/**
+	 * Read this CSV file.
+	 *
+	 * @param file
+	 */
 	public void readCsvFile(File file) {
 		try {
 			LineNumberReader r = new LineNumberReader(new FileReader(file));
 			String line;
 			while ((line = r.readLine()) != null) {
-				add(readCsvLine(line, null));
+				add(readCsvLine(line));
 			}
 		} catch (IOException ex) {
 			throw new RuntimeException(ex);
 		}
 	}
 
-	public static Result readCsvLine(String s, String otherImplementation) {
+	private static Result readCsvLine(String s) {
 		try {
 			String[] sa = s.split("\\|");
 			Result r = new Result();
 			r.traceName = sa[0];
-			r.implementationName = otherImplementation != null ? otherImplementation : sa[1];
+			r.implementationName = sa[1];
 			r.cacheSize = Long.parseLong(sa[2]);
 			r.traceLength = Long.parseLong(sa[4]);
 			r.missCount = Long.parseLong(sa[5]);
@@ -88,89 +113,42 @@ public class Ranking {
 		}
 	}
 
-	public void add(Result res) {
+	public synchronized void add(Result res) {
 		Map<Long, List<Result>> size2res = trace2size2resultList.computeIfAbsent(res.traceName, k -> new HashMap<>());
 		List<Result> list = size2res.computeIfAbsent(res.cacheSize, k -> new ArrayList<>());
 		list.add(res);
-		list.sort(new Comparator<Result>() {
-			@Override
-			public int compare(final Result o1, final Result o2) {
-				return (int) (o1.missCount - o2.missCount);
-			}
-		});
+		list.sort((o1, o2) -> (int) (o1.missCount - o2.missCount));
 	}
 
-	public void printSummary(Ranking currentRun, String[] comparisonImplementations) {
-		collectSummary(currentRun, (r,l) -> summaryLine(r,l, 3));
+	public void addAll(Iterable<Result> list) {
+		list.forEach(this::add);
+	}
+
+	public void addAll(Stream<Result> stream) {
+		stream.forEach(this::add);
+	}
+
+	public synchronized void writeTopSummary(PrintWriter writer, Ranking currentRun, int count) {
+		collectSummary(writer, currentRun, (r, l) -> summaryLine(r, l, count));
+	}
+
+	public synchronized void printSummary(PrintWriter writer, Ranking currentRun, String[] comparisonImplementations) {
 		if (comparisonImplementations != null && comparisonImplementations.length > 0) {
 			double[] diffSum = new double[comparisonImplementations.length];
 			int[] counts = new int[comparisonImplementations.length];
-			collectSummary(currentRun, (r, l) -> summaryPick(r, l, comparisonImplementations, diffSum, counts));
-			System.out.print("- - -");
+			collectSummary(writer, currentRun, (r, l) -> summaryPick(r, l, comparisonImplementations, diffSum, counts));
+			writer.print("- - -");
 			for (int i = 0; i < counts.length; i++) {
-				System.out.print(String.format(" - %.3f", diffSum[i] / counts[i]));
+				writer.print(String.format(" - %.3f", diffSum[i] / counts[i]));
 			}
+			writer.println();
 		}
 	}
 
-	public Collection<Result> getAllResults() {
+	public synchronized Collection<Result> getAllResults() {
 		return
 			trace2size2resultList
 				.values().stream().flatMap(m -> m.values().stream().flatMap(Collection::stream)).collect(Collectors.toList());
-	}
-
-	public void collectSummary(Ranking currentRun, BiConsumer<Result, List<Result>> collect) {
-		for (Map.Entry<String, Map<Long, List<Result>>> entry : currentRun.trace2size2resultList.entrySet()) {
-			String traceName = entry.getKey();
-			List<Long> sizes = new ArrayList<>();
-			sizes.addAll(entry.getValue().keySet());
-			sizes.sort(Long::compareTo);
-			for (long cacheSize : sizes) {
-				Result result = entry.getValue().get(cacheSize).get(0);
-				List<Result> ranking = getRanking(traceName, cacheSize);
-				collect.accept(result, ranking);
-			}
-		}
-	}
-
-	public void summaryLine(Result result, List<Result> ranking, int count) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("%s %d %.3f",
-				result.traceName,
-				result.cacheSize,
-				result.getHitPercent()));
-		count = Math.min(count, ranking.size());
-		for (int i = 0; i < count; i++) {
-			Result best = ranking.get(i);
-			sb.append(String.format(" %s %.3f %.3f",
-				best.implementationName,
-				best.getHitPercent(),
-				result.getHitPercent() - best.getHitPercent()));
-		}
-		System.out.println(sb);
-	}
-
-	public void summaryPick(Result result, List<Result> ranking, String[] implementations, double[] diffSum, int[] count) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("%s %d %.3f",
-			result.traceName,
-			result.cacheSize,
-			result.getHitPercent()));
-		for (int i = 0; i < implementations.length; i++) {
-			String implementation = implementations[i];
-			final int index = i;
-			ranking.stream()
-				.filter(r -> r.getImplementationName().equals(implementation)).findAny()
-				.ifPresent(r -> {
-					double diff = result.getHitPercent() - r.getHitPercent();
-					sb.append(String.format(" %.3f %.3f",
-					r.getHitPercent(),
-					diff));
-					count[index]++;
-					diffSum[index] += diff;
-				});
-		}
-		System.out.println(sb);
 	}
 
 	public List<Result> getRanking(String traceName, long cacheSize) {
@@ -194,7 +172,61 @@ public class Ranking {
 				.append(r.implementationName)
 				.append('=')
 				.append(String.format("%.3f",r.getHitPercent()))
-			);
+		);
+		return sb.toString();
+	}
+
+	private void collectSummary(PrintWriter writer, Ranking currentRun, BiFunction<Result, List<Result>, String> collect) {
+		for (Map.Entry<String, Map<Long, List<Result>>> entry : currentRun.trace2size2resultList.entrySet()) {
+			String traceName = entry.getKey();
+			List<Long> sizes = new ArrayList<>();
+			sizes.addAll(entry.getValue().keySet());
+			sizes.sort(Long::compareTo);
+			for (long cacheSize : sizes) {
+				Result result = entry.getValue().get(cacheSize).get(0);
+				List<Result> ranking = getRanking(traceName, cacheSize);
+				writer.println(collect.apply(result, ranking));
+			}
+		}
+	}
+
+	private String summaryLine(Result result, List<Result> ranking, int count) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(String.format("%s %d %.3f",
+				result.traceName,
+				result.cacheSize,
+				result.getHitPercent()));
+		count = Math.min(count, ranking.size());
+		for (int i = 0; i < count; i++) {
+			Result best = ranking.get(i);
+			sb.append(String.format(" %s %.3f %.3f",
+				best.implementationName,
+				best.getHitPercent(),
+				result.getHitPercent() - best.getHitPercent()));
+		}
+		return sb.toString();
+	}
+
+	private String summaryPick(Result result, List<Result> ranking, String[] implementations, double[] diffSum, int[] count) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(String.format("%s %d %.3f",
+			result.traceName,
+			result.cacheSize,
+			result.getHitPercent()));
+		for (int i = 0; i < implementations.length; i++) {
+			String implementation = implementations[i];
+			final int index = i;
+			ranking.stream()
+				.filter(r -> r.getImplementationName().equals(implementation)).findAny()
+				.ifPresent(r -> {
+					double diff = result.getHitPercent() - r.getHitPercent();
+					sb.append(String.format(" %.3f %.3f",
+					r.getHitPercent(),
+					diff));
+					count[index]++;
+					diffSum[index] += diff;
+				});
+		}
 		return sb.toString();
 	}
 
@@ -249,6 +281,7 @@ public class Ranking {
 		public void setMissCount(final long v) {
 			missCount = v;
 		}
+
 	}
 
 }

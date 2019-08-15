@@ -51,7 +51,6 @@ public class BenchmarkingBase {
 
   @AfterClass
   public static void printRankingSummary() {
-    RANKING.printSummary(CURRENT_RUN, new String[]{"cache2kV12", "caffeine*"});
   }
 
   public BenchmarkCache<Integer, Integer> freshCache(AccessTrace t, int _maxElements) {

@@ -22,6 +22,7 @@ package org.cache2k.benchmark.thirdparty;
 
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.EvictionMatrixTestBase;
+import org.cache2k.benchmark.EvictionTestVariation;
 import org.cache2k.benchmark.TraceCollections;
 import org.cache2k.benchmark.cache.CaffeineStarFactory;
 import org.junit.runner.RunWith;
@@ -49,16 +50,16 @@ public class RunAllWithTheOne extends EvictionMatrixTestBase {
 		}
 	}
 
-	public final static VariationBuilder CONFIGURED_CACHE = new VariationBuilder()
+	public final static EvictionTestVariation.Builder CONFIGURED_CACHE = new EvictionTestVariation.Builder()
 		.add(resolveFactory());
 
 	@Parameterized.Parameters(name="{0}")
 	public static Iterable<? extends Object> data() {
-		return new VariationBuilder().merge(CONFIGURED_CACHE).merge(TraceCollections.ALL_TRACES).build();
+		return new EvictionTestVariation.Builder().merge(CONFIGURED_CACHE).merge(TraceCollections.ALL_TRACES).build();
 	}
 
 	public RunAllWithTheOne(final Object point) {
-		super((TestVariation) point);
+		super((EvictionTestVariation) point);
 	}
 
 }
