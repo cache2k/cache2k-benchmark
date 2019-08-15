@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.cache;
 
 /*
  * #%L
@@ -20,17 +20,18 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.impls.PartitionedLinkedHashMapCache;
-import org.cache2k.benchmark.impls.SynchronizedLinkedHashMapCache;
+import org.cache2k.benchmark.Cache2kFactory;
 
 /**
- * @author Jens Wilke
+ * Create a cache2k implementation variant optimized, if no eviction needs to take place.
+ * We use the random eviction algorithm, which does not count hits. This is interesting to
+ * see how much overhead the hit recording needs in the other implementations.
  */
-public class PartitionedLinkedHashMapFactory extends BenchmarkCacheFactory {
+public class Cache2kNoEvictionFactory extends Cache2kFactory {
 
-	@Override
-	protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-		return new PartitionedLinkedHashMapCache<>(_maxElements);
-	}
+  {
+    if (1 == 1)
+      throw new UnsupportedOperationException();
+  }
 
 }

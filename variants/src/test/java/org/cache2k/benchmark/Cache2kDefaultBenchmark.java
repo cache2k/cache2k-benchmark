@@ -20,6 +20,8 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import org.cache2k.benchmark.cache.Cache2kStarFactory;
+
 /**
  * @author Jens Wilke; created: 2013-06-13
  */

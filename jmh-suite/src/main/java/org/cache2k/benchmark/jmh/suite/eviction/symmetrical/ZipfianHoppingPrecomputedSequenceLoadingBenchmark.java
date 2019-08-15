@@ -68,7 +68,7 @@ public class ZipfianHoppingPrecomputedSequenceLoadingBenchmark extends Benchmark
 
   private Integer[] pattern;
 
-  private final ZipfianSequenceLoadingBenchmark.DataSource source = new ZipfianSequenceLoadingBenchmark.DataSource();
+  private final ZipfianSequenceLoadingBenchmark.DataLoader source = new ZipfianSequenceLoadingBenchmark.DataLoader();
 
   @State(Scope.Thread)
   public static class ThreadState {

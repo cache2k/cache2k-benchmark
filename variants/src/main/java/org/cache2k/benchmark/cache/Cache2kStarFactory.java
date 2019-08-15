@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.cache;
 
 /*
  * #%L
@@ -20,6 +20,8 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import org.cache2k.benchmark.Cache2kFactory;
+
 /**
  * Build a cache2k cache that is tuned towards optimal eviction.
  * Normally cache2k build multiple segments in multi core environments
@@ -30,9 +32,9 @@ package org.cache2k.benchmark;
 public class Cache2kStarFactory extends Cache2kFactory {
 
   {
-    disableStatistics = false;
-    strictEviction = true;
-    name("cache2k*");
+    setDisableStatistics(false);
+    setStrictEviction(true);
+    setName("cache2k*");
   }
 
 }

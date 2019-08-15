@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.cache;
 
 /*
  * #%L
@@ -20,11 +20,19 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import org.cache2k.benchmark.BenchmarkCache;
+import org.cache2k.benchmark.BenchmarkCacheFactory;
+import org.cache2k.benchmark.impls.PartitionedLinkedHashMapCache;
+import org.cache2k.benchmark.impls.SynchronizedLinkedHashMapCache;
+
 /**
  * @author Jens Wilke
  */
-public abstract class BenchmarkCacheSource<K,V> {
+public class PartitionedLinkedHashMapFactory extends BenchmarkCacheFactory {
 
-  public abstract V load(K key);
+	@Override
+	protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+		return new PartitionedLinkedHashMapCache<>(_maxElements);
+	}
 
 }

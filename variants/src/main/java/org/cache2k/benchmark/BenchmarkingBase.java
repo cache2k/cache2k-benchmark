@@ -20,6 +20,7 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import org.cache2k.benchmark.cache.Cache2kStarFactory;
 import org.cache2k.benchmark.eviction.EvictionStats;
 import org.cache2k.benchmark.traces.Ranking;
 import org.cache2k.benchmark.util.TraceSupplier;

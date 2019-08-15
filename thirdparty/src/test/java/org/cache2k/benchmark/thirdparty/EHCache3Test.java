@@ -21,7 +21,7 @@ package org.cache2k.benchmark.thirdparty;
  */
 
 import org.cache2k.benchmark.BenchmarkCache;
-import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.BenchmarkCacheLoader;
 import org.cache2k.benchmark.cache.JCacheCacheFactory;
 import org.ehcache.jsr107.EhcacheCachingProvider;
 import org.junit.Test;
@@ -48,7 +48,7 @@ public class EHCache3Test {
 		JCacheCacheFactory f = new JCacheCacheFactory();
 		f.setProvider(EhcacheCachingProvider.class.getName());
 		// f.setCacheName("benchmark");
-		BenchmarkCache<Integer, Integer> _cache = f.createLoadingCache(Integer.class, Integer.class, 10000, new BenchmarkCacheSource<Integer, Integer>() {
+		BenchmarkCache<Integer, Integer> _cache = f.createLoadingCache(Integer.class, Integer.class, 10000, new BenchmarkCacheLoader<Integer, Integer>() {
 			@Override
 			public Integer load(final Integer key) {
 				return key;

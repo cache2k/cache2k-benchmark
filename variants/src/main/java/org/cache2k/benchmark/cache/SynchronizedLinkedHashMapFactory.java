@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.cache;
 
 /*
  * #%L
@@ -20,13 +20,18 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-/**
- * Turn on expiry. This leads to more memory consumption to hold the timer queue.
- */
-public class Cache2kWithExpiryFactory extends Cache2kFactory {
+import org.cache2k.benchmark.BenchmarkCache;
+import org.cache2k.benchmark.BenchmarkCacheFactory;
+import org.cache2k.benchmark.impls.SynchronizedLinkedHashMapCache;
 
-  {
-    withExpiry = true;
-  }
+/**
+ * @author Jens Wilke
+ */
+public class SynchronizedLinkedHashMapFactory extends BenchmarkCacheFactory {
+
+	@Override
+	protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+		return new SynchronizedLinkedHashMapCache<>(_maxElements);
+	}
 
 }

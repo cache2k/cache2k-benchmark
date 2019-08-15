@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.eviction;
+package org.cache2k.benchmark.eviction.evaluationCache;
 
 /*
  * #%L
@@ -19,6 +19,10 @@ package org.cache2k.benchmark.eviction;
  * limitations under the License.
  * #L%
  */
+
+import org.cache2k.benchmark.eviction.EvictionPolicy;
+import org.cache2k.benchmark.eviction.EvictionStats;
+import org.cache2k.benchmark.eviction.LinkedEntry;
 
 /**
  * Eviction policy based on the Clock-Pro idea with changes as used in cache2k V1.2.

@@ -21,7 +21,7 @@ package org.cache2k.benchmark.cache;
  */
 
 import org.cache2k.benchmark.EvaluationCacheFactory;
-import org.cache2k.benchmark.eviction.ArcEviction;
+import org.cache2k.benchmark.eviction.evaluationCache.ArcEviction;
 
 /**
  * @author Jens Wilke
@@ -30,7 +30,7 @@ public class ArcEvictionFactory extends EvaluationCacheFactory {
 
 	{
 		withEviction(ArcEviction::new);
-		name("arc");
+		setName("arc");
 	}
 
 }

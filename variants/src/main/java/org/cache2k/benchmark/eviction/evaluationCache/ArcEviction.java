@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.eviction;
+package org.cache2k.benchmark.eviction.evaluationCache;
 
 /*
  * #%L
@@ -19,6 +19,9 @@ package org.cache2k.benchmark.eviction;
  * limitations under the License.
  * #L%
  */
+
+import org.cache2k.benchmark.eviction.EvictionPolicy;
+import org.cache2k.benchmark.eviction.LinkedEntry;
 
 import java.util.HashMap;
 
@@ -262,10 +265,10 @@ public class ArcEviction<K,V> extends EvictionPolicy<K, V, ArcEviction.Entry> {
 	public void close(long expectedSize) {
 		assert expectedSize >= b1Hash.size() + b2Hash.size();
 		assert expectedSize == (t1Size + t2Size);
-		assert b1Hash.size() == b1Head.size();
-		assert b2Hash.size() == b2Head.size();
-		assert t1Size == t1Head.size();
-		assert t2Size == t2Head.size();
+		assert b1Hash.size() == b1Head.listSize();
+		assert b2Hash.size() == b2Head.listSize();
+		assert t1Size == t1Head.listSize();
+		assert t2Size == t2Head.listSize();
 	}
 
 	public String toString() {

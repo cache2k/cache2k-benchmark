@@ -57,7 +57,7 @@ public class OptBenchmark extends RandomCacheBenchmark {
 
     @Override
     public void record(final Integer v) {
-      trace.add(v);
+      trace.add((int) v);
     }
 
     @Override

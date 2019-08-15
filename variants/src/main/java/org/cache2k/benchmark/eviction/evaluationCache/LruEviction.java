@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.eviction;
+package org.cache2k.benchmark.eviction.evaluationCache;
 
 /*
  * #%L
@@ -20,53 +20,38 @@ package org.cache2k.benchmark.eviction;
  * #L%
  */
 
-import it.unimi.dsi.util.XoShiRo256StarStarRandom;
-
-import java.util.Random;
+import org.cache2k.benchmark.eviction.EvictionPolicy;
+import org.cache2k.benchmark.eviction.LinkedEntry;
 
 /**
- * Eviction policy which just selects the evicted item by random.
- * Distributes all entries randomly into a bucket list and then picks
- * round robin for eviction.
+ * Eviction policy based on LRU.
  *
  * @author Jens Wilke
  */
-public class RandomEviction<K,V> extends EvictionPolicy<K, V, RandomEviction.Entry> {
+public class LruEviction<K,V> extends EvictionPolicy<K, V, LruEviction.Entry> {
 
-	private Random random = new XoShiRo256StarStarRandom(1802);
-	private Entry[] buckets;
-	private int evictionBucketIdx = 0;
-
-	@Override
-	public void setCapacity(final int v) {
-		super.setCapacity(v);
-		buckets = new Entry[getCapacity()];
-	}
+	private Entry head = new Entry(null,null).shortCircuit();
 
 	@Override
 	public Entry newEntry(final K key, final V value) {
 		Entry e = new Entry(key, value);
-		int bucketIdx = random.nextInt(buckets.length);
-		e.next = buckets[bucketIdx];
-		buckets[bucketIdx] = e;
+		head.insertInList(e);
 		return e;
 	}
 
 	@Override
 	public void recordHit(final Entry e) {
+		head.moveToFront(e);
 	}
 
 	@Override
 	public Entry evict() {
-		Entry e;
-		while ( (e = buckets[evictionBucketIdx]) == null) {
-			evictionBucketIdx++;
-			if (evictionBucketIdx >= buckets.length) {
-				evictionBucketIdx = 0;
-			}
-		}
-		buckets[evictionBucketIdx] = e.next;
-		return e;
+		return head.prev.removeFromList();
+	}
+
+	@Override
+	public void close(final long expectedSize) {
+		assert expectedSize == head.listSize();
 	}
 
 	@Override
@@ -76,7 +61,6 @@ public class RandomEviction<K,V> extends EvictionPolicy<K, V, RandomEviction.Ent
 
 	static class Entry extends LinkedEntry<Entry, Object, Object> {
 
-		private Entry next;
 		public Entry(final Object _key, final Object _value) {
 			super(_key, _value);
 		}

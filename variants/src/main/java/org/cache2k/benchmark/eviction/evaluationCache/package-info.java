@@ -1,4 +1,10 @@
-package org.cache2k.benchmark;
+/**
+ * A set of different eviction strategies implemented by Jens Wilke for evaluation
+ * purposes.
+ *
+ * @author Jens Wilke
+ */
+package org.cache2k.benchmark.eviction.evaluationCache;
 
 /*
  * #%L
@@ -19,17 +25,3 @@ package org.cache2k.benchmark;
  * limitations under the License.
  * #L%
  */
-
-import org.cache2k.benchmark.impls.SynchronizedLinkedHashMapCache;
-
-/**
- * @author Jens Wilke
- */
-public class SynchronizedLinkedHashMapFactory extends BenchmarkCacheFactory {
-
-	@Override
-	protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-		return new SynchronizedLinkedHashMapCache<>(_maxElements);
-	}
-
-}

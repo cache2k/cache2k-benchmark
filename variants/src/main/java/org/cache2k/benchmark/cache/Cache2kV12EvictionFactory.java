@@ -21,8 +21,7 @@ package org.cache2k.benchmark.cache;
  */
 
 import org.cache2k.benchmark.EvaluationCacheFactory;
-import org.cache2k.benchmark.eviction.ArcEviction;
-import org.cache2k.benchmark.eviction.Cache2kV12Eviction;
+import org.cache2k.benchmark.eviction.evaluationCache.Cache2kV12Eviction;
 
 /**
  * @author Jens Wilke
@@ -31,7 +30,7 @@ public class Cache2kV12EvictionFactory extends EvaluationCacheFactory {
 
 	{
 		withEviction(Cache2kV12Eviction::new);
-		name("cache2kV12");
+		setName("cache2kV12");
 	}
 
 }

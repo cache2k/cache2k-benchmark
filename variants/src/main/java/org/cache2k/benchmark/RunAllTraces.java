@@ -20,6 +20,7 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import org.cache2k.benchmark.cache.Cache2kStarFactory;
 import org.cache2k.benchmark.traces.Traces;
 import org.junit.ClassRule;
 import org.junit.Test;

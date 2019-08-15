@@ -26,7 +26,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
-import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.BenchmarkCacheLoader;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -61,7 +61,7 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
   @Override
   public <K, V> BenchmarkCache<K, V> createUnspecializedLoadingCache(
     final Class<K> _keyType, final Class<V> _valueType,
-    final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
+    final int _maxElements, final BenchmarkCacheLoader<K, V> _source) {
     CacheLoader<K,V> l = new CacheLoader<K, V>() {
       @Override
       public V load(final K key) {

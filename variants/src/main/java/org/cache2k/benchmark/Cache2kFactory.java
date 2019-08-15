@@ -33,9 +33,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Cache2kFactory extends BenchmarkCacheFactory {
 
-  AtomicInteger counter = new AtomicInteger();
-  boolean disableStatistics = true;
-  boolean strictEviction = false;
+  private AtomicInteger counter = new AtomicInteger();
+  private boolean disableStatistics = true;
+  private boolean strictEviction = false;
 
   @Override
   protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
@@ -126,7 +126,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
 
   @SuppressWarnings("unchecked")
   @Override
-  public <K, V> BenchmarkCache<K, V> createLoadingCache(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
+  public <K, V> BenchmarkCache<K, V> createLoadingCache(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements, final BenchmarkCacheLoader<K, V> _source) {
     final Cache<K, V> c = createInternal(_keyType, _valueType, _maxElements, _source);
     if (c instanceof IntCache) {
       final IntCache<V> ic = (IntCache<V>) c;
@@ -240,7 +240,7 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
     };
   }
 
-  private <K,V> Cache<K, V> createInternal(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
+  private <K,V> Cache<K, V> createInternal(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements, final BenchmarkCacheLoader<K, V> _source) {
     Cache2kBuilder<K, V> b =
       Cache2kBuilder.of(_keyType, _valueType)
         .name("testCache-" + counter.incrementAndGet())
@@ -269,4 +269,11 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
     return b.build();
   }
 
+  public void setDisableStatistics(final boolean _disableStatistics) {
+    disableStatistics = _disableStatistics;
+  }
+
+  public void setStrictEviction(final boolean _strictEviction) {
+    strictEviction = _strictEviction;
+  }
 }

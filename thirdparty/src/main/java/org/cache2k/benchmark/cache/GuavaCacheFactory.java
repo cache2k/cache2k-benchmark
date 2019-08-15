@@ -26,7 +26,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
-import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.BenchmarkCacheLoader;
 
 import java.util.concurrent.TimeUnit;
 
@@ -47,7 +47,7 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
   @Override
   public <K, V> BenchmarkCache<K, V> createUnspecializedLoadingCache(
     final Class<K> _keyType, final Class<V> _valueType,
-    final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
+    final int _maxElements, final BenchmarkCacheLoader<K, V> _source) {
     MyLoadingBenchmarkCache c = new MyLoadingBenchmarkCache();
     c.size = _maxElements;
     CacheBuilder cb = builder(_maxElements);

@@ -118,8 +118,10 @@ public class EvictionBenchmarkRunner {
    * is tested in this run.
    */
   private void saveAutoCandidate(final BenchmarkCacheFactory factory) {
-    if (autoCandidate == null && !multipleImplementations) {
-      autoCandidate = factory.getName();
+    if (autoCandidate == null) {
+      if (!multipleImplementations) {
+        autoCandidate = factory.getName();
+      }
     } else {
       multipleImplementations = !autoCandidate.equals(factory.getName());
       if (multipleImplementations) {

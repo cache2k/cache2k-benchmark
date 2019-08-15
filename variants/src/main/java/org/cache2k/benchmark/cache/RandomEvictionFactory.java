@@ -21,10 +21,7 @@ package org.cache2k.benchmark.cache;
  */
 
 import org.cache2k.benchmark.EvaluationCacheFactory;
-import org.cache2k.benchmark.eviction.ArcEviction;
-import org.cache2k.benchmark.eviction.RandomEviction;
-
-import java.util.Random;
+import org.cache2k.benchmark.eviction.evaluationCache.RandomEviction;
 
 /**
  * @author Jens Wilke
@@ -33,7 +30,7 @@ public class RandomEvictionFactory extends EvaluationCacheFactory {
 
 	{
 		withEviction(RandomEviction::new);
-		name("random");
+		setName("random");
 	}
 
 }

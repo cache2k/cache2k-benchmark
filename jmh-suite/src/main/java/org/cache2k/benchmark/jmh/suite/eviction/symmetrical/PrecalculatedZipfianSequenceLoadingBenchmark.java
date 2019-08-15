@@ -22,7 +22,7 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
-import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.BenchmarkCacheLoader;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
 import org.cache2k.benchmark.util.ZipfianPattern;
@@ -66,7 +66,7 @@ public class PrecalculatedZipfianSequenceLoadingBenchmark extends BenchmarkBase 
   @Param({"false"})
   public boolean expiry = false;
 
-  private final DataSource source = new DataSource();
+  private final DataLoader source = new DataLoader();
 
   @State(Scope.Thread)
   public static class ThreadState {
@@ -137,7 +137,7 @@ public class PrecalculatedZipfianSequenceLoadingBenchmark extends BenchmarkBase 
     return v;
   }
 
-  static class DataSource extends BenchmarkCacheSource<Integer, Integer> {
+  static class DataLoader extends BenchmarkCacheLoader<Integer, Integer> {
 
     LongAdder missCount = new LongAdder();
 

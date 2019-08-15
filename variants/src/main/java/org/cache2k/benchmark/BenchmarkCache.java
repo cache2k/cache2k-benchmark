@@ -33,7 +33,7 @@ public abstract class BenchmarkCache<K, V> implements Closeable {
 
   /**
    * Return the element that is present in the cache.
-   * If created via {@link BenchmarkCacheFactory#createLoadingCache(Class, Class, int, BenchmarkCacheSource)}
+   * If created via {@link BenchmarkCacheFactory#createLoadingCache(Class, Class, int, BenchmarkCacheLoader)}
    * the source will be called to populate the cache.
    */
   public V get(K key) {

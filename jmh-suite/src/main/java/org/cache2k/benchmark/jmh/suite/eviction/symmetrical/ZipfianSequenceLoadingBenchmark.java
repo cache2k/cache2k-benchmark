@@ -21,7 +21,7 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
  */
 
 import org.cache2k.benchmark.BenchmarkCacheFactory;
-import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.BenchmarkCacheLoader;
 import org.cache2k.benchmark.IntBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
@@ -66,7 +66,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @Param({"false"})
   public boolean expiry = false;
 
-  private final DataSource source = new DataSource();
+  private final DataLoader source = new DataLoader();
 
   /** Use thread safe RPNG to give each thread state another seed. */
   final Random offsetSeed = new Random(1802);
@@ -136,7 +136,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     return v;
   }
 
-  static class DataSource extends BenchmarkCacheSource<Integer, Integer> {
+  static class DataLoader extends BenchmarkCacheLoader<Integer, Integer> {
 
     LongAdder missCount = new LongAdder();
 

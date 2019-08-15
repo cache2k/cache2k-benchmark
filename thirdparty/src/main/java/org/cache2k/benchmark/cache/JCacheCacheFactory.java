@@ -21,17 +21,14 @@ package org.cache2k.benchmark.cache;
  */
 
 import com.github.benmanes.caffeine.jcache.configuration.CaffeineConfiguration;
-import com.typesafe.config.ConfigException;
 import org.cache2k.Cache2kBuilder;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
-import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.BenchmarkCacheLoader;
 import org.cache2k.jcache.ExtendedMutableConfiguration;
-import org.cache2k.jcache.JCacheConfiguration;
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.core.EhcacheManager;
 import org.ehcache.jsr107.Eh107Configuration;
 import org.ehcache.spi.loaderwriter.BulkCacheLoadingException;
 import org.ehcache.spi.loaderwriter.BulkCacheWritingException;
@@ -92,7 +89,7 @@ public class JCacheCacheFactory extends BenchmarkCacheFactory {
   @Override
   public <K, V> BenchmarkCache<K, V> createUnspecializedLoadingCache(
     final Class<K> _keyType, final Class<V> _valueType,
-    final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
+    final int _maxElements, final BenchmarkCacheLoader<K, V> _source) {
 
     final CacheLoader<K,V> l = new CacheLoader<K, V>() {
       @Override

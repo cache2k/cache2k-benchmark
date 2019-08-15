@@ -20,7 +20,7 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.eviction.Cache2kV12Eviction;
+import org.cache2k.benchmark.eviction.evaluationCache.Cache2kV12Eviction;
 
 /**
  * @author Jens Wilke

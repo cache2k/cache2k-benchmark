@@ -80,7 +80,7 @@ public class LinkedEntry<E extends LinkedEntry,K,V> extends Entry<K,V> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public final long size() {
+	public final long listSize() {
 		return entryCountFromCyclicList((E) this) - 1;
 	}
 

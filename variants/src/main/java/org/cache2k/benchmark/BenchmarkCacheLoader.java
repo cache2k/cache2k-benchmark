@@ -1,8 +1,8 @@
-package org.cache2k.benchmark.cache;
+package org.cache2k.benchmark;
 
 /*
  * #%L
- * Benchmarks: third party products.
+ * Benchmarks: Implementation and eviction variants
  * %%
  * Copyright (C) 2013 - 2019 headissue GmbH, Munich
  * %%
@@ -23,12 +23,8 @@ package org.cache2k.benchmark.cache;
 /**
  * @author Jens Wilke
  */
-public class CaffeineStarFactory extends CaffeineCacheFactory {
+public abstract class BenchmarkCacheLoader<K,V> {
 
-	{
-		sameThreadEviction(true);
-		fullEvictionCapacity(true);
-		setName("caffeine*");
-	}
+  public abstract V load(K key);
 
 }

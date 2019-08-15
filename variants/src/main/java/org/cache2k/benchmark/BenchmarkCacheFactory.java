@@ -59,13 +59,13 @@ public abstract class BenchmarkCacheFactory {
 
   public <K,V> BenchmarkCache<K, V> createUnspecializedLoadingCache(
     Class<K> _keyType, Class<V> _valueType,
-    int _maxElements, BenchmarkCacheSource<K,V> _source) {
+    int _maxElements, BenchmarkCacheLoader<K,V> _source) {
     throw new UnsupportedOperationException();
   }
 
   public <K,V> BenchmarkCache<K, V> createLoadingCache(
     Class<K> _keyType, Class<V> _valueType,
-    int _maxElements, BenchmarkCacheSource<K,V> _source) {
+    int _maxElements, BenchmarkCacheLoader<K,V> _source) {
     BenchmarkCache<K,V> c = createUnspecializedLoadingCache(_keyType, _valueType, _maxElements, _source);
     if (_keyType == Integer.class) {
       return  (BenchmarkCache<K, V>) IntBenchmarkCache.wrap((BenchmarkCache<Integer, V>) c);
@@ -73,7 +73,7 @@ public abstract class BenchmarkCacheFactory {
     return c;
   }
 
-  public BenchmarkCacheFactory name(String name) {
+  public BenchmarkCacheFactory setName(String name) {
     this.name = name;
     return this;
   }

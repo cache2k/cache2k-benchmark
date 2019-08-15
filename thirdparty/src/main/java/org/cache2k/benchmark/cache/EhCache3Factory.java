@@ -22,7 +22,7 @@ package org.cache2k.benchmark.cache;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
-import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.BenchmarkCacheLoader;
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.ResourceType;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
@@ -50,7 +50,7 @@ public class EhCache3Factory extends BenchmarkCacheFactory {
 
   @Override
   public <K, V> BenchmarkCache<K, V> createUnspecializedLoadingCache(final Class<K> _keyType, final Class<V> _valueType,
-                                                                     final int _maxElements, final BenchmarkCacheSource<K, V> _source) {
+                                                                     final int _maxElements, final BenchmarkCacheLoader<K, V> _source) {
     CacheLoaderWriter<K,V> lw = new CacheLoaderWriter<K, V>() {
       @Override
       public V load(final K key) throws Exception {

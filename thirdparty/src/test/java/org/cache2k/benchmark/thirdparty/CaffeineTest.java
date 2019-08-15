@@ -26,7 +26,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Weigher;
 import org.cache2k.benchmark.BenchmarkCache;
-import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.BenchmarkCacheLoader;
 import org.cache2k.benchmark.cache.JCacheCacheFactory;
 import org.junit.Test;
 
@@ -69,7 +69,7 @@ public class CaffeineTest {
 	public void testJCacheDefault10000ConfigurationAndLoader() {
 		JCacheCacheFactory f = new JCacheCacheFactory();
 		f.setProvider(com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider.class.getName());
-		BenchmarkCache<Integer, Integer> _cache = f.createLoadingCache(Integer.class, Integer.class, 10000, new BenchmarkCacheSource<Integer, Integer>() {
+		BenchmarkCache<Integer, Integer> _cache = f.createLoadingCache(Integer.class, Integer.class, 10000, new BenchmarkCacheLoader<Integer, Integer>() {
 			@Override
 			public Integer load(final Integer key) {
 				return key;

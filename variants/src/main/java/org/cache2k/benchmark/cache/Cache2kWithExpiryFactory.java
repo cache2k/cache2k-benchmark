@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.cache;
 
 /*
  * #%L
@@ -20,16 +20,15 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import org.cache2k.benchmark.Cache2kFactory;
+
 /**
- * Create a cache2k implementation variant optimized, if no eviction needs to take place.
- * We use the random eviction algorithm, which does not count hits. This is interesting to
- * see how much overhead the hit recording needs in the other implementations.
+ * Turn on expiry. This leads to more memory consumption to hold the timer queue.
  */
-public class Cache2kNoEvictionFactory extends Cache2kFactory {
+public class Cache2kWithExpiryFactory extends Cache2kFactory {
 
   {
-    if (1 == 1)
-      throw new UnsupportedOperationException();
+    withExpiry = true;
   }
 
 }
