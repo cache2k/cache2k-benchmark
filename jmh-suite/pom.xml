@@ -28,7 +28,7 @@
     <dependencies>
         <dependency>
           <groupId>${project.groupId}</groupId>
-          <artifactId>zoo</artifactId>
+          <artifactId>variants</artifactId>
           <version>${project.version}</version>
         </dependency>
         <dependency>

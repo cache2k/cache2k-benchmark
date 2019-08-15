@@ -25,6 +25,7 @@ import com.github.benmanes.caffeine.cache.simulator.policy.irr.LirsPolicy;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.cache2k.benchmark.BenchmarkCollection;
+import org.cache2k.benchmark.cache.CaffeineSimulatorCacheFactory;
 
 /**
  * @author Jens Wilke; created: 2013-06-13

@@ -20,9 +20,9 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import org.cache2k.benchmark.eviction.EvictionStats;
+
 import java.io.Closeable;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Interface to a cache implementation we use for benchmarking.
@@ -30,8 +30,6 @@ import java.util.List;
  * @author Jens Wilke; created: 2013-06-15
  */
 public abstract class BenchmarkCache<K, V> implements Closeable {
-
-  private List<EvictionListener<K>> evictionListeners = new ArrayList<>();
 
   /**
    * Return the element that is present in the cache.
@@ -67,16 +65,8 @@ public abstract class BenchmarkCache<K, V> implements Closeable {
    */
   public Object getOriginalCache() { return null; }
 
-  /**
-   * Registers an eviction listener if the cache implementation supports it.
-   * If the cache implementation does not support it, does nothing.
-   */
-  public final void registerEvictionNotifier(EvictionListener el) {
-    evictionListeners.add(el);
-  }
-
-  public final Iterable<EvictionListener<K>> getEvictionListeners() {
-    return evictionListeners;
+  public EvictionStats getEvictionStats() {
+    return new EvictionStats() {};
   }
 
 }

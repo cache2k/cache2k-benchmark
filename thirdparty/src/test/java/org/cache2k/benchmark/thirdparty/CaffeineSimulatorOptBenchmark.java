@@ -23,6 +23,7 @@ package org.cache2k.benchmark.thirdparty;
 import com.github.benmanes.caffeine.cache.simulator.policy.opt.ClairvoyantPolicy;
 import com.typesafe.config.ConfigFactory;
 import org.cache2k.benchmark.BenchmarkCollection;
+import org.cache2k.benchmark.cache.CaffeineSimulatorCacheFactory;
 
 /**
  * The ClairvoyantPolicy from the caffeine simulator.

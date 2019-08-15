@@ -402,6 +402,16 @@ public class Cache2kV12Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV12Evi
 		return false;
 	}
 
+	@Override
+	public EvictionStats getEvictionStats() {
+		return new EvictionStats() {
+			@Override
+			public long getScanCount() {
+				return coldScanCnt + hotScanCnt;
+			}
+		};
+	}
+
 	public String toString() {
 		return this.getClass().getSimpleName() +
 			"(coldSize=" + coldSize +

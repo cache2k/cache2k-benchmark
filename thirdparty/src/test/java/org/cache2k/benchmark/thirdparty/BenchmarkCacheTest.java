@@ -22,6 +22,7 @@ package org.cache2k.benchmark.thirdparty;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
+import org.cache2k.benchmark.cache.GuavaCacheFactory;
 import org.junit.Test;
 
 /**

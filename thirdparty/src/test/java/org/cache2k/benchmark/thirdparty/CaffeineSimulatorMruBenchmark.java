@@ -24,6 +24,7 @@ import com.github.benmanes.caffeine.cache.simulator.admission.Admission;
 import com.github.benmanes.caffeine.cache.simulator.policy.linked.LinkedPolicy;
 import com.typesafe.config.ConfigFactory;
 import org.cache2k.benchmark.BenchmarkCollection;
+import org.cache2k.benchmark.cache.CaffeineSimulatorCacheFactory;
 
 /**
  * The FrequentlyUsedPolicy with MFU policy from the caffeine simulator.

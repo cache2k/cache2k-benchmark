@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.thirdparty;
+package org.cache2k.benchmark.cache;
 
 /*
  * #%L
@@ -40,12 +40,12 @@ public class CaffeineSimulatorCacheFactory extends BenchmarkCacheFactory {
   PolicyFactory policy;
   Config config;
 
-  CaffeineSimulatorCacheFactory policy(PolicyFactory f) {
+  public CaffeineSimulatorCacheFactory policy(PolicyFactory f) {
     policy = f;
     return this;
   }
 
-  CaffeineSimulatorCacheFactory config(Config cfg) {
+  public CaffeineSimulatorCacheFactory config(Config cfg) {
     config = cfg;
     return this;
   }

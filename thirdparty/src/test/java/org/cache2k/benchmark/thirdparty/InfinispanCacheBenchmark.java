@@ -21,6 +21,7 @@ package org.cache2k.benchmark.thirdparty;
  */
 
 import org.cache2k.benchmark.BenchmarkCollection;
+import org.cache2k.benchmark.cache.InfinispanCacheFactory;
 
 /**
  * Run the benchmark collection woth JBoss Infinispan.

@@ -20,25 +20,35 @@ package org.cache2k.benchmark.eviction;
  * #L%
  */
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import it.unimi.dsi.util.XoShiRo256StarStarRandom;
+
 import java.util.Random;
 
 /**
  * Eviction policy which just selects the evicted item by random.
+ * Distributes all entries randomly into a bucket list and then picks
+ * round robin for eviction.
  *
  * @author Jens Wilke
  */
 public class RandomEviction<K,V> extends EvictionPolicy<K, V, RandomEviction.Entry> {
 
-	private Random random = new Random(1802);
-	private HashMap<String, Entry> map = new HashMap<>();
+	private Random random = new XoShiRo256StarStarRandom(1802);
+	private Entry[] buckets;
+	private int evictionBucketIdx = 0;
+
+	@Override
+	public void setCapacity(final int v) {
+		super.setCapacity(v);
+		buckets = new Entry[getCapacity()];
+	}
 
 	@Override
 	public Entry newEntry(final K key, final V value) {
 		Entry e = new Entry(key, value);
-		map.put(Long.toHexString(random.nextLong()) + key, e);
+		int bucketIdx = random.nextInt(buckets.length);
+		e.next = buckets[bucketIdx];
+		buckets[bucketIdx] = e;
 		return e;
 	}
 
@@ -48,15 +58,15 @@ public class RandomEviction<K,V> extends EvictionPolicy<K, V, RandomEviction.Ent
 
 	@Override
 	public Entry evict() {
-		Iterator<Map.Entry<String, Entry>> it = map.entrySet().iterator();
-		Entry e = it.next().getValue();
-		it.remove();
+		Entry e;
+		while ( (e = buckets[evictionBucketIdx]) == null) {
+			evictionBucketIdx++;
+			if (evictionBucketIdx >= buckets.length) {
+				evictionBucketIdx = 0;
+			}
+		}
+		buckets[evictionBucketIdx] = e.next;
 		return e;
-	}
-
-	@Override
-	public void close(final long expectedSize) {
-		assert expectedSize == map.size();
 	}
 
 	@Override
@@ -66,6 +76,7 @@ public class RandomEviction<K,V> extends EvictionPolicy<K, V, RandomEviction.Ent
 
 	static class Entry extends LinkedEntry<Entry, Object, Object> {
 
+		private Entry next;
 		public Entry(final Object _key, final Object _value) {
 			super(_key, _value);
 		}

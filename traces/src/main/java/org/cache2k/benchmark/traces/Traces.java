@@ -121,7 +121,7 @@ public interface Traces {
 	 * @see <a href="https://github.com/ben-manes/caffeine/issues/106"/>
 	 */
 	TraceSupplier SCARAB_RECS =
-		of("trace-scarab-recs-20160808T073231Z.trc.xz").name("scrab-recs")
+		of("trace-scarab-recs-20160808T073231Z.trc.xz").name("scarab-recs")
 		.sizes(25_000, 50_000, 75_000, 100_000);
 
 	/**
@@ -130,7 +130,7 @@ public interface Traces {
 	 * @see <a href="https://github.com/ben-manes/caffeine/issues/106"/>
 	 */
 	TraceSupplier SCARAB_PRODS =
-		of("trace-scarab-prods-20160808T073231Z.trc.xz").name("scrab-prods")
+		of("trace-scarab-prods-20160808T073231Z.trc.xz").name("scarab-prods")
 		.sizes(25_000, 50_000, 75_000, 100_000);
 
 	/**
@@ -182,7 +182,7 @@ public interface Traces {
 	TraceSupplier UMASS_WEBSEARCH1_1ST1M =
 		new TraceSupplier(() -> CacheAccessTraceUmassFinancial1.provideUmassTrace("WebSearch1.spc.bz2"))
 			.name("umass-websearch1-1st1M")
-		  .sizes(10000, 20000, 30000);
+		  .sizes(100000, 200000, 300000);
 
 	/**
 	 * UMass WebSearch2 trace. Truncated to one million requests using only

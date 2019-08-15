@@ -61,6 +61,16 @@ public abstract class EvictionPolicy<K, V, E extends Entry> {
 		capacitySet = true;
 	}
 
+	/**
+	 * Called after testing is finished. Implementations can check their
+	 * internal data structures.
+	 *
+	 * @param expectedSize The current cache size.
+	 */
 	public void close(long expectedSize) { }
+
+	public EvictionStats getEvictionStats() {
+		return new EvictionStats() {};
+	}
 
 }

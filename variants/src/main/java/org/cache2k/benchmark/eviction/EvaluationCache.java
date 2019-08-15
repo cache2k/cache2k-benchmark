@@ -21,6 +21,7 @@ package org.cache2k.benchmark.eviction;
  */
 
 import org.cache2k.benchmark.BenchmarkCache;
+import org.cache2k.benchmark.EvictionListener;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,27 +37,32 @@ import java.util.Map;
 public class EvaluationCache<E extends Entry<K,V>, K,V>
 	extends BenchmarkCache<K,V> {
 
+	private final Iterable<EvictionListener<K>> evictionListeners;
 	private final EvictionPolicy<K, V, E> eviction;
 	private final Map<K, E> content = new HashMap<>();
-	private final boolean evictAfter = true;
+	private final boolean evictAfter = false;
 	private long evictSpinCnt = 0;
+	private long evictionCnt;
 
-	public EvaluationCache(final EvictionPolicy<K, V, E> eviction) {
+	public EvaluationCache(final EvictionPolicy<K, V, E> eviction, Iterable<EvictionListener<K>> evictionListeners) {
 		this.eviction = eviction;
+		this.evictionListeners = evictionListeners;
 	}
 
 	@Override
 	public void put(final K key, final V value) {
 		if (!evictAfter && content.size() >= eviction.getCapacity()) {
 			E e0 = eviction.evict();
-			getEvictionListeners().forEach(l -> l.evicted(e0.getKey()));
+			evictionCnt++;
+			evictionListeners.forEach(l -> l.evicted(e0.getKey()));
 			content.remove(e0.getKey());
 		}
 		E e = eviction.newEntry(key, value);
 		if (evictAfter && content.size() >= eviction.getCapacity()) {
+			evictionCnt++;
 			for(;;) {
 				E e0 = eviction.evict();
-				getEvictionListeners().forEach(l -> l.evicted(e0.getKey()));
+				evictionListeners.forEach(l -> l.evicted(e0.getKey()));
 				if (e0.getKey().equals(key)) {
 					e = eviction.newEntry(key, value);
 					evictSpinCnt++;
@@ -96,6 +102,33 @@ public class EvaluationCache<E extends Entry<K,V>, K,V>
 	@Override
 	public void close() {
 		eviction.close(content.size());
+	}
+
+	@Override
+	public EvictionStats getEvictionStats() {
+		final EvictionStats sts = eviction.getEvictionStats();
+		assert sts.getEvictionCount() < 0 || sts.getEvictionCount() == evictionCnt;
+		return new EvictionStats() {
+			@Override
+			public long getScanCount() {
+				return sts.getScanCount();
+			}
+
+			@Override
+			public long getEvictionCount() {
+				return evictionCnt;
+			}
+
+			@Override
+			public double getAdaptionValue() {
+				return sts.getAdaptionValue();
+			}
+
+			@Override
+			public double getAverageHotPercentage() {
+				return sts.getAverageHotPercentage();
+			}
+		};
 	}
 
 	@Override

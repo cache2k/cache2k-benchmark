@@ -1,8 +1,8 @@
-package org.cache2k.benchmark.thirdparty;
+package org.cache2k.benchmark.cache;
 
 /*
  * #%L
- * Benchmarks: third party products.
+ * Benchmarks: Implementation and eviction variants
  * %%
  * Copyright (C) 2013 - 2019 headissue GmbH, Munich
  * %%
@@ -20,23 +20,18 @@ package org.cache2k.benchmark.thirdparty;
  * #L%
  */
 
-import com.github.benmanes.caffeine.cache.simulator.policy.adaptive.CarPolicy;
-import com.typesafe.config.ConfigFactory;
-import org.cache2k.benchmark.BenchmarkCollection;
-import org.cache2k.benchmark.cache.CaffeineSimulatorCacheFactory;
+import org.cache2k.benchmark.EvaluationCacheFactory;
+import org.cache2k.benchmark.eviction.ArcEviction;
+import org.cache2k.benchmark.eviction.Cache2kV12Eviction;
 
 /**
- * The ClairvoyantPolicy from the caffeine simulator.
- *
  * @author Jens Wilke
  */
-public class CaffeineSimulatorCarBenchmark extends BenchmarkCollection {
+public class Cache2kV12EvictionFactory extends EvaluationCacheFactory {
 
-  {
-    factory =
-      new CaffeineSimulatorCacheFactory()
-        .config(ConfigFactory.empty())
-        .policy(cfg -> new CarPolicy(cfg));
-  }
+	{
+		withEviction(Cache2kV12Eviction::new);
+		name("cache2kV12");
+	}
 
 }

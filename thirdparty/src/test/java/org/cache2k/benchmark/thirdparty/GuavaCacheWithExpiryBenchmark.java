@@ -20,6 +20,8 @@ package org.cache2k.benchmark.thirdparty;
  * #L%
  */
 
+import org.cache2k.benchmark.cache.GuavaCacheFactory;
+
 /**
  * Runs the benchmark collection on Google Guava.
  *

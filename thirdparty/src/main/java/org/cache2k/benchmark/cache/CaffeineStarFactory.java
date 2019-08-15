@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.thirdparty;
+package org.cache2k.benchmark.cache;
 
 /*
  * #%L
@@ -20,23 +20,15 @@ package org.cache2k.benchmark.thirdparty;
  * #L%
  */
 
-import com.github.benmanes.caffeine.cache.simulator.policy.adaptive.CarPolicy;
-import com.typesafe.config.ConfigFactory;
-import org.cache2k.benchmark.BenchmarkCollection;
-import org.cache2k.benchmark.cache.CaffeineSimulatorCacheFactory;
-
 /**
- * The ClairvoyantPolicy from the caffeine simulator.
- *
  * @author Jens Wilke
  */
-public class CaffeineSimulatorCarBenchmark extends BenchmarkCollection {
+public class CaffeineStarFactory extends CaffeineCacheFactory {
 
-  {
-    factory =
-      new CaffeineSimulatorCacheFactory()
-        .config(ConfigFactory.empty())
-        .policy(cfg -> new CarPolicy(cfg));
-  }
+	{
+		sameThreadEviction(true);
+		fullEvictionCapacity(true);
+		name("caffeine*");
+	}
 
 }

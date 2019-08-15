@@ -24,6 +24,7 @@ import com.github.benmanes.caffeine.cache.simulator.admission.Admission;
 import com.github.benmanes.caffeine.cache.simulator.policy.linked.LinkedPolicy;
 import com.typesafe.config.ConfigFactory;
 import org.cache2k.benchmark.BenchmarkCollection;
+import org.cache2k.benchmark.cache.CaffeineSimulatorCacheFactory;
 
 /**
  * Benchmarks with LRU from the caffeine simulator. Used to validate

@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.thirdparty;
+package org.cache2k.benchmark.cache;
 
 /*
  * #%L
@@ -31,7 +31,7 @@ import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.spi.loaderwriter.CacheLoaderWriter;
 
 /**
- * @author Jens Wilke; created: 2013-12-08
+ * @author Jens Wilke
  */
 public class EhCache3Factory extends BenchmarkCacheFactory {
 

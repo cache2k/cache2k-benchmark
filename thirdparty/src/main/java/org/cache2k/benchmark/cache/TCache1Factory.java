@@ -3,7 +3,7 @@
  * Copyright 2016 trivago GmbH
  */
 
-package org.cache2k.benchmark.thirdparty;
+package org.cache2k.benchmark.cache;
 
 /*
  * #%L

@@ -22,8 +22,7 @@ package org.cache2k.benchmark.jmh;
 
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.Cache2kFactory;
-import org.cache2k.benchmark.jmh.suite.eviction.symmetrical.Cache2kMetricsRecorder;
-import org.cache2k.benchmark.thirdparty.JCacheCacheFactory;
+import org.cache2k.benchmark.cache.JCacheCacheFactory;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;

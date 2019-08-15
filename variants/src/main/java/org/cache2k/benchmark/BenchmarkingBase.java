@@ -20,9 +20,13 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import org.cache2k.benchmark.eviction.EvictionStats;
+import org.cache2k.benchmark.traces.Ranking;
 import org.cache2k.benchmark.util.TraceSupplier;
 import org.junit.After;
 import org.cache2k.benchmark.util.AccessTrace;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -33,9 +37,22 @@ import java.io.PrintWriter;
  */
 public class BenchmarkingBase {
 
+  private static Ranking RANKING;
+  private static Ranking CURRENT_RUN = new Ranking();
   protected BenchmarkCacheFactory factory = new Cache2kStarFactory();
 
   BenchmarkCache<Integer, Integer> cache = null;
+
+  @BeforeClass
+  public static void initRanking() {
+    RANKING = new Ranking();
+    RANKING.readEvaluationResults();
+  }
+
+  @AfterClass
+  public static void printRankingSummary() {
+    RANKING.printSummary(CURRENT_RUN, new String[]{"cache2kV12", "caffeine*"});
+  }
 
   public BenchmarkCache<Integer, Integer> freshCache(AccessTrace t, int _maxElements) {
     return freshCache(_maxElements);
@@ -65,7 +82,7 @@ public class BenchmarkingBase {
     if (c instanceof SimulatorPolicy) {
       SimulatorPolicy p = (SimulatorPolicy) c;
       for (Integer k : _trace) {
-        ((SimulatorPolicy) c).record(k);
+        p.record(k);
       }
       return p.getMissCount();
     }
@@ -115,7 +132,8 @@ public class BenchmarkingBase {
     s += ", missCount=" + _missCount + ", hitRatePercent=" + _hitRate;
     s += ", uniqueValues=" + _trace.getValueCount();
     String _cacheImplementation = factory.getName();
-    System.out.println(_cacheImplementation + "@" + _traceName + ": " + s);
+    System.out.println(_cacheImplementation + "@" + _traceName + ": " + s + " " + RANKING.getTop3(_traceName, _cacheSize));
+    EvictionStats _evictionStats = cache.getEvictionStats();
     String _csvLine =
       _traceName + "|" +  // 1
       factory.getName() + "|" + // 2
@@ -123,13 +141,21 @@ public class BenchmarkingBase {
       String.format("%.3f", hitRatePercent) + "|" + // 4
       _trace.getLength() + "|" + // 5
       _missCount + "|" + // 6
-      0 + "| "  + // 7
-      -1 +  "| " + // 8
-      cache.toString(); // 9
+      _evictionStats.getEvictionCount() + "| "  + // 7
+      _evictionStats.getScanCount() +  "| " + // 8
+      String.format("%.3f",_evictionStats.getScansPerEviction()) + "|" + // 9
+      cache.toString(); // 10
     writeCsv(_csvLine);
+    Ranking.Result result = new Ranking.Result();
+    result.setImplementationName(factory.getName());
+    result.setTraceName(_traceName);
+    result.setCacheSize(_cacheSize);
+    result.setMissCount(_missCount);
+    result.setTraceLength(_trace.getLength());
+    CURRENT_RUN.add(result);
   }
 
-  void writeCsv(String _csvLine) {
+  static void writeCsv(String _csvLine) {
     String s = System.getProperty("cache2k.benchmark.result.csv");
     if (s == null) {
       return;

@@ -21,8 +21,7 @@ package org.cache2k.benchmark.thirdparty;
  */
 
 import org.cache2k.benchmark.BenchmarkCollection;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.cache2k.benchmark.cache.InfinispanCacheFactory;
 
 /**
  * @author Jens Wilke; created: 2013-12-08

@@ -29,8 +29,8 @@ public class NewArcCacheBenchmark extends BenchmarkCollection {
 
   {
     factory =
-      new ExperimentalEvictionCacheFactory()
-        .eviction(ArcEviction::new);
+      new EvaluationCacheFactory()
+        .withEviction(ArcEviction::new);
   }
 
 }

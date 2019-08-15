@@ -22,6 +22,7 @@ package org.cache2k.benchmark.thirdparty;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.cache.JCacheCacheFactory;
 import org.ehcache.jsr107.EhcacheCachingProvider;
 import org.junit.Test;
 

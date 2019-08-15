@@ -20,13 +20,16 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import scala.concurrent.java8.FuturesConvertersImpl;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Jens Wilke
  */
 public abstract class BenchmarkCacheFactory {
 
+  private List<EvictionListener<?>> evictionListeners = new ArrayList<>();
   private String name;
   protected boolean withExpiry;
 
@@ -101,6 +104,15 @@ public abstract class BenchmarkCacheFactory {
     }
     s = s.toLowerCase();
     return s;
+  }
+
+  public BenchmarkCacheFactory withEvictionListener(EvictionListener<?> listener) {
+    evictionListeners.add(listener);
+    return this;
+  }
+
+  public Iterable<EvictionListener<?>> getEvictionListeners() {
+    return Collections.unmodifiableList(evictionListeners);
   }
 
   @Override

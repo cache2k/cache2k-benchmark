@@ -27,6 +27,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Weigher;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheSource;
+import org.cache2k.benchmark.cache.JCacheCacheFactory;
 import org.junit.Test;
 
 import java.util.Arrays;

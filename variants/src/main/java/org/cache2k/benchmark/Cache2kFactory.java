@@ -41,7 +41,6 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
   protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     final Cache<K, V> c = createInternal(_keyType, _valueType, _maxElements, null);
     return returnCache(c, _maxElements);
-
   }
 
   @SuppressWarnings("unchecked")

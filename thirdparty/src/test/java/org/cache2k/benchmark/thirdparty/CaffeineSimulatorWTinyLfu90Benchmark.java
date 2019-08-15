@@ -25,6 +25,7 @@ import com.github.benmanes.caffeine.cache.simulator.policy.sketch.WindowTinyLfuP
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.cache2k.benchmark.BenchmarkCollection;
+import org.cache2k.benchmark.cache.CaffeineSimulatorCacheFactory;
 
 /**
  * Window Tiny-Lfu from the Caffeine simulator. Percent-Main=0.99
