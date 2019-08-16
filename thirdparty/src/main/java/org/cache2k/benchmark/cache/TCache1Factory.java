@@ -30,6 +30,7 @@ import com.trivago.triava.tcache.core.Builder;
 import com.trivago.triava.tcache.eviction.Cache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
+import org.cache2k.benchmark.ProductCacheFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -38,7 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Christian Esken
  */
-public class TCache1Factory extends BenchmarkCacheFactory {
+public class TCache1Factory extends ProductCacheFactory {
   AtomicInteger counter = new AtomicInteger();
 
   @Override
@@ -75,11 +76,6 @@ public class TCache1Factory extends BenchmarkCacheFactory {
       this.size = maxElements;
       this.factory = factory;
       this.cache = builder.build();
-    }
-
-    @Override
-    public int getCapacity() {
-      return size;
     }
 
     @Override

@@ -1,8 +1,8 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.cache;
 
 /*
  * #%L
- * Benchmarks: Implementation and eviction variants
+ * Benchmarks: third party products.
  * %%
  * Copyright (C) 2013 - 2019 headissue GmbH, Munich
  * %%
@@ -20,17 +20,26 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import java.util.HashMap;
+import com.github.benmanes.caffeine.cache.simulator.policy.Policy;
+import com.github.benmanes.caffeine.cache.simulator.policy.adaptive.ArcPolicy;
+import com.typesafe.config.Config;
+import org.cache2k.benchmark.EvictionTuning;
 
 /**
+ * Build a caffeine simulator ARC policy
+ *
  * @author Jens Wilke
+ * @see ArcPolicy
  */
-public class HashMapFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
+public class CaffeineSimulatorArcPolicyFactory extends CaffeineSimulatorPolicyFactory<EvictionTuning.None> {
 
-  @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(
-    final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-    return new ConcurrentHashMapFactory.MyCache(new HashMap<K, V>(), _maxElements);
-  }
+	{
+		setName("arc-cs");
+	}
+
+	@Override
+	protected Policy createCaffeinePolicy(final Config configWithSize) {
+		return new ArcPolicy(configWithSize);
+	}
 
 }

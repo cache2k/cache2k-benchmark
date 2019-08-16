@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author Jens Wilke; created: 2013-12-08
  */
-public class Cache2kFactory extends BenchmarkCacheFactory {
+public class Cache2kFactory extends ProductCacheFactory {
 
   private AtomicInteger counter = new AtomicInteger();
   private boolean disableStatistics = true;
@@ -48,11 +48,6 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
     if (_c instanceof IntCache) {
       final IntCache<V> ic = (IntCache<V>) _c;
       return (BenchmarkCache<K, V>) new IntBenchmarkCache<V>() {
-
-        @Override
-        public int getCapacity() {
-          return _maxElements;
-        }
 
         @Override
         public V getIfPresent(int key) {
@@ -78,19 +73,9 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
         public String toString() {
           return ic.toString();
         }
-
-        @Override
-        public Object getOriginalCache() {
-          return _c;
-        }
       };
     }
     return new BenchmarkCache<K, V>() {
-
-      @Override
-      public int getCapacity() {
-        return _maxElements;
-      }
 
       @Override
       public V get(K key) {
@@ -115,11 +100,6 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
       @Override
       public String toString() {
         return _c.toString();
-      }
-
-      @Override
-      public Object getOriginalCache() {
-        return _c;
       }
     };
   }
@@ -150,18 +130,8 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
         }
 
         @Override
-        public Object getOriginalCache() {
-          return ic;
-        }
-
-        @Override
         public void close() {
           ic.close();
-        }
-
-        @Override
-        public int getCapacity() {
-          return _maxElements;
         }
       };
     }
@@ -187,18 +157,8 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
         }
 
         @Override
-        public Object getOriginalCache() {
-          return ic;
-        }
-
-        @Override
         public void close() {
           c.close();
-        }
-
-        @Override
-        public int getCapacity() {
-          return _maxElements;
         }
       };
     }
@@ -224,18 +184,8 @@ public class Cache2kFactory extends BenchmarkCacheFactory {
       }
 
       @Override
-      public Object getOriginalCache() {
-        return c;
-      }
-
-      @Override
       public void close() {
         c.close();
-      }
-
-      @Override
-      public int getCapacity() {
-        return _maxElements;
       }
     };
   }

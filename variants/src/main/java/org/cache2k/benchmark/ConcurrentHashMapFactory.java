@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Jens Wilke
  */
-public class ConcurrentHashMapFactory extends BenchmarkCacheFactory {
+public class ConcurrentHashMapFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
 
   @Override
   protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
@@ -65,11 +65,6 @@ public class ConcurrentHashMapFactory extends BenchmarkCacheFactory {
     @Override
     public void remove(final K key) {
       map.remove(key);
-    }
-
-    @Override
-    public int getCapacity() {
-      return maxElements;
     }
 
     @Override

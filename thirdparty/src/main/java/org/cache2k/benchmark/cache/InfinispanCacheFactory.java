@@ -22,6 +22,7 @@ package org.cache2k.benchmark.cache;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
+import org.cache2k.benchmark.ProductCacheFactory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
@@ -33,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Jens Wilke; created: 2013-12-08
  */
-public class InfinispanCacheFactory extends BenchmarkCacheFactory {
+public class InfinispanCacheFactory extends ProductCacheFactory {
 
   static final String CACHE_NAME = "testCache";
   static EmbeddedCacheManager cacheManager;
@@ -103,11 +104,6 @@ public class InfinispanCacheFactory extends BenchmarkCacheFactory {
     @Override
     public void close() {
       cache.getCacheManager().removeCache(CACHE_NAME);
-    }
-
-    @Override
-    public int getCapacity() {
-      return cache.getCacheConfiguration().eviction().maxEntries();
     }
 
     @Override

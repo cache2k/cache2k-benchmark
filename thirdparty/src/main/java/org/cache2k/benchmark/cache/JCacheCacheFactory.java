@@ -25,6 +25,7 @@ import org.cache2k.Cache2kBuilder;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
+import org.cache2k.benchmark.ProductCacheFactory;
 import org.cache2k.jcache.ExtendedMutableConfiguration;
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
@@ -49,7 +50,7 @@ import java.util.OptionalLong;
  *
  * @author Jens Wilke
  */
-public class JCacheCacheFactory extends BenchmarkCacheFactory {
+public class JCacheCacheFactory extends ProductCacheFactory {
 
   private String cacheName = "default";
   private String provider;
@@ -63,7 +64,6 @@ public class JCacheCacheFactory extends BenchmarkCacheFactory {
   protected <K, V> BenchmarkCache<K, V> createSpecialized(
     final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
-    c.size = _maxElements;
     String _cacheName = constructCacheName(_maxElements);
     CacheManager mgr = resolveCacheManager();
     if (mgr.getClass().getName().toString().contains("Eh107")) {
@@ -104,7 +104,6 @@ public class JCacheCacheFactory extends BenchmarkCacheFactory {
     };
     String _cacheName = constructCacheName(_maxElements);
     MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
-    c.size = _maxElements;
     CacheManager mgr = resolveCacheManager();
     if (mgr.getClass().getName().toString().contains("Eh107")) {
       CacheConfiguration<K, V> _eh107Configuration =
@@ -193,13 +192,7 @@ public class JCacheCacheFactory extends BenchmarkCacheFactory {
 
   static class MyBenchmarkCacheAdapter<K,V> extends BenchmarkCache<K, V> {
 
-    int size;
-    Cache<K, V> cache;
-
-    @Override
-    public int getCapacity() {
-      return size;
-    }
+    private Cache<K, V> cache;
 
     @Override
     public V get(final K key) {

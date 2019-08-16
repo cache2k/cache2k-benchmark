@@ -20,17 +20,8 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import java.util.HashMap;
-
 /**
  * @author Jens Wilke
  */
-public class HashMapFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
-
-  @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(
-    final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-    return new ConcurrentHashMapFactory.MyCache(new HashMap<K, V>(), _maxElements);
-  }
-
+public class ProductCacheFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
 }

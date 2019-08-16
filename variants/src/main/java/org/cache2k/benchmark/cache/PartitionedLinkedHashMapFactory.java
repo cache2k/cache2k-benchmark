@@ -22,13 +22,14 @@ package org.cache2k.benchmark.cache;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
+import org.cache2k.benchmark.EvictionTuning;
 import org.cache2k.benchmark.impls.PartitionedLinkedHashMapCache;
 import org.cache2k.benchmark.impls.SynchronizedLinkedHashMapCache;
 
 /**
  * @author Jens Wilke
  */
-public class PartitionedLinkedHashMapFactory extends BenchmarkCacheFactory {
+public class PartitionedLinkedHashMapFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
 
 	@Override
 	protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {

@@ -20,17 +20,26 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import java.util.HashMap;
-
 /**
+ * Marker for a bean that holds tuning parameters for the eviction strategy.
+ *
  * @author Jens Wilke
  */
-public class HashMapFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
+public interface EvictionTuning {
 
-  @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(
-    final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-    return new ConcurrentHashMapFactory.MyCache(new HashMap<K, V>(), _maxElements);
-  }
+	/**
+	 * Compact string to add to the cache implementation name to determine the actual
+	 * tuning configuration.
+	 */
+	default String getNameSuffix() {
+		return toString();
+	}
+
+	/**
+	 * Denotes that no tuning is taken.
+	 */
+	class None implements EvictionTuning {
+		private None() {}
+	}
 
 }

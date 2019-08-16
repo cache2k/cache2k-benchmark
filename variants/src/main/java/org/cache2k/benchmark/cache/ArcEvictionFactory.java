@@ -21,7 +21,7 @@ package org.cache2k.benchmark.cache;
  */
 
 import org.cache2k.benchmark.EvaluationCacheFactory;
-import org.cache2k.benchmark.eviction.evaluationCache.ArcEviction;
+import org.cache2k.benchmark.prototype.playGround.ArcEviction;
 
 /**
  * @author Jens Wilke

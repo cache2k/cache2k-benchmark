@@ -1,4 +1,10 @@
-package org.cache2k.benchmark;
+/**
+ * A set of different eviction strategies implemented by Jens Wilke for evaluation
+ * purposes.
+ *
+ * @author Jens Wilke
+ */
+package org.cache2k.benchmark.prototype.playGround;
 
 /*
  * #%L
@@ -19,18 +25,3 @@ package org.cache2k.benchmark;
  * limitations under the License.
  * #L%
  */
-
-import java.util.HashMap;
-
-/**
- * @author Jens Wilke
- */
-public class HashMapFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
-
-  @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(
-    final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-    return new ConcurrentHashMapFactory.MyCache(new HashMap<K, V>(), _maxElements);
-  }
-
-}

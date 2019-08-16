@@ -70,9 +70,4 @@ public class PartitionedLinkedHashMapCache<K,V> extends BenchmarkCache<K,V> {
 		}
 	}
 
-	@Override
-	public int getCapacity() {
-		return size;
-	}
-
 }

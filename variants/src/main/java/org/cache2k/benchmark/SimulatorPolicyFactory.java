@@ -20,17 +20,14 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import java.util.HashMap;
-
 /**
+ * Constructs a simulator policy, ony meaningful for evaluating the eviction
+ * efficiency.
+ *
  * @author Jens Wilke
  */
-public class HashMapFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
+public abstract class SimulatorPolicyFactory<T extends EvictionTuning> extends AnyCacheFactory<T> {
 
-  @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(
-    final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-    return new ConcurrentHashMapFactory.MyCache(new HashMap<K, V>(), _maxElements);
-  }
+	public abstract SimulatorPolicy create(int capacity);
 
 }

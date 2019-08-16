@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.prototype;
 
 /*
  * #%L
@@ -20,17 +20,27 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import java.util.HashMap;
-
 /**
+ * A cached entry holds a key and value.
+ *
  * @author Jens Wilke
  */
-public class HashMapFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
+public class Entry<K, V> {
 
-  @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(
-    final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-    return new ConcurrentHashMapFactory.MyCache(new HashMap<K, V>(), _maxElements);
-  }
+	private K key;
+	private V value;
+
+	public Entry(final K _key, final V _value) {
+		key = _key;
+		value = _value;
+	}
+
+	public K getKey() {
+		return key;
+	}
+
+	public V getValue() {
+		return value;
+	}
 
 }

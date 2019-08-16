@@ -27,13 +27,14 @@ import com.google.common.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
+import org.cache2k.benchmark.ProductCacheFactory;
 
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Jens Wilke
  */
-public class GuavaCacheFactory extends BenchmarkCacheFactory {
+public class GuavaCacheFactory extends ProductCacheFactory {
 
   @Override
   protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
@@ -76,11 +77,6 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
     Cache<K, V> cache;
 
     @Override
-    public int getCapacity() {
-      return size;
-    }
-
-    @Override
     public V get(final K key) {
       return cache.getIfPresent(key);
     }
@@ -106,11 +102,6 @@ public class GuavaCacheFactory extends BenchmarkCacheFactory {
 
     int size;
     LoadingCache<K, V> cache;
-
-    @Override
-    public int getCapacity() {
-      return size;
-    }
 
     @Override
     public V get(final K key) {

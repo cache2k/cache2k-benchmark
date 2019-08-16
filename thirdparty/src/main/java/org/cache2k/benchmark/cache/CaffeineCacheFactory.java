@@ -27,6 +27,8 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
+import org.cache2k.benchmark.ProductCacheFactory;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,7 +36,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Jens Wilke
  */
-public class CaffeineCacheFactory extends BenchmarkCacheFactory {
+public class CaffeineCacheFactory extends ProductCacheFactory {
 
   private boolean sameThreadEviction = false;
   private boolean fullEvictionCapacity = false;
@@ -53,7 +55,6 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
   protected <K, V> BenchmarkCache<K, V> createSpecialized(
     final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
     MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
-    c.size = _maxElements;
     c.cache = createCache(_maxElements).build();
     return c;
   }
@@ -69,7 +70,6 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
       }
     };
     MyLoadingBenchmarkCache c = new MyLoadingBenchmarkCache();
-    c.size = _maxElements;
     c.cache = createCache(_maxElements).build(l);
     return c;
   }
@@ -90,13 +90,7 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
 
   static class MyBenchmarkCacheAdapter<K,V> extends BenchmarkCache<K, V> {
 
-    int size;
-    Cache<K, V> cache;
-
-    @Override
-    public int getCapacity() {
-      return size;
-    }
+    private Cache<K, V> cache;
 
     @Override
     public V get(final K key) {
@@ -127,13 +121,7 @@ public class CaffeineCacheFactory extends BenchmarkCacheFactory {
 
   static class MyLoadingBenchmarkCache<K, V> extends BenchmarkCache<K, V> {
 
-    int size;
-    LoadingCache<K, V> cache;
-
-    @Override
-    public int getCapacity() {
-      return size;
-    }
+    private LoadingCache<K, V> cache;
 
     @Override
     public V get(final K key) {

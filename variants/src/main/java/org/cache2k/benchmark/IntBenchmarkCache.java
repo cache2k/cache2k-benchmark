@@ -57,11 +57,6 @@ public abstract class IntBenchmarkCache<V> extends BenchmarkCache<Integer, V> {
       }
 
       @Override
-      public int getCapacity() {
-        return c.getCapacity();
-      }
-
-      @Override
       public String toString() {
         return c.toString();
       }

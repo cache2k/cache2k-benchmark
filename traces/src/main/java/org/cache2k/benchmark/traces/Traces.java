@@ -26,6 +26,7 @@ import com.github.benmanes.caffeine.cache.simulator.parser.corda.CordaTraceReade
 
 import static org.cache2k.benchmark.util.TraceSupplier.*;
 
+import com.github.benmanes.caffeine.cache.simulator.parser.lirs.LirsTraceReader;
 import org.cache2k.benchmark.util.AccessPattern;
 import org.cache2k.benchmark.util.LongToIntMapper;
 import org.cache2k.benchmark.util.Patterns;
@@ -59,6 +60,25 @@ public interface Traces {
 			Patterns.explode(AccessPattern.of(new CordaTraceReader("trace_vaultservice.gz").events().mapToInt(new LongToIntMapper())), 10))
 			.name("corda-small-10x")
 			.sizes(512 * 10, 1024 * 10);
+
+	/**
+	 * Reference trace used in the LIRS and CLOCK-Pro paper. This trace
+	 * is used to compare the hit percentages in the papers to the
+	 * implementation to ensure correctness.
+	 */
+	TraceSupplier LOOP =
+		fromLongStream(() -> new LirsTraceReader("loop.trace.gz").events())
+			.name("loop")
+			.sizes(512, 1024);
+
+	/**
+	 * Trace combining {@link #CORDA_SMALL} {@link #LOOP} and {@link #CORDA_SMALL}.
+	 * used for adaptive cache evaluations.
+	 */
+	TraceSupplier CORDA_LOOP_CORDA =
+		of(() -> Patterns.concat(CORDA_SMALL.get().newPattern(), LOOP.get().newPattern(), CORDA_SMALL.get().newPattern()))
+			.name("corda-loop-corda")
+			.sizes(512, 1024);
 
 	/**
 	 * Reference trace used in the LIRS and CLOCK-Pro paper. This trace
@@ -234,7 +254,7 @@ public interface Traces {
 		.sizes(625, 1250, 2500, 5000, 10000);
 
 	/**
-	 * FIXME: add origin!
+	 * The OLTP trace is used in the ARC paper.
 	 */
 	TraceSupplier OLTP =
 		TraceSupplier.of("trace-oltp.trc.bin.gz").name("oltp")
@@ -263,7 +283,12 @@ public interface Traces {
 	TraceSupplier ZIPFIAN_10K_3M =
 		of(() -> new ZipfianPattern(1802,10000).strip(3_000_000))
 		.name("zipf10K-3M")
-		.sizes(500, 2000, 8000);
+		.sizes(500, 1000, 2000);
+
+	TraceSupplier ZIPFIAN_10K_1M =
+		of(() -> new ZipfianPattern(1802,10000).strip(1_000_000))
+			.name("zipf10K-1M")
+			.sizes(500, 1000, 2000);
 
 	TraceSupplier ZIPFIAN_900_3M =
 		of(() -> new ZipfianPattern(1802,900).strip(3_000_000))

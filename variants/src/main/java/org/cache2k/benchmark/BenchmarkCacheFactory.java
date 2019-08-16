@@ -27,10 +27,9 @@ import java.util.List;
 /**
  * @author Jens Wilke
  */
-public abstract class BenchmarkCacheFactory {
+public abstract class BenchmarkCacheFactory<T extends EvictionTuning> extends AnyCacheFactory<T> {
 
   private List<EvictionListener<?>> evictionListeners = new ArrayList<>();
-  private String name;
   protected boolean withExpiry;
 
   public final IntBenchmarkCache<Integer> create(int _maxElements) {
@@ -73,11 +72,6 @@ public abstract class BenchmarkCacheFactory {
     return c;
   }
 
-  public BenchmarkCacheFactory setName(String name) {
-    this.name = name;
-    return this;
-  }
-
   public BenchmarkCacheFactory withExpiry(boolean v) {
     withExpiry = v;
     return this;
@@ -91,22 +85,7 @@ public abstract class BenchmarkCacheFactory {
     throw new UnsupportedOperationException();
   }
 
-  public String getName() {
-    if (name != null) {
-      return name;
-    }
-    String s = this.getClass().getSimpleName();
-    String[] _stripSuffixes = new String[]{"CacheFactory", "Factory"};
-    for (String _suffix : _stripSuffixes) {
-      if (s.endsWith(_suffix)) {
-        s = s.substring(0, s.length() - _suffix.length());
-      }
-    }
-    s = s.toLowerCase();
-    return s;
-  }
-
-  public BenchmarkCacheFactory withEvictionListener(EvictionListener<?> listener) {
+  public AnyCacheFactory withEvictionListener(EvictionListener<?> listener) {
     evictionListeners.add(listener);
     return this;
   }

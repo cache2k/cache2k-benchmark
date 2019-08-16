@@ -65,9 +65,4 @@ public class SynchronizedLinkedHashMapCache<K,V> extends BenchmarkCache<K,V> {
 		}
 	}
 
-	@Override
-	public int getCapacity() {
-		return backingMap.getCacheSize();
-	}
-
 }

@@ -20,7 +20,7 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.eviction.EvictionStats;
+import org.cache2k.benchmark.prototype.EvictionStatistics;
 
 import java.io.Closeable;
 
@@ -56,17 +56,8 @@ public abstract class BenchmarkCache<K, V> implements Closeable {
   /** free up all resources of the cache */
   public void close() { }
 
-  /** Configured maximum entry count of the cache */
-  public abstract int getCapacity();
-
-  /**
-   * Return the original implementation. We use this for experimentation to
-   * get and set some runtime parameters during benchmarks runs.
-   */
-  public Object getOriginalCache() { return null; }
-
-  public EvictionStats getEvictionStats() {
-    return new EvictionStats() {};
+  public EvictionStatistics getEvictionStats() {
+    return new EvictionStatistics() {};
   }
 
 }

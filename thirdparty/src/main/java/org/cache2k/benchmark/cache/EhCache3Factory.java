@@ -23,8 +23,8 @@ package org.cache2k.benchmark.cache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
+import org.cache2k.benchmark.ProductCacheFactory;
 import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.ResourceType;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
@@ -33,7 +33,7 @@ import org.ehcache.spi.loaderwriter.CacheLoaderWriter;
 /**
  * @author Jens Wilke
  */
-public class EhCache3Factory extends BenchmarkCacheFactory {
+public class EhCache3Factory extends ProductCacheFactory {
 
   static final org.ehcache.CacheManager MANAGER = CacheManagerBuilder.newCacheManagerBuilder().build(true);
   static final String CACHE_NAME = "testCache";
@@ -83,11 +83,6 @@ public class EhCache3Factory extends BenchmarkCacheFactory {
     MyBenchmarkCache(CacheConfiguration<K, V> cfg) {
       this.config = cfg;
       cache = MANAGER.createCache(CACHE_NAME, cfg);
-    }
-
-    @Override
-    public int getCapacity() {
-      return (int) config.getResourcePools().getPoolForResource(ResourceType.Core.HEAP).getSize();
     }
 
     @Override

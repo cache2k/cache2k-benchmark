@@ -20,6 +20,8 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import org.cache2k.benchmark.prototype.EvictionStatistics;
+
 /**
  * @author Jens Wilke
  */
@@ -28,6 +30,10 @@ public interface SimulatorPolicy {
   void record(Integer v);
 
   long getMissCount();
+
+  default void close() { }
+
+  default EvictionStatistics getEvictionStatistics() { return new EvictionStatistics() { }; }
 
 }
 

@@ -2,7 +2,7 @@ package org.cache2k.benchmark.cache;
 
 /*
  * #%L
- * Benchmarks: Implementation and eviction variants
+ * Benchmarks: third party products.
  * %%
  * Copyright (C) 2013 - 2019 headissue GmbH, Munich
  * %%
@@ -20,19 +20,29 @@ package org.cache2k.benchmark.cache;
  * #L%
  */
 
-import org.cache2k.benchmark.BenchmarkCache;
-import org.cache2k.benchmark.BenchmarkCacheFactory;
+import com.github.benmanes.caffeine.cache.simulator.policy.Policy;
+import com.github.benmanes.caffeine.cache.simulator.policy.adaptive.CarPolicy;
+import com.github.benmanes.caffeine.cache.simulator.policy.irr.ClockProPolicy;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.cache2k.benchmark.EvictionTuning;
-import org.cache2k.benchmark.impls.SynchronizedLinkedHashMapCache;
 
 /**
+ * Build a caffeines' Clock-Pro simulator policy
+ *
  * @author Jens Wilke
+ * @see ClockProPolicy
  */
-public class SynchronizedLinkedHashMapFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
+public class CaffeineSimulatorClockProPolicyFactory
+	extends CaffeineSimulatorPolicyFactory<EvictionTuning.None> {
+
+	{
+		setName("clockpro-cs");
+	}
 
 	@Override
-	protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-		return new SynchronizedLinkedHashMapCache<>(_maxElements);
+	protected Policy createCaffeinePolicy(final Config configWithSize) {
+		return new ClockProPolicy(configWithSize);
 	}
 
 }

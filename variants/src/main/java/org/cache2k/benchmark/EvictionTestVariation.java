@@ -36,10 +36,10 @@ import java.util.Set;
 public class EvictionTestVariation {
 
 	private final TraceSupplier traceSupplier;
-	private final BenchmarkCacheFactory cacheFactory;
+	private final AnyCacheFactory cacheFactory;
 	private final int cacheSize;
 
-	public EvictionTestVariation(final TraceSupplier traceSupplier, final BenchmarkCacheFactory cacheFactory, final int cacheSize) {
+	public EvictionTestVariation(final TraceSupplier traceSupplier, final AnyCacheFactory cacheFactory, final int cacheSize) {
 		this.traceSupplier = traceSupplier;
 		this.cacheFactory = cacheFactory;
 		this.cacheSize = cacheSize;
@@ -49,7 +49,7 @@ public class EvictionTestVariation {
 		return traceSupplier;
 	}
 
-	public BenchmarkCacheFactory getCacheFactory() {
+	public AnyCacheFactory getCacheFactory() {
 		return cacheFactory;
 	}
 
@@ -64,10 +64,10 @@ public class EvictionTestVariation {
 
 	public static class Builder {
 
-		private Set<BenchmarkCacheFactory> caches = new HashSet<>();
+		private Set<AnyCacheFactory> caches = new HashSet<>();
 		private Map<TraceSupplier, Set<Integer>> trace2sizes = new HashMap<>();
 
-		public Builder add(BenchmarkCacheFactory factory) {
+		public Builder add(AnyCacheFactory factory) {
 			caches.add(factory);
 			return this;
 		}

@@ -21,7 +21,7 @@ package org.cache2k.benchmark.cache;
  */
 
 import org.cache2k.benchmark.EvaluationCacheFactory;
-import org.cache2k.benchmark.eviction.evaluationCache.RandomEviction;
+import org.cache2k.benchmark.prototype.playGround.RandomEviction;
 
 /**
  * @author Jens Wilke

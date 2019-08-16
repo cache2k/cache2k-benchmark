@@ -35,6 +35,7 @@ public class EvictionBenchmarkRunnerRule implements TestRule {
 	private String suiteName;
 	private String candidate = null;
 	private String[] peers;
+	private boolean readStoredResults;
 
 	@Override
 	public Statement apply(final Statement base, final Description description) {
@@ -46,7 +47,9 @@ public class EvictionBenchmarkRunnerRule implements TestRule {
 			@Override
 			public void evaluate() throws Throwable {
 				runner = new EvictionBenchmarkRunner(suiteName);
-				runner.readEvaluationResults();
+				if (readStoredResults) {
+					runner.readEvaluationResults();
+				}
 				base.evaluate();
 				runner.printRankingSummary(candidate, peers);
 			}
@@ -60,6 +63,11 @@ public class EvictionBenchmarkRunnerRule implements TestRule {
 
 	public EvictionBenchmarkRunnerRule peers(String... s) {
 		peers = s;
+		return this;
+	}
+
+	public EvictionBenchmarkRunnerRule setReadStoredResults(final boolean v) {
+		readStoredResults = v;
 		return this;
 	}
 
