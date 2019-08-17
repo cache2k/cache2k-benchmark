@@ -22,27 +22,68 @@ package org.cache2k.benchmark;
 
 import org.cache2k.benchmark.prototype.EvictionPolicy;
 import org.cache2k.benchmark.prototype.PrototypeCache;
+import scala.concurrent.java8.FuturesConvertersImpl;
 
-import java.util.function.Supplier;
+import java.lang.reflect.Constructor;
 
 /**
+ * Creates a cache with the specified eviction policy.
+ *
  * @author Jens Wilke
  */
-public class EvaluationCacheFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
+public class EvaluationCacheFactory<T extends EvictionTuning> extends BenchmarkCacheFactory<T> {
 
-	private Supplier<EvictionPolicy> evictionSupplier;
+	private Class<EvictionPolicy> evictionClass;
 
-	public EvaluationCacheFactory withEviction(Supplier<EvictionPolicy> es) {
-		evictionSupplier = es;
+	public EvaluationCacheFactory withEviction(Class<EvictionPolicy> eviction) {
+		this.evictionClass = eviction;
+		String suffix = "eviction";
+		String name = eviction.getSimpleName().toLowerCase();
+		if (name.endsWith(suffix)) {
+			name = name.substring(0, name.length() - suffix.length());
+		}
+		setNamePrefix(name);
 		return this;
+	}
+
+	protected EvictionPolicy createPolicy(final int capacity) {
+		Constructor constructor = evictionClass.getConstructors()[0];
+		try {
+			if (constructor.getParameterTypes().length == 1) {
+				return (EvictionPolicy) constructor.newInstance(capacity);
+			} else {
+				return (EvictionPolicy) constructor.newInstance(capacity, getTuning());
+			}
+		} catch (Exception ex) {
+			throw new IllegalArgumentException("Creating: " + evictionClass.getName(), ex);
+		}
+	}
+
+	/**
+	 * Create a default tunable by obtaining the class from the constructor argument.
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public T getDefaultTuning() {
+		try {
+			Constructor constructor = evictionClass.getConstructors()[0];
+			if (constructor.getParameterTypes().length == 1) {
+				return null;
+			}
+			if (constructor.getParameterTypes().length != 2) {
+				throw new IllegalArgumentException("Cache implementation needs exactly one constructor.");
+			}
+			return (T) constructor.getParameterTypes()[1].newInstance();
+		} catch (Exception ex) {
+			throw new RuntimeException("Creating tuning for: " + evictionClass.getName(), ex);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-		EvictionPolicy e = evictionSupplier.get();
-		e.setCapacity(_maxElements);
-		return (BenchmarkCache<K,V>) new PrototypeCache(e, getEvictionListeners());
+	protected <K, V> BenchmarkCache<K, V> createSpecialized(
+		final Class<K> _keyType, final Class<V> _valueType, final int capacity) {
+		return (BenchmarkCache<K,V>) new PrototypeCache(createPolicy(capacity), getEvictionListeners());
 	}
 
 }

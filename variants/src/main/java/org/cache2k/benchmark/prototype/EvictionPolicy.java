@@ -27,7 +27,6 @@ package org.cache2k.benchmark.prototype;
  */
 public abstract class EvictionPolicy<K, V, E extends Entry> {
 
-	private boolean capacitySet;
 	private int capacity;
 
 	/**
@@ -52,14 +51,11 @@ public abstract class EvictionPolicy<K, V, E extends Entry> {
 	 */
 	public abstract void remove(E e);
 
-	public int getCapacity() { return capacity;	}
-	public void setCapacity(int v) {
-		if (capacitySet) {
-			throw new IllegalStateException();
-		}
-		capacity = v;
-		capacitySet = true;
+	public EvictionPolicy(int capacity) {
+		this.capacity = capacity;
 	}
+
+	public int getCapacity() { return capacity;	}
 
 	/**
 	 * Called after testing is finished. Implementations can check their

@@ -37,6 +37,14 @@ public class ClockEviction<K,V> extends EvictionPolicy<K, V, ClockEviction.Entry
 	private long size;
 	private Entry hand;
 
+	/**
+	 * Created via reflection
+	 */
+	@SuppressWarnings("unused")
+	public ClockEviction(final int capacity) {
+		super(capacity);
+	}
+
 	@Override
 	public Entry newEntry(final K key, final V value) {
 		Entry e = new Entry(key, value);

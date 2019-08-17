@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.cache;
+package org.cache2k.benchmark.prototype.playGround;
 
 /*
  * #%L
@@ -20,17 +20,19 @@ package org.cache2k.benchmark.cache;
  * #L%
  */
 
-import org.cache2k.benchmark.EvaluationCacheFactory;
-import org.cache2k.benchmark.prototype.playGround.RandomEviction;
+import org.cache2k.benchmark.EvictionTuning;
 
 /**
  * @author Jens Wilke
  */
-public class RandomEvictionFactory extends EvaluationCacheFactory {
+public class Cache2kV1Tuning implements EvictionTuning {
 
-	{
-		withEviction(RandomEviction::new);
-		setName("random");
+	int hotMaxPercentage = 97;
+
+	int hitCounterDecreaseShift = 6;
+
+	public String toString() {
+		return String.format("%d,%d", hotMaxPercentage, hitCounterDecreaseShift);
 	}
 
 }

@@ -65,6 +65,10 @@ public class ArcEviction<K,V> extends EvictionPolicy<K, V, ArcEviction.Entry> {
 
 	private boolean b2HitPreferenceForEviction;
 
+	public ArcEviction(final int capacity) {
+		super(capacity);
+	}
+
 	@Override
 	public Entry newEntry(final K key, final V value) {
 		Entry e = checkForGhost(key);

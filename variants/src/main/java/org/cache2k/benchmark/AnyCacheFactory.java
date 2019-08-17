@@ -83,11 +83,20 @@ public class AnyCacheFactory<T extends EvictionTuning> {
 	public T getDefaultTuning() { return null; }
 
 	/**
-	 * Can be overridden by subclasses. Defaults to
+	 * Can be overridden by subclasses. Defaults to the output from the tuning object.
+	 * If its identical with the default, return an empty string.
 	 */
 	protected String getNameSuffixFromTuning() {
 		if (getTuning() != null) {
-			return "(" + getTuning().getNameSuffix() + ")";
+			String value = getTuning().getNameSuffix();
+			T defaultTuning = getDefaultTuning();
+			if (defaultTuning != null) {
+				String defaultValue = defaultTuning.getNameSuffix();
+				if (value.equals(defaultValue)) {
+					return "";
+				}
+			}
+			return "(" + value + ")";
 		}
 		return "";
 	}

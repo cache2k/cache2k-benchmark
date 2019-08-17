@@ -48,6 +48,14 @@ public class CarEviction<K,V> extends EvictionPolicy<K, V, CarEviction.Entry> {
 
 	private long hits;
 
+	/**
+	 * Created via reflection
+	 */
+	@SuppressWarnings("unused")
+	public CarEviction(final int capacity) {
+		super(capacity);
+	}
+
 	@Override
 	public Entry newEntry(final K key, final V value) {
 		Entry e = checkForGhost(key);

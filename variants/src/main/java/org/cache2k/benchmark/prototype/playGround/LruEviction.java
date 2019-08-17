@@ -32,6 +32,14 @@ public class LruEviction<K,V> extends EvictionPolicy<K, V, LruEviction.Entry> {
 
 	private Entry head = new Entry(null,null).shortCircuit();
 
+	/**
+	 * Created via reflection.
+	 */
+	@SuppressWarnings("unused")
+	public LruEviction(final int capacity) {
+		super(capacity);
+	}
+
 	@Override
 	public Entry newEntry(final K key, final V value) {
 		Entry e = new Entry(key, value);

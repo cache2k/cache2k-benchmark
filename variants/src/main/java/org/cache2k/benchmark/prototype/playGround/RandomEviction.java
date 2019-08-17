@@ -39,9 +39,8 @@ public class RandomEviction<K,V> extends EvictionPolicy<K, V, RandomEviction.Ent
 	private Entry[] buckets;
 	private int evictionBucketIdx = 0;
 
-	@Override
-	public void setCapacity(final int v) {
-		super.setCapacity(v);
+	public RandomEviction(final int capacity) {
+		super(capacity);
 		buckets = new Entry[getCapacity()];
 	}
 

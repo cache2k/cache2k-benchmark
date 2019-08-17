@@ -62,8 +62,6 @@ public class Cache2kV12Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV12Evi
 	private int coldSize;
 	private int hotSize;
 
-	/** Maximum size of hot clock. 0 means normal clock behaviour */
-
 	private Entry handCold;
 	private Entry handHot;
 
@@ -71,14 +69,14 @@ public class Cache2kV12Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV12Evi
 	private Cache2kV12Eviction.Ghost ghostHead = new Ghost().shortCircuit();
 	private int ghostSize = 0;
 	private static final int GHOST_LOAD_PERCENT = 63;
-	private Tunable tunable;
+	private Cache2kV1Tuning tuning;
 
-	public Cache2kV12Eviction() {
-		this(new Tunable());
-	}
-
-	public Cache2kV12Eviction(Tunable t) {
-		tunable = t;
+	/**
+	 * Created via reflection.
+	 */
+	public Cache2kV12Eviction(int capacity, Cache2kV1Tuning tuning) {
+		super(capacity);
+		this.tuning = tuning;
 		coldSize = 0;
 		hotSize = 0;
 		handCold = null;
@@ -123,7 +121,7 @@ public class Cache2kV12Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV12Evi
 	}
 
 	public long getHotMax() {
-		return getSize() * tunable.hotMaxPercentage / 100;
+		return getSize() * tuning.hotMaxPercentage / 100;
 	}
 
 	public long getGhostMax() {
@@ -226,7 +224,7 @@ public class Cache2kV12Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV12Evi
 		long _hotHits = hotHits;
 		int _initialMaxScan = hotSize >> 2 + 1;
 		int _maxScan = _initialMaxScan;
-		long _decrease = ((_hand.hitCnt + _hand.next.hitCnt) >> tunable.hitCounterDecreaseShift) + 1;
+		long _decrease = ((_hand.hitCnt + _hand.next.hitCnt) >> tuning.hitCounterDecreaseShift) + 1;
 		while (_maxScan-- > 0) {
 			long _hitCnt = _hand.hitCnt;
 			if (_hitCnt < _lowestHits) {
@@ -324,14 +322,6 @@ public class Cache2kV12Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV12Evi
 			}
 		}
 		return _hand;
-	}
-
-	public static class Tunable {
-
-		int hotMaxPercentage = 97;
-
-		int hitCounterDecreaseShift = 6;
-
 	}
 
 	private Ghost lookupGhost(int _hash) {
