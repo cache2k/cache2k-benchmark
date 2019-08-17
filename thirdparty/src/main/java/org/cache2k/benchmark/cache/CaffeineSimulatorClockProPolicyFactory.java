@@ -28,7 +28,7 @@ import com.typesafe.config.ConfigFactory;
 import org.cache2k.benchmark.EvictionTuning;
 
 /**
- * Build a caffeines' Clock-Pro simulator policy
+ * Build a Caffeines' Clock-Pro simulator policy
  *
  * @author Jens Wilke
  * @see ClockProPolicy
