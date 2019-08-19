@@ -22,6 +22,7 @@ package org.cache2k.benchmark.prototype;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.EvictionListener;
+import org.cache2k.benchmark.EvictionStatistics;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -100,7 +101,7 @@ public class PrototypeCache<E extends Entry<K,V>, K,V>
 	}
 
 	@Override
-	public EvictionStatistics getEvictionStats() {
+	public EvictionStatistics getEvictionStatistics() {
 		final EvictionStatistics sts = eviction.getEvictionStats();
 		assert sts.getEvictionCount() < 0 || sts.getEvictionCount() == evictionCnt;
 		return new EvictionStatistics() {

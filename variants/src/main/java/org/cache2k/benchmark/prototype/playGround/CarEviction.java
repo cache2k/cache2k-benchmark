@@ -21,7 +21,7 @@ package org.cache2k.benchmark.prototype.playGround;
  */
 
 import org.cache2k.benchmark.prototype.EvictionPolicy;
-import org.cache2k.benchmark.prototype.EvictionStatistics;
+import org.cache2k.benchmark.EvictionStatistics;
 import org.cache2k.benchmark.prototype.LinkedEntry;
 
 import java.util.HashMap;

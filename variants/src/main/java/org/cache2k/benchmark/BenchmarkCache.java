@@ -20,8 +20,6 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.prototype.EvictionStatistics;
-
 import java.io.Closeable;
 
 /**
@@ -56,7 +54,7 @@ public abstract class BenchmarkCache<K, V> implements Closeable {
   /** free up all resources of the cache */
   public void close() { }
 
-  public EvictionStatistics getEvictionStats() {
+  public EvictionStatistics getEvictionStatistics() {
     return new EvictionStatistics() {};
   }
 

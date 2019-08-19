@@ -26,7 +26,7 @@ import com.typesafe.config.ConfigFactory;
 import org.cache2k.benchmark.EvictionTuning;
 import org.cache2k.benchmark.SimulatorPolicy;
 import org.cache2k.benchmark.SimulatorPolicyFactory;
-import org.cache2k.benchmark.prototype.EvictionStatistics;
+import org.cache2k.benchmark.EvictionStatistics;
 
 /**
  * Integrates the caffeine simulator.

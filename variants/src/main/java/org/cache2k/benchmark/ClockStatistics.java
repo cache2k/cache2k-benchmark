@@ -20,8 +20,6 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.prototype.EvictionStatistics;
-
 /**
  * Interesting statistics for clock-like eviction algorithms.
  * This is basically the scan count.

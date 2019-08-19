@@ -20,7 +20,6 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.prototype.EvictionStatistics;
 import org.cache2k.benchmark.traces.Ranking;
 import org.cache2k.benchmark.util.AccessTrace;
 
@@ -104,7 +103,7 @@ public class EvictionBenchmarkRunner {
           missCount++;
         }
       }
-      logHitRate(factory, capacity, cache.toString(), cache.getEvictionStats(), trace, missCount);
+      logHitRate(factory, capacity, cache.toString(), cache.getEvictionStatistics(), trace, missCount);
     } else {
       SimulatorPolicy policy = ((SimulatorPolicyFactory) factory).create(capacity);
       Integer[] objTrace = trace.getObjectArray();

@@ -20,6 +20,8 @@ package org.cache2k.benchmark.prototype;
  * #L%
  */
 
+import org.cache2k.benchmark.EvictionStatistics;
+
 /**
  * Abstract class / basic interface for a eviction policy.
  *

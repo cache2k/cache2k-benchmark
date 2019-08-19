@@ -31,8 +31,17 @@ public class Cache2kV1Tuning implements EvictionTuning {
 
 	int hitCounterDecreaseShift = 6;
 
+	/** Needed for creation by reflection */
+	@SuppressWarnings("unused")
+	public Cache2kV1Tuning() { }
+
+	public Cache2kV1Tuning(final int hotMaxPercentage) {
+		this.hotMaxPercentage = hotMaxPercentage;
+	}
+
 	public String toString() {
-		return String.format("%d,%d", hotMaxPercentage, hitCounterDecreaseShift);
+		// return String.format("%d,%d", hotMaxPercentage, hitCounterDecreaseShift);
+		return String.format("%d", hotMaxPercentage);
 	}
 
 }

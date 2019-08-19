@@ -20,8 +20,6 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.prototype.EvictionStatistics;
-
 /**
  * @author Jens Wilke
  */

@@ -21,7 +21,7 @@ package org.cache2k.benchmark.prototype.playGround;
  */
 
 import org.cache2k.benchmark.prototype.EvictionPolicy;
-import org.cache2k.benchmark.prototype.EvictionStatistics;
+import org.cache2k.benchmark.EvictionStatistics;
 import org.cache2k.benchmark.prototype.LinkedEntry;
 
 /**
@@ -48,6 +48,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
 	private long hotScanCnt;
 	private long coldRunCnt;
 	private long coldScanCnt;
+	private long reshuffleCnt;
 
 	private int coldSize;
 	private int hotSize;
@@ -183,7 +184,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
 			ghostHits++;
 		}
 		// fill up hot on startup first / glimpse optimization.
-		if (g != null || (coldSize == 0 && hotSize < getHotMax())) {
+		if (g != null || (hotSize < getHotMax())) {
 			e.setHot(true);
 			hotSize++;
 			handHot = Entry.insertIntoTailCyclicList(handHot, e);
@@ -193,12 +194,15 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
 		handCold = Entry.insertIntoTailCyclicList(handCold, e);
 	}
 
-	/**
-	 * Scan through hot entries.
-	 *
-	 * @return candidate for eviction or demotion
-	 */
 	private Entry runHandHot() {
+		return runHandHot(hotSize >> 2 + 1);
+	}
+		/**
+		 * Scan through hot entries.
+		 *
+		 * @return candidate for eviction or demotion
+		 */
+	private Entry runHandHot(final int _initialMaxScan) {
 		assert(hotSize > 0);
 		assert(handHot != null);
 		hotRunCnt++;
@@ -206,7 +210,6 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
 		Entry _coldCandidate = _hand;
 		long _lowestHits = Long.MAX_VALUE;
 		long _hotHits = hotHits;
-		int _initialMaxScan = hotSize >> 2 + 1;
 		int _maxScan = _initialMaxScan;
 		long _decrease = ((_hand.hitCnt + _hand.next.hitCnt) >> tuning.hitCounterDecreaseShift) + 1;
 		while (_maxScan-- > 0) {
@@ -253,9 +256,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
 				if (hotSize >= getHotMax() && handHot != null) {
 					_evictFromHot = runHandHot();
 				}
-				// System.out.println("promote: " + _hand.key + " " + _hand.hitCnt);
 				_scanCnt++;
-				// reset the hit counter
 				coldHits += _hand.hitCnt;
 				_hand.hitCnt = 0;
 				Entry e = _hand;
@@ -265,6 +266,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
 				e.setHot(true);
 				hotSize++;
 				handHot = Entry.insertIntoTailCyclicList(handHot, e);
+				reshuffleCnt++;
 				if (_evictFromHot != null) {
 					coldScanCnt += _scanCnt;
 					handCold = _hand;
@@ -360,6 +362,10 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
 			public long getScanCount() {
 				return coldScanCnt + hotScanCnt;
 			}
+			@Override
+			public long getReshuffleCount() {
+				return reshuffleCnt;
+			}
 		};
 	}
 
@@ -383,7 +389,9 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
 			// How often hand hot is triggered
 			", hotRunCnt=" + hotRunCnt +
 			// How many entries are scanned on a hand hot run
-			", hotScanCnt=" + hotScanCnt + ")";
+			", hotScanCnt=" + hotScanCnt +
+			", totalScanCnt=" + (hotScanCnt + coldScanCnt) +
+			", reshuffleCnt=" + reshuffleCnt + ")";
 	}
 
 	/**
