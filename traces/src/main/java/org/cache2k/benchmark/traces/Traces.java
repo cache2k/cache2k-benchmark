@@ -178,9 +178,9 @@ public interface Traces {
 	 * <p>fileName=Financial1.spc.bz2, sha1sum=5f705113ef5ab0b7cf033894e03ff0b050927ffd
 	 * @see <a href="http://traces.cs.umass.edu/index.php/Storage/Storage">UMassTraceRepository</a>
 	 */
-	 TraceSupplier UMASS_FINANCIAL1_1M =
+	 TraceSupplier FINANCIAL1_1M =
 		TraceSupplier.of(() -> UmassTraceReader.of("Financial1.spc.bz2").strip(1_000_000))
-		.name("umass-financial1-1M")
+		.name("financial1-1M")
 		.sizes(12500, 25000, 50000, 100000, 200000);
 
 	/**
@@ -189,7 +189,7 @@ public interface Traces {
 	 * <p>fileName=Financial1.spc.bz2, sha1sum=5f705113ef5ab0b7cf033894e03ff0b050927ffd
 	 * @see <a href="http://traces.cs.umass.edu/index.php/Storage/Storage">UMassTraceRepository</a>
 	 */
-	TraceSupplier UMASS_FINANCIAL1 =
+	TraceSupplier FINANCIAL1 =
 		TraceSupplier.of(() -> UmassTraceReader.of("Financial1.spc.bz2"))
 			.name("financial1")
 			.sizes(12500, 25000, 50000, 100000, 200000);
@@ -200,9 +200,9 @@ public interface Traces {
 	 * <p>fileName=Financial2.spc.bz2, sha1sum=ca788d7ec7b3700c989c252752af54c68a637a4a
 	 * @see <a href="http://traces.cs.umass.edu/index.php/Storage/Storage">UMassTraceRepository</a>
 	 */
-	TraceSupplier UMASS_FINANCIAL2_1M =
+	TraceSupplier FINANCIAL2_1M =
 		TraceSupplier.of(() -> UmassTraceReader.of("Financial2.spc.bz2").strip(1_000_000))
-			.name("umass-financial2-1M")
+			.name("financial2-1M")
 		  .sizes(5000, 10000, 20000, 40000, 80000);
 
 	/**
@@ -211,9 +211,9 @@ public interface Traces {
 	 * <p>fileName=Financial2.spc.bz2, sha1sum=ca788d7ec7b3700c989c252752af54c68a637a4a
 	 * @see <a href="http://traces.cs.umass.edu/index.php/Storage/Storage">UMassTraceRepository</a>
 	 */
-	TraceSupplier UMASS_FINANCIAL2 =
+	TraceSupplier FINANCIAL2 =
 		TraceSupplier.of(() -> UmassTraceReader.of("Financial2.spc.bz2"))
-			.name("umass-financial2")
+			.name("financial2")
 			.sizes(5000, 10000, 20000, 40000, 80000);
 
 	/**
@@ -222,7 +222,7 @@ public interface Traces {
 	 * <p>fileName=WebSearch1.spc.bz2, sha1sum=4952e8eee9ea0117d6fc010779b32c3260ce6ead
 	 * @see <a href="http://traces.cs.umass.edu/index.php/Storage/Storage">UMassTraceRepository</a>
 	 */
-	TraceSupplier UMASS_WEBSEARCH1_1M =
+	TraceSupplier WEBSEARCH1_1M =
 		TraceSupplier.of(() -> UmassTraceReader.of("WebSearch1.spc.bz2").strip(1_000_000))
 			.name("umass-websearch1-1M")
 		  .sizes(100000, 200000, 300000);
@@ -233,9 +233,9 @@ public interface Traces {
 	 * <p>fileName=WebSearch1.spc.bz2, sha1sum=4952e8eee9ea0117d6fc010779b32c3260ce6ead
 	 * @see <a href="http://traces.cs.umass.edu/index.php/Storage/Storage">UMassTraceRepository</a>
 	 */
-	TraceSupplier UMASS_WEBSEARCH1 =
+	TraceSupplier WEBSEARCH1 =
 		TraceSupplier.of(() -> UmassTraceReader.of("WebSearch1.spc.bz2"))
-			.name("umass-websearch1")
+			.name("websearch1")
 			.sizes(100000, 200000, 300000);
 
 	/**
@@ -244,9 +244,9 @@ public interface Traces {
 	 * <p>fileName=WebSearch2.spc.bz2, sha1sum=6d44ce16f4233a74be4a42c54bce7cca1197098a
 	 * @see <a href="http://traces.cs.umass.edu/index.php/Storage/Storage">UMassTraceRepository</a>
 	 */
-	TraceSupplier UMASS_WEBSEARCH2_1M =
+	TraceSupplier WEBSEARCH2_1M =
 		TraceSupplier.of(() -> UmassTraceReader.of("WebSearch2.spc.bz2").strip(1_000_000))
-			.name("umass-websearch2-1M")
+			.name("websearch2-1M")
 			.sizes(10000, 20000, 30000);
 
 	/**
@@ -255,9 +255,9 @@ public interface Traces {
 	 * <p>fileName=WebSearch2.spc.bz2, sha1sum=6d44ce16f4233a74be4a42c54bce7cca1197098a
 	 * @see <a href="http://traces.cs.umass.edu/index.php/Storage/Storage">UMassTraceRepository</a>
 	 */
-	TraceSupplier UMASS_WEBSEARCH2 =
+	TraceSupplier WEBSEARCH2 =
 		TraceSupplier.of(() -> UmassTraceReader.of("WebSearch2.spc.bz2"))
-			.name("umass-websearch2")
+			.name("websearch2")
 			.sizes(10000, 20000, 30000);
 
 	/**
@@ -266,9 +266,9 @@ public interface Traces {
 	 * <p>fileName=WebSearch3.spc.bz2, sha1sum=b01df4d3a1d3379d8a33dfb35958e8749e6c4e02
 	 * @see <a href="http://traces.cs.umass.edu/index.php/Storage/Storage">UMassTraceRepository</a>
 	 */
-	TraceSupplier UMASS_WEBSEARCH3_1M =
+	TraceSupplier WEBSEARCH3_1M =
 		TraceSupplier.of(() -> UmassTraceReader.of("WebSearch3.spc.bz2").strip(1_000_000))
-			.name("umass-websearch3-1M")
+			.name("websearch3-1M")
 			.sizes(10000, 20000, 30000);
 
 	/**
@@ -277,9 +277,9 @@ public interface Traces {
 	 * <p>fileName=WebSearch3.spc.bz2, sha1sum=b01df4d3a1d3379d8a33dfb35958e8749e6c4e02
 	 * @see <a href="http://traces.cs.umass.edu/index.php/Storage/Storage">UMassTraceRepository</a>
 	 */
-	TraceSupplier UMASS_WEBSEARCH3 =
+	TraceSupplier WEBSEARCH3 =
 		TraceSupplier.of(() -> UmassTraceReader.of("WebSearch3.spc.bz2"))
-			.name("umass-websearch3")
+			.name("websearch3")
 			.sizes(10000, 20000, 30000);
 
 	/**

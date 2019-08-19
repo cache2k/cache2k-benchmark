@@ -82,6 +82,9 @@ public class UmassTraceReader extends AccessPattern {
           return false;
         }
         String[] sa = s.split(",", 5);
+        if (sa.length < 3) {
+          continue;
+        }
         int asu = Integer.parseInt(sa[0]);
         if (asu >= ASU_SPACE) {
           throw new IllegalArgumentException("asu too high: " + asu);
