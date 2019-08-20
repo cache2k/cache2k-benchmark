@@ -41,8 +41,6 @@ import java.io.LineNumberReader;
  */
 public class UmassTraceReader extends AccessPattern {
 
-  public static final String DIRECTORY_ENV = "org.cache2k.benchmark.traces.umass";
-  public static final String DEFAULT_DIRECTORY = "/opt/headissue/cache2k-benchmark-trace//umass.edu";
   private static final int BLOCK_SIZE = 512;
   private static final int ASU_SPACE = 128;
 
@@ -51,17 +49,8 @@ public class UmassTraceReader extends AccessPattern {
   private int count;
 
   public static AccessPattern of(String fileName) throws IOException {
-    String directory = System.getenv(DIRECTORY_ENV);
-    if (directory == null) {
-      directory = DEFAULT_DIRECTORY;
-    }
-    if (!new File(directory).isDirectory()) {
-      throw new IllegalArgumentException(
-        "UMass traces are missing. " +
-        "Download the traces and specify the directory via environment variable: " + DIRECTORY_ENV);
-    }
     return new UmassTraceReader(new BZip2CompressorInputStream(
-      new FileInputStream(directory + File.separator + fileName)));
+      new FileInputStream(TraceDirectory.resolveFile("umass.edu/" + fileName))));
   }
 
   private UmassTraceReader(InputStream in) {

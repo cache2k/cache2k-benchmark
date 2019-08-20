@@ -27,10 +27,12 @@ import com.github.benmanes.caffeine.cache.simulator.parser.corda.CordaTraceReade
 import static org.cache2k.benchmark.util.TraceSupplier.*;
 
 import com.github.benmanes.caffeine.cache.simulator.parser.lirs.LirsTraceReader;
+import com.github.benmanes.caffeine.cache.simulator.parser.wikipedia.WikipediaTraceReader;
 import org.cache2k.benchmark.util.AccessPattern;
 import org.cache2k.benchmark.util.LongToIntMapper;
 import org.cache2k.benchmark.util.Patterns;
 import org.cache2k.benchmark.util.RandomAccessPattern;
+import org.cache2k.benchmark.util.TraceDirectory;
 import org.cache2k.benchmark.util.TraceSupplier;
 import org.cache2k.benchmark.util.UmassTraceReader;
 import org.cache2k.benchmark.util.ZipfianPattern;
@@ -39,6 +41,12 @@ import org.cache2k.benchmark.util.ZipfianPattern;
  * @author Jens Wilke
  */
 public interface Traces {
+
+	TraceSupplier WIKIPEDIA1 =
+		fromLongStream(() -> new WikipediaTraceReader(
+			TraceDirectory.resolveFile("wikipedia/wiki.1190153705.gz")).events())
+			.name("wikipedia1")
+			.sizes(512, 1024, 2048, 4096);
 
 	/**
 	 * Corda trace from the Caffeine simulator.

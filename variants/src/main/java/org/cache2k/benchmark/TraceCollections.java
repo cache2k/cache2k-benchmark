@@ -49,10 +49,11 @@ public class TraceCollections {
 			.add(Traces.CORDA_SMALL_10X)
 			.add(Traces.CORDA_LOOP_CORDA)
 			.add(Traces.LOOP)
+			.add(Traces.WIKIPEDIA1)
 			.add(Traces.ZIPFIAN_900_3M)
-			.add(Traces.ZIPFIAN_900_1M)
+			// .add(Traces.ZIPFIAN_900_1M)
 			.add(Traces.ZIPFIAN_10K_10M)
-			.add(Traces.ZIPFIAN_10K_3M)
+			// .add(Traces.ZIPFIAN_10K_3M)
 			.add(Traces.RANDOM_1000_1M)
 			.add(Traces.RANDOM_1000_100K)
 			.add(Traces.RANDOM_1000_10K);
