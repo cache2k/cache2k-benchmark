@@ -70,6 +70,7 @@ public class Cache2kV12Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV12Evi
   private int ghostSize = 0;
   private static final int GHOST_LOAD_PERCENT = 63;
   private Cache2kV1Tuning tuning;
+  private long reshuffleCnt;
 
   /**
    * Created via reflection.
@@ -230,6 +231,7 @@ public class Cache2kV12Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV12Evi
     this.hotHits = hotHits;
     long scanCount = initialMaxScan - maxScan;
     hotScanCnt += scanCount;
+    reshuffleCnt++;
     handHot = Entry.removeFromCyclicList(hand, coldCandidate);
     hotSize--;
     coldCandidate.setHot(false);
@@ -253,6 +255,7 @@ public class Cache2kV12Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV12Evi
         coldHits += hand.hitCnt;
         hand.hitCnt = 0;
         Entry e = hand;
+        reshuffleCnt++;
         hand = Entry.removeFromCyclicList(e);
         coldSize--;
         e.setHot(true);
@@ -359,6 +362,10 @@ public class Cache2kV12Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV12Evi
       public long getScanCount() {
         return coldScanCnt + hotScanCnt;
       }
+      @Override
+      public long getReshuffleCount() {
+        return reshuffleCnt;
+      }
     };
   }
 
@@ -374,7 +381,9 @@ public class Cache2kV12Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV12Evi
       ", coldRunCnt=" + coldRunCnt +// identical to the evictions anyways
       ", coldScanCnt=" + coldScanCnt +
       ", hotRunCnt=" + hotRunCnt +
-      ", hotScanCnt=" + hotScanCnt + ")";
+      ", hotScanCnt=" + hotScanCnt +
+      ", totalScanCnt=" + (hotScanCnt + coldScanCnt) +
+      ", reshuffleCnt=" + reshuffleCnt + ")";
   }
 
   /**
