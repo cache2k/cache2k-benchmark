@@ -178,7 +178,8 @@ public class EvictionBenchmarkRunner {
       evictionStats.getEvictionCount() + "| "  + // 7
       evictionStats.getScanCount() +  "| " + // 8
       String.format("%.3f",evictionStats.getScansPerEviction()) + "|" + // 9
-      cacheToString; // 10
+      evictionStats.getReshuffleCount() +  "| " + // 10
+      cacheToString; // 11
     writeCsv(csvLine);
     Ranking.Result result = new Ranking.Result();
     result.setImplementationName(factory.getName());
