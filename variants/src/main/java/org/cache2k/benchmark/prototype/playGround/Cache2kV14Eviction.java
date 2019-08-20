@@ -52,6 +52,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
 
   private int coldSize;
   private int hotSize;
+  private int hotMax;
 
   /** Maximum size of hot clock. 0 means normal clock behaviour */
 
@@ -67,6 +68,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
   public Cache2kV14Eviction(int capacity, Cache2kV1Tuning tuning) {
     super(capacity);
     this.tuning = tuning;
+    hotMax = capacity * tuning.hotMaxPercentage / 100;
     coldSize = 0;
     hotSize = 0;
     handCold = null;
@@ -110,7 +112,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
   }
 
   public long getHotMax() {
-    return getCapacity() * tuning.hotMaxPercentage / 100;
+    return hotMax;
   }
 
   public long getGhostMax() {
@@ -145,9 +147,6 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
     int hc = e.getHashCode();
     Ghost g = lookupGhost(hc);
     if (g != null) {
-      /*
-       * either this is a hash code collision, or a previous ghost hit that was not removed.
-       */
       Ghost.moveToFront(ghostHead, g);
       return;
     }
@@ -176,7 +175,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
        */
       ghostHits++;
     }
-    if (g != null || (hotSize < getHotMax())) {
+    if (g != null || (coldSize == 0 && hotSize < getHotMax())) {
       e.setHot(true);
       hotSize++;
       handHot = Entry.insertIntoTailCyclicList(handHot, e);
