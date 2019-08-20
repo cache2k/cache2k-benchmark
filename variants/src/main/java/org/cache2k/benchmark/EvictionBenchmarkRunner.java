@@ -27,6 +27,7 @@ import java.io.CharArrayWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 
 /**
  * Runs eviction benchmarks, writes results to a CSV file and collects results
@@ -61,7 +62,7 @@ public class EvictionBenchmarkRunner {
     ranking.readEvaluationResults();
   }
 
-  public void printRankingSummary(String candidate, String[] peers) {
+  public void printRankingSummary(String candidate, List<String> peers) {
     CharArrayWriter buffer = new CharArrayWriter();
     PrintWriter out = new PrintWriter(buffer);
     if (candidate == null) {

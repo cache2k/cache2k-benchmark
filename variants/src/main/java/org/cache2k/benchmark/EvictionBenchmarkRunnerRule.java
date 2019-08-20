@@ -24,6 +24,12 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * Wrap the runner into a JUnit rule
  *
@@ -34,7 +40,7 @@ public class EvictionBenchmarkRunnerRule implements TestRule {
 	private EvictionBenchmarkRunner runner;
 	private String suiteName;
 	private String candidate = null;
-	private String[] peers;
+	private List<String> peers;
 	private boolean readStoredResults;
 
 	@Override
@@ -62,7 +68,26 @@ public class EvictionBenchmarkRunnerRule implements TestRule {
 	}
 
 	public EvictionBenchmarkRunnerRule peers(String... s) {
-		peers = s;
+		peers = Arrays.asList(s);
+		return this;
+	}
+
+	/**
+	 * Sets first cache in the builder as comparison candidate and the others as peer
+	 */
+	public EvictionBenchmarkRunnerRule candidateAndPeers(EvictionTestVariation.Builder variations) {
+		candidateAndPeers(variations.getCaches());
+		return this;
+	}
+
+	/**
+	 * Sets first cache as comparison candidate and the others as peer
+	 */
+	public EvictionBenchmarkRunnerRule candidateAndPeers(Collection<AnyCacheFactory> caches) {
+		List<String> cacheNames =
+			caches.stream().map(AnyCacheFactory::getName).collect(Collectors.toList());
+		candidate  = cacheNames.remove(0);
+		peers = cacheNames;
 		return this;
 	}
 

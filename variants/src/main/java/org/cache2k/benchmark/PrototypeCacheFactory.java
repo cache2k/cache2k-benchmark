@@ -30,11 +30,16 @@ import java.lang.reflect.Constructor;
  *
  * @author Jens Wilke
  */
-public class PrototypeCacheFactory<T extends EvictionTuning> extends BenchmarkCacheFactory<T> {
+@SuppressWarnings("Duplicates")
+public final class PrototypeCacheFactory<T extends EvictionTuning> extends BenchmarkCacheFactory<T> {
 
-	private Class<EvictionPolicy> evictionClass;
+	private Class<? extends EvictionPolicy> evictionClass;
 
-	public PrototypeCacheFactory withEviction(Class<EvictionPolicy> eviction) {
+	public static PrototypeCacheFactory of(Class<? extends EvictionPolicy> eviction) {
+		return new PrototypeCacheFactory().withEviction(eviction);
+	}
+
+	public PrototypeCacheFactory withEviction(Class<? extends EvictionPolicy> eviction) {
 		this.evictionClass = eviction;
 		String suffix = "eviction";
 		String name = eviction.getSimpleName().toLowerCase();
@@ -65,6 +70,9 @@ public class PrototypeCacheFactory<T extends EvictionTuning> extends BenchmarkCa
 	@Override
 	public T getDefaultTuning() {
 		try {
+			if (evictionClass.getConstructors().length != 1) {
+				throw new IllegalArgumentException("Eviction class needs to have only one constructor");
+			}
 			Constructor constructor = evictionClass.getConstructors()[0];
 			if (constructor.getParameterTypes().length == 1) {
 				return null;

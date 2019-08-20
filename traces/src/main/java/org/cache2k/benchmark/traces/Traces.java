@@ -70,7 +70,7 @@ public interface Traces {
 	TraceSupplier LOOP =
 		fromLongStream(() -> new LirsTraceReader("loop.trace.gz").events())
 			.name("loop")
-			.sizes(512, 1024);
+			.sizes(256, 512);
 
 	/**
 	 * Trace combining {@link #CORDA_SMALL} {@link #LOOP} and {@link #CORDA_SMALL}.

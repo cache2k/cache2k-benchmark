@@ -26,11 +26,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
+ * One specific variant to run a test for, which is the cache, size and trace.
+ * The builder actually builds a set of variations out of all possible combinations
+ * for caches, traces and target cache sizes.
+ *
  * @author Jens Wilke
  */
 public class EvictionTestVariation {
@@ -39,7 +44,8 @@ public class EvictionTestVariation {
 	private final AnyCacheFactory cacheFactory;
 	private final int cacheSize;
 
-	public EvictionTestVariation(final TraceSupplier traceSupplier, final AnyCacheFactory cacheFactory, final int cacheSize) {
+	public EvictionTestVariation(final TraceSupplier traceSupplier,
+															 final AnyCacheFactory cacheFactory, final int cacheSize) {
 		this.traceSupplier = traceSupplier;
 		this.cacheFactory = cacheFactory;
 		this.cacheSize = cacheSize;
@@ -64,7 +70,7 @@ public class EvictionTestVariation {
 
 	public static class Builder {
 
-		private Set<AnyCacheFactory> caches = new HashSet<>();
+		private Set<AnyCacheFactory> caches = new LinkedHashSet<>();
 		private Map<TraceSupplier, Set<Integer>> trace2sizes = new HashMap<>();
 
 		public Builder add(AnyCacheFactory factory) {
@@ -72,6 +78,13 @@ public class EvictionTestVariation {
 			return this;
 		}
 
+		/**
+		 * Add add a trace.
+		 *
+		 * @param trace the trace to add
+		 * @param cacheSizes cache sizes to test with this trace. If empty use the default sizes
+		 *                   specified in the trace.
+		 */
 		public Builder add(TraceSupplier trace, int... cacheSizes) {
 			Set<Integer> sizes = trace2sizes.computeIfAbsent(trace, x -> new HashSet<>());
 			for (int i : (cacheSizes.length == 0 ? trace.getSizes() : cacheSizes)) { sizes.add(i); }
@@ -89,6 +102,17 @@ public class EvictionTestVariation {
 			return this;
 		}
 
+		/**
+		 * Return caches in the order they were inserted.
+		 */
+		public Collection<AnyCacheFactory> getCaches() {
+			return caches;
+		}
+
+		/**
+		 * Build and return all variants of possible combinations of
+		 * cache, size and trace.
+		 */
 		public Collection<EvictionTestVariation> build() {
 			final List<EvictionTestVariation> result = new ArrayList<>();
 			caches.forEach(cache ->
