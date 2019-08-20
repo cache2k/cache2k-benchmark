@@ -32,12 +32,18 @@ import java.io.PrintWriter;
  * Runs eviction benchmarks, writes results to a CSV file and collects results
  * in a ranking.
  *
- * @author Jens Wilke; created: 2013-12-08
+ * @author Jens Wilke
  */
+@SuppressWarnings("WeakerAccess")
 public class EvictionBenchmarkRunner {
 
   private final Ranking ranking = new Ranking();
 
+  /**
+   * Name for the benchmark suite. Not yet used. We might use it in the
+   * future to write to different files.
+   */
+  @SuppressWarnings({"unused", "FieldCanBeLocal"})
   private String name;
   private boolean multipleImplementations = false;
   private String autoCandidate;
@@ -71,13 +77,14 @@ public class EvictionBenchmarkRunner {
         .filter(r -> !r.getImplementationName().equals(realCandidate)));
       out.println();
       out.println("== Summary - Top 3 ===");
-      out.println("trace size hitrate best hitrate diff 2nd-best hitrate diff 3rd-best hitrate diff");
+      out.println("trace size hitrate best hitrate diff " +
+        "2nd-best hitrate diff 3rd-best hitrate diff");
       others.writeTopSummary(out, current, 3);
       out.println();
       out.println("== Summary - Peers ===");
       StringBuilder sb = new StringBuilder();
       for (String peer : peers) {
-        sb.append(" " + peer + " - diff");
+        sb.append(" ").append(peer).append(" - diff");
       }
       out.println("trace size hitrate" + sb.toString());
       others.printSummary(out, current, peers);
@@ -85,16 +92,19 @@ public class EvictionBenchmarkRunner {
     System.out.print(buffer.toString());
   }
 
-  public long runBenchmark(EvictionTestVariation variation) {
-    return runBenchmark(variation.getCacheFactory(), variation.getTraceSupplier().get(), variation.getCacheSize());
+  public void runBenchmark(EvictionTestVariation variation) {
+    runBenchmark(variation.getCacheFactory(), variation.getTraceSupplier().get(),
+      variation.getCacheSize());
   }
 
-  public long runBenchmark(AnyCacheFactory factory, AccessTrace trace, int capacity) {
+  @SuppressWarnings("unchecked")
+  public void runBenchmark(AnyCacheFactory factory, AccessTrace trace, int capacity) {
     saveAutoCandidate(factory);
     long missCount =  0;
     if (factory instanceof BenchmarkCacheFactory) {
       BenchmarkCacheFactory benchmarkCacheFactory = (BenchmarkCacheFactory) factory;
-      BenchmarkCache<Integer, Integer> cache = benchmarkCacheFactory.create(Integer.class, Integer.class, capacity);
+      BenchmarkCache<Integer, Integer> cache =
+        benchmarkCacheFactory.create(Integer.class, Integer.class, capacity);
       Integer[] objTrace = trace.getObjectArray();
       for (Integer k : objTrace) {
         Integer v = cache.get(k);
@@ -103,7 +113,9 @@ public class EvictionBenchmarkRunner {
           missCount++;
         }
       }
-      logHitRate(factory, capacity, cache.toString(), cache.getEvictionStatistics(), trace, missCount);
+      logHitRate(
+        factory, capacity, cache.toString(),
+        cache.getEvictionStatistics(), trace, missCount);
     } else {
       SimulatorPolicy policy = ((SimulatorPolicyFactory) factory).create(capacity);
       Integer[] objTrace = trace.getObjectArray();
@@ -111,9 +123,9 @@ public class EvictionBenchmarkRunner {
         policy.record(k);
       }
       missCount = policy.getMissCount();
-      logHitRate(factory, capacity, policy.toString(), policy.getEvictionStatistics(), trace, missCount);
+      logHitRate(factory, capacity, policy.toString(),
+        policy.getEvictionStatistics(), trace, missCount);
     }
-    return missCount;
   }
 
   /**
@@ -133,44 +145,47 @@ public class EvictionBenchmarkRunner {
     }
   }
 
-  private void logHitRate(AnyCacheFactory factory, long cacheSize, String cacheToString, EvictionStatistics stats, AccessTrace trace, long missCount) {
+  private void logHitRate(AnyCacheFactory factory, long cacheSize, String cacheToString,
+                          EvictionStatistics stats, AccessTrace trace, long missCount) {
     saveHitRate(factory, cacheSize, cacheToString, stats, trace, missCount);
     System.out.println(cacheToString);
     System.out.flush();
   }
 
-  private void saveHitRate(AnyCacheFactory factory, long cacheSize, String cacheToString, EvictionStatistics _evictionStats, AccessTrace _trace, long _missCount) {
+  private void saveHitRate(AnyCacheFactory factory, long cacheSize, String cacheToString,
+                           EvictionStatistics evictionStats, AccessTrace trace, long missCount) {
     double hitRatePercent =
-      (_trace.getLength() - _missCount) * 100D / _trace.getLength();
-    String _traceName = _trace.getName();
-    String _hitRate = String.format("%.3f", hitRatePercent);
+      (trace.getLength() - missCount) * 100D / trace.getLength();
+    String traceName = trace.getName();
+    String hitRate = String.format("%.3f", hitRatePercent);
     String s = "";
     if (cacheSize > 0) {
       s += "size=" + cacheSize + ", ";
     }
-    s += "accessCount=" + _trace.getLength();
-    s += ", missCount=" + _missCount + ", hitRatePercent=" + _hitRate;
-    s += ", uniqueValues=" + _trace.getValueCount();
-    String _cacheImplementation = factory.getName();
-    System.out.println(_cacheImplementation + "@" + _traceName + ": " + s + " " + ranking.getTop3(_traceName, cacheSize));
-    String _csvLine =
-      _traceName + "|" +  // 1
+    s += "accessCount=" + trace.getLength();
+    s += ", missCount=" + missCount + ", hitRatePercent=" + hitRate;
+    s += ", uniqueValues=" + trace.getValueCount();
+    String cacheImplementation = factory.getName();
+    System.out.println(cacheImplementation + "@" + traceName + ": " + s + " " +
+      ranking.getTop3(traceName, cacheSize));
+    String csvLine =
+      traceName + "|" +  // 1
       factory.getName() + "|" + // 2
       cacheSize + "|" + // 3
       String.format("%.3f", hitRatePercent) + "|" + // 4
-      _trace.getLength() + "|" + // 5
-      _missCount + "|" + // 6
-      _evictionStats.getEvictionCount() + "| "  + // 7
-      _evictionStats.getScanCount() +  "| " + // 8
-      String.format("%.3f",_evictionStats.getScansPerEviction()) + "|" + // 9
+      trace.getLength() + "|" + // 5
+      missCount + "|" + // 6
+      evictionStats.getEvictionCount() + "| "  + // 7
+      evictionStats.getScanCount() +  "| " + // 8
+      String.format("%.3f",evictionStats.getScansPerEviction()) + "|" + // 9
       cacheToString; // 10
-    writeCsv(_csvLine);
+    writeCsv(csvLine);
     Ranking.Result result = new Ranking.Result();
     result.setImplementationName(factory.getName());
-    result.setTraceName(_traceName);
+    result.setTraceName(traceName);
     result.setCacheSize(cacheSize);
-    result.setMissCount(_missCount);
-    result.setTraceLength(_trace.getLength());
+    result.setMissCount(missCount);
+    result.setTraceLength(trace.getLength());
     ranking.add(result);
   }
 
