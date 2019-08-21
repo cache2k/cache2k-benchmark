@@ -46,38 +46,38 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class SomeTracesWithSomeCachesBenchmark {
 
-	public final static EvictionTestVariation.Builder CACHES = new EvictionTestVariation.Builder()
-		.add(SimpleCacheFactory.of(ClockProP.class))
-		.add(SimpleCacheFactory.of(CAR.class))
-		.add(PrototypeCacheFactory.of(Cache2kV14Eviction.class))
-		.add(new CaffeineStarFactory())
-		.add(new CaffeineSimulatorOptPolicyFactory().setName("OPT"));
+  public final static EvictionTestVariation.Builder CACHES = new EvictionTestVariation.Builder()
+    .add(SimpleCacheFactory.of(ClockProP.class))
+    .add(SimpleCacheFactory.of(CAR.class))
+    .add(PrototypeCacheFactory.of(Cache2kV14Eviction.class))
+    .add(new CaffeineStarFactory())
+    .add(new CaffeineSimulatorOptPolicyFactory().setName("OPT"));
 
-	public final static EvictionTestVariation.Builder TRACES =
-		new EvictionTestVariation.Builder()
-			.add(Traces.FINANCIAL1_1M)
-			.add(Traces.OLTP, 128, 256, 512)
-			.add(Traces.SCARAB_RECS);
+  public final static EvictionTestVariation.Builder TRACES =
+    new EvictionTestVariation.Builder()
+      .add(Traces.FINANCIAL1_1M)
+      .add(Traces.OLTP, 128, 256, 512)
+      .add(Traces.SCARAB_RECS);
 
-	@ClassRule
-	public static EvictionBenchmarkRunnerRule runner = new EvictionBenchmarkRunnerRule()
-		.candidateAndPeers(CACHES)
-		.setReadStoredResults(false);
+  @ClassRule
+  public static EvictionBenchmarkRunnerRule runner = new EvictionBenchmarkRunnerRule()
+    .candidateAndPeers(CACHES)
+    .setReadStoredResults(false);
 
-	@Parameterized.Parameters(name="{0}")
-	public static Iterable<? extends Object> data() {
-		return new EvictionTestVariation.Builder().merge(CACHES).merge(TRACES).build();
-	}
+  @Parameterized.Parameters(name="{0}")
+  public static Iterable<? extends Object> data() {
+    return new EvictionTestVariation.Builder().merge(CACHES).merge(TRACES).build();
+  }
 
-	private EvictionTestVariation variation;
+  private EvictionTestVariation variation;
 
-	public SomeTracesWithSomeCachesBenchmark(final EvictionTestVariation variation) {
-		this.variation = variation;
-	}
+  public SomeTracesWithSomeCachesBenchmark(final EvictionTestVariation variation) {
+    this.variation = variation;
+  }
 
-	@Test
-	public void test() {
-		runner.runBenchmark(variation);
-	}
+  @Test
+  public void test() {
+    runner.runBenchmark(variation);
+  }
 
 }
