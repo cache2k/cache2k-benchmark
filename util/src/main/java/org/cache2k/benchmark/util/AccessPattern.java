@@ -25,7 +25,8 @@ import java.util.stream.IntStream;
 
 /**
  * Requests to a cache as a stream of integer numbers, which represent
- * the cache key.
+ * the cache key. Should not be used any more, with Java 8 better use
+ * an {@code IntStream}.
  *
  * @author Jens Wilke
  */

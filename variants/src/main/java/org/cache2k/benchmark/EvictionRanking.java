@@ -1,24 +1,22 @@
-package org.cache2k.benchmark.traces;
+package org.cache2k.benchmark;
 
 /*
  * #%L
- * Benchmarks: Access trace collection
+ * Benchmarks: Implementation and eviction variants
  * %%
  * Copyright (C) 2013 - 2019 headissue GmbH, Munich
  * %%
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as
- * published by the Free Software Foundation, either version 3 of the 
- * License, or (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU General Public 
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  * #L%
  */
 
@@ -45,7 +43,7 @@ import java.util.stream.Stream;
  * @author Jens Wilke
  */
 @SuppressWarnings("WeakerAccess")
-public class Ranking {
+public class EvictionRanking {
 
   public static final String EVALUATION_RESULTS_DIR = "evaluation-results";
   private final Map<String, Map<Long, List<Result>>> trace2size2resultList = new HashMap<>();
@@ -129,11 +127,11 @@ public class Ranking {
     stream.forEach(this::add);
   }
 
-  public synchronized void writeTopSummary(PrintWriter writer, Ranking currentRun, int count) {
+  public synchronized void writeTopSummary(PrintWriter writer, EvictionRanking currentRun, int count) {
     collectSummary(writer, currentRun, (r, l) -> summaryLine(r, l, count));
   }
 
-  public synchronized void printSummary(PrintWriter writer, Ranking currentRun,
+  public synchronized void printSummary(PrintWriter writer, EvictionRanking currentRun,
                                         List<String> peers) {
     if (peers != null && peers.size() > 0) {
       double[] diffSum = new double[peers.size()];
@@ -179,7 +177,7 @@ public class Ranking {
     return sb.toString();
   }
 
-  private void collectSummary(PrintWriter writer, Ranking currentRun,
+  private void collectSummary(PrintWriter writer, EvictionRanking currentRun,
                               BiFunction<Result, List<Result>, String> collect) {
     for (Map.Entry<String, Map<Long, List<Result>>> entry :
       currentRun.trace2size2resultList.entrySet()) {

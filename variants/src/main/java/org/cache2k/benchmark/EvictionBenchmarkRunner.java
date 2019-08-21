@@ -20,7 +20,6 @@ package org.cache2k.benchmark;
  * #L%
  */
 
-import org.cache2k.benchmark.traces.Ranking;
 import org.cache2k.benchmark.util.AccessTrace;
 
 import java.io.CharArrayWriter;
@@ -38,7 +37,7 @@ import java.util.List;
 @SuppressWarnings("WeakerAccess")
 public class EvictionBenchmarkRunner {
 
-  private final Ranking ranking = new Ranking();
+  private final EvictionRanking ranking = new EvictionRanking();
 
   /**
    * Name for the benchmark suite. Not yet used. We might use it in the
@@ -70,8 +69,8 @@ public class EvictionBenchmarkRunner {
     }
     final String realCandidate = candidate;
     if (candidate != null) {
-      Ranking current = new Ranking();
-      Ranking others = new Ranking();
+      EvictionRanking current = new EvictionRanking();
+      EvictionRanking others = new EvictionRanking();
       current.addAll(ranking.getAllResults().stream()
         .filter(r -> r.getImplementationName().equals(realCandidate)));
       others.addAll(ranking.getAllResults().stream()
@@ -182,7 +181,7 @@ public class EvictionBenchmarkRunner {
       evictionStats.getReshuffleCount() +  "| " + // 10
       cacheToString; // 11
     writeCsv(csvLine);
-    Ranking.Result result = new Ranking.Result();
+    EvictionRanking.Result result = new EvictionRanking.Result();
     result.setImplementationName(factory.getName());
     result.setTraceName(traceName);
     result.setCacheSize(cacheSize);
