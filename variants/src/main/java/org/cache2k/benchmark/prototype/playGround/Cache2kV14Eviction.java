@@ -25,15 +25,17 @@ import org.cache2k.benchmark.EvictionStatistics;
 import org.cache2k.benchmark.prototype.LinkedEntry;
 
 /**
- * Eviction policy based on the Clock-Pro idea.
+ * Eviction policy based on the Clock-Pro idea. Simple version of the implementation in
+ * {@link Cache2kV12Eviction} with similar or better hitrate results. This version promotes
+ * referenced cold entries into the hot space, but does no demotion to cold, instead, non
+ * referenced hot entries are evicted directly. The second change is that new entries are
+ * inserted directly into hot space, if not full.
  *
  * <p>The Clock-Pro algorithm is explained by the authors in
  * <a href="http://www.ece.eng.wayne.edu/~sjiang/pubs/papers/jiang05_CLOCK-Pro.pdf">CLOCK-Pro:
  * An Effective Improvement of the CLOCK Replacement</a>
  * and <a href="http://www.slideshare.net/huliang64/clockpro">Clock-Pro: An Effective
  * Replacement in OS Kernel</a>.
- *
- * <p>
  *
  * @author Jens Wilke
  */
