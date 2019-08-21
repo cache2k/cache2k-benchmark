@@ -82,8 +82,6 @@
               <argLine>-verbose:gc -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+UseSerialGC</argLine>
               -->
               <systemProperties>
-                <jub.consumers>CONSOLE,XML</jub.consumers>
-                <jub.xml.file>${project.build.directory}/junit-benchmark.xml</jub.xml.file>
                 <cache2k.benchmark.result.csv>${project.build.directory}/cache2k-benchmark-result.csv
                 </cache2k.benchmark.result.csv>
               </systemProperties>

@@ -41,8 +41,10 @@ public class TraceCollections {
 			.add(Traces.FINANCIAL1)
 			.add(Traces.FINANCIAL2)
 			.add(Traces.WEBSEARCH1)
+			/* we don't use these traces, too big
 			.add(Traces.WEBSEARCH2)
 			.add(Traces.WEBSEARCH3)
+			 */
 			.add(Traces.SCARAB_PRODS)
 			.add(Traces.SCARAB_RECS)
 			.add(Traces.CORDA_SMALL)
@@ -55,7 +57,8 @@ public class TraceCollections {
 			.add(Traces.ZIPFIAN_10K_10M)
 			// .add(Traces.ZIPFIAN_10K_3M)
 			.add(Traces.RANDOM_1000_1M)
-			.add(Traces.RANDOM_1000_100K)
-			.add(Traces.RANDOM_1000_10K);
+			// .add(Traces.RANDOM_1000_100K)
+			// .add(Traces.RANDOM_1000_10K)
+			;
 
 }

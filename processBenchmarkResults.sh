@@ -18,24 +18,6 @@
 RESULT="target/benchmark-result";
 SITE="../cache2k/src/site/resources/benchmark-result";
 
-# pivot "<impl>,<impl2>,..."
-#
-# Input format:
-#
-# benchmarkMostlyHit_6E|org.cache2k.benchmark.LruCacheBenchmark|0.596
-# benchmarkMostlyHit_6E|org.cache2k.benchmark.LruSt030709CacheBenchmark|0.248
-# benchmarkMostlyHit_6E|org.cache2k.benchmark.RecentDefaultCacheBenchmark|0.573
-# benchmarkRandom_6E|org.cache2k.benchmark.ArcCacheBenchmark|0.169
-# benchmarkRandom_6E|org.cache2k.benchmark.ClockCacheBenchmark|0.138
-# . . .
-
-# Output format:
-#
-# benchmarkAllMiss_6E 0.207 0.403 
-# benchmarkEffective90_6E 0.047 0.074 
-# benchmarkEffective95_6E 0.04 0.059 
-#
-
 processCommandLine() {
   pars="$#";
   while true; do

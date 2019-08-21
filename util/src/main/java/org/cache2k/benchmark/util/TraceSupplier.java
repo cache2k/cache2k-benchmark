@@ -20,6 +20,7 @@ package org.cache2k.benchmark.util;
  * #L%
  */
 
+import java.lang.ref.WeakReference;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -30,7 +31,7 @@ import java.util.stream.LongStream;
  */
 public class TraceSupplier implements Supplier<AccessTrace> {
 
-	private AccessTrace trace;
+	private volatile WeakReference<AccessTrace> traceCache = new WeakReference<>(null);
 	private Callable<AccessTrace> supplier;
 	private String name;
 	private int[] sizes = null;
@@ -75,6 +76,7 @@ public class TraceSupplier implements Supplier<AccessTrace> {
 
 	@Override
 	public AccessTrace get() {
+		AccessTrace trace = traceCache.get();
 		if (trace != null) {
 			return trace;
 		}
@@ -84,6 +86,7 @@ public class TraceSupplier implements Supplier<AccessTrace> {
 			sneakyThrow(ex);
 		}
 		trace.name(name);
+		traceCache = new WeakReference<>(trace);
 		return trace;
 	}
 

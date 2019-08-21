@@ -236,7 +236,7 @@ public interface Traces {
 		  .sizes(100000, 200000, 300000);
 
 	/**
-	 * UMass WebSearch1 trace.
+	 * UMass WebSearch1 trace. accessCount=31970644, uniqueValues=12299573, hitrate around 17% at 2M cache size.
 	 *
 	 * <p>fileName=WebSearch1.spc.bz2, sha1sum=4952e8eee9ea0117d6fc010779b32c3260ce6ead
 	 * @see <a href="http://traces.cs.umass.edu/index.php/Storage/Storage">UMassTraceRepository</a>
@@ -244,7 +244,7 @@ public interface Traces {
 	TraceSupplier WEBSEARCH1 =
 		TraceSupplier.of(() -> UmassTraceReader.of("WebSearch1.spc.bz2"))
 			.name("websearch1")
-			.sizes(100000, 200000, 300000);
+			.sizes(1_000_000, 2_000_000);
 
 	/**
 	 * UMass WebSearch2 trace. Truncated to one million requests.
@@ -258,7 +258,7 @@ public interface Traces {
 			.sizes(10000, 20000, 30000);
 
 	/**
-	 * UMass WebSearch2 trace. Truncated to one million requests.
+	 * UMass WebSearch2 trace.
 	 *
 	 * <p>fileName=WebSearch2.spc.bz2, sha1sum=6d44ce16f4233a74be4a42c54bce7cca1197098a
 	 * @see <a href="http://traces.cs.umass.edu/index.php/Storage/Storage">UMassTraceRepository</a>
@@ -266,7 +266,7 @@ public interface Traces {
 	TraceSupplier WEBSEARCH2 =
 		TraceSupplier.of(() -> UmassTraceReader.of("WebSearch2.spc.bz2"))
 			.name("websearch2")
-			.sizes(10000, 20000, 30000);
+			.sizes(1_000_000, 2_000_000);
 
 	/**
 	 * UMass WebSearch3 trace. Truncated to one million requests.
@@ -288,7 +288,7 @@ public interface Traces {
 	TraceSupplier WEBSEARCH3 =
 		TraceSupplier.of(() -> UmassTraceReader.of("WebSearch3.spc.bz2"))
 			.name("websearch3")
-			.sizes(10000, 20000, 30000);
+			.sizes(1_000_000, 2_000_000);
 
 	/**
 	 * Trace of database object access of a eCommerce web application during the night time.
@@ -357,11 +357,11 @@ public interface Traces {
 	TraceSupplier ZIPFIAN_900_3M =
 		of(() -> new ZipfianPattern(1802,900).strip(3_000_000))
 		.name("zipf900-3M")
-		.sizes(50, 100, 300, 500, 700, 2000, 8000);
+		.sizes(50, 100, 300, 500, 700);
 
 	TraceSupplier ZIPFIAN_900_1M =
 		of(() -> new ZipfianPattern(1802,900).strip(1_000_000))
 			.name("zipf900-1M")
-			.sizes(50, 100, 300, 500, 700, 2000, 8000);
+			.sizes(50, 100, 300, 500, 700);
 
 }
