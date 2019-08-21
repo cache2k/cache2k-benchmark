@@ -46,6 +46,7 @@ public abstract class CaffeineSimulatorPolicyFactory<T extends EvictionTuning> e
 
   private static class Adapter implements SimulatorPolicy {
 
+    private boolean finishCalled;
     private Policy policy;
 
     private Adapter(final Policy policy) {
@@ -59,12 +60,19 @@ public abstract class CaffeineSimulatorPolicyFactory<T extends EvictionTuning> e
 
     @Override
     public long getMissCount() {
+      if (!finishCalled) {
+        policy.finished();
+        finishCalled = true;
+      }
       return policy.stats().missCount();
     }
 
     @Override
     public void close() {
-      policy.finished();
+      if (!finishCalled) {
+        policy.finished();
+        finishCalled = true;
+      }
     }
 
     @Override
