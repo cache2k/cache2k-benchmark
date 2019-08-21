@@ -20,7 +20,12 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>variants</artifactId>
+      <artifactId>testbed</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>clockProPlus</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

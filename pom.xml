@@ -31,11 +31,12 @@
   </properties>
 
   <modules>
-    <module>variants</module>
+    <module>testbed</module>
     <module>util</module>
     <module>traces</module>
     <module>thirdparty</module>
     <module>jmh-suite</module>
+    <module>clockProPlus</module>
   </modules>
 
   <dependencies>

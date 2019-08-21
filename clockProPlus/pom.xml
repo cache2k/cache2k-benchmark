@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>cache2k-benchmark-parent</artifactId>
+    <groupId>org.cache2k.benchmark</groupId>
+    <version>0.22-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>clockProPlus</artifactId>
+  <name>Benchmarks: Clock-Pro+ and other eviction policies</name>
+  <inceptionYear>2018</inceptionYear>
+  <organization>
+    <name>Cong Li, Intel Corporation</name>
+  </organization>
+
+  <description>
+    Code used for the paper: "Cong Li, 2019. CLOCK-Pro+: Improving CLOCK-Pro Cache
+    Replacement with Utility-Driven Adaptation".
+    This code was provided by Cong Li with permission
+    to release it under the Apache licence.
+  </description>
+
+  <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>testbed</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
+</project>
