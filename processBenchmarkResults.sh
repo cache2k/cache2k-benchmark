@@ -377,7 +377,5 @@ for I in $traces; do
 done
 }
 
-
-
 processCommandLine "$@";
 

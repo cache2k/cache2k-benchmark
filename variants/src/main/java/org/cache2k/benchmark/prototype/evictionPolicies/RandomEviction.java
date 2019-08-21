@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.prototype.playGround;
+package org.cache2k.benchmark.prototype.evictionPolicies;
 
 /*
  * #%L
@@ -20,46 +20,54 @@ package org.cache2k.benchmark.prototype.playGround;
  * #L%
  */
 
+import it.unimi.dsi.util.XoShiRo256StarStarRandom;
 import org.cache2k.benchmark.prototype.EvictionPolicy;
 import org.cache2k.benchmark.prototype.LinkedEntry;
 
+import java.util.Random;
+
 /**
- * Eviction policy based on LRU.
+ * Eviction policy which just selects the evicted item by random.
+ * Distributes all entries randomly into a bucket list and then picks
+ * round robin for eviction.
  *
  * @author Jens Wilke
  */
-public class LruEviction<K,V> extends EvictionPolicy<K, V, LruEviction.Entry> {
+public class RandomEviction<K,V> extends EvictionPolicy<K, V, RandomEviction.Entry> {
 
-	private Entry head = new Entry(null,null).shortCircuit();
+	private Random random = new XoShiRo256StarStarRandom(1802);
+	private Entry[] buckets;
+	private int evictionBucketIdx = 0;
 
-	/**
-	 * Created via reflection.
-	 */
-	@SuppressWarnings("unused")
-	public LruEviction(final int capacity) {
+	public RandomEviction(final int capacity) {
 		super(capacity);
+		buckets = new Entry[getCapacity()];
 	}
 
 	@Override
 	public Entry newEntry(final K key, final V value) {
 		Entry e = new Entry(key, value);
-		head.insertInList(e);
+		int bucketIdx = random.nextInt(buckets.length);
+		e.next = buckets[bucketIdx];
+		buckets[bucketIdx] = e;
 		return e;
 	}
 
 	@Override
 	public void recordHit(final Entry e) {
-		head.moveToFront(e);
 	}
 
 	@Override
 	public Entry evict() {
-		return head.prev.removeFromList();
-	}
-
-	@Override
-	public void close(final long expectedSize) {
-		assert expectedSize == head.listSize();
+		Entry e;
+		while ( (e = buckets[evictionBucketIdx]) == null) {
+			evictionBucketIdx++;
+			if (evictionBucketIdx >= buckets.length) {
+				evictionBucketIdx = 0;
+			}
+		}
+		buckets[evictionBucketIdx] = e.next;
+		return e;
 	}
 
 	@Override
@@ -69,6 +77,7 @@ public class LruEviction<K,V> extends EvictionPolicy<K, V, LruEviction.Entry> {
 
 	static class Entry extends LinkedEntry<Entry, Object, Object> {
 
+		private Entry next;
 		public Entry(final Object _key, final Object _value) {
 			super(_key, _value);
 		}

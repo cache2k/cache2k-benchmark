@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.prototype.playGround;
+package org.cache2k.benchmark.prototype.evictionPolicies;
 
 /*
  * #%L
@@ -25,11 +25,10 @@ import org.cache2k.benchmark.EvictionStatistics;
 import org.cache2k.benchmark.prototype.LinkedEntry;
 
 /**
- * Eviction policy based on the Clock-Pro idea. Simple version of the implementation in
- * {@link Cache2kV12Eviction} with similar or better hitrate results. This version promotes
- * referenced cold entries into the hot space, but does no demotion to cold, instead, non
- * referenced hot entries are evicted directly. The second change is that new entries are
- * inserted directly into hot space, if not full.
+ * Eviction policy based on the Clock-Pro idea with changes as used in cache2k V1.2.
+ * This code is retained as-is and doesn't get improvements. The eviction results are
+ * not 100% identical to cache2k V1.2, since the V1.2 version is triggering eviction
+ * after an insert.
  *
  * <p>The Clock-Pro algorithm is explained by the authors in
  * <a href="http://www.ece.eng.wayne.edu/~sjiang/pubs/papers/jiang05_CLOCK-Pro.pdf">CLOCK-Pro:
@@ -37,10 +36,19 @@ import org.cache2k.benchmark.prototype.LinkedEntry;
  * and <a href="http://www.slideshare.net/huliang64/clockpro">Clock-Pro: An Effective
  * Replacement in OS Kernel</a>.
  *
+ * <p>This version uses a static allocation for hot and cold space sizes. No online or dynamic
+ * optimization is done. Instead of the term "non resident cold pages" the word "ghost" is
+ * used in this code. The "ghosts" only keep a hash code of the key, which is sufficient to decide
+ * whether this key was seen before. Instead a of one clock cold and hot pages are kept in
+ * two separate clocks, which means the entry sequence reshuffles on the promotion from
+ * cold to hot. Instead of just a reference bit, a reference counter is used. On eviction
+ * from the hot clock the counter is taken into account and entries with fewer references
+ * are evicted first.
+ *
  * @author Jens Wilke
  */
 @SuppressWarnings({"Duplicates", "WeakerAccess"})
-public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Eviction.Entry> {
+public class Cache2kV12Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV12Eviction.Entry> {
 
   private long hotHits;
   private long coldHits;
@@ -50,27 +58,26 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
   private long hotScanCnt;
   private long coldRunCnt;
   private long coldScanCnt;
-  private long reshuffleCnt;
 
   private int coldSize;
   private int hotSize;
-  private int hotMax;
-
-  /** Maximum size of hot clock. 0 means normal clock behaviour */
 
   private Entry handCold;
   private Entry handHot;
 
-  private Cache2kV14Eviction.Ghost[] ghosts;
-  private Cache2kV14Eviction.Ghost ghostHead = new Ghost().shortCircuit();
+  private Cache2kV12Eviction.Ghost[] ghosts;
+  private Cache2kV12Eviction.Ghost ghostHead = new Ghost().shortCircuit();
   private int ghostSize = 0;
   private static final int GHOST_LOAD_PERCENT = 63;
   private Cache2kV1Tuning tuning;
+  private long reshuffleCnt;
 
-  public Cache2kV14Eviction(int capacity, Cache2kV1Tuning tuning) {
+  /**
+   * Created via reflection.
+   */
+  public Cache2kV12Eviction(int capacity, Cache2kV1Tuning tuning) {
     super(capacity);
     this.tuning = tuning;
-    hotMax = capacity * tuning.hotMaxPercentage / 100;
     coldSize = 0;
     hotSize = 0;
     handCold = null;
@@ -114,7 +121,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
   }
 
   public long getHotMax() {
-    return hotMax;
+    return getSize() * tuning.hotMaxPercentage / 100;
   }
 
   public long getGhostMax() {
@@ -132,6 +139,12 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
   /**
    * Remove, expire or eviction of an entry happens. Remove the entry from the
    * replacement list data structure.
+   *
+   * <p>Why don't generate ghosts here? If the entry is removed because of
+   * a programmatic remove or expiry we should not occupy any resources.
+   * Removing and expiry may also take place when no eviction is needed at all,
+   * which happens when the cache size did not hit the maximum yet. Producing ghosts
+   * would add additional overhead, when it is not needed.
    */
   protected void removeFromReplacementList(Entry e) {
     if (e.isHot()) {
@@ -149,13 +162,16 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
     int hc = e.getHashCode();
     Ghost g = lookupGhost(hc);
     if (g != null) {
+      /*
+       * either this is a hash code collision, or a previous ghost hit that was not removed.
+       */
       Ghost.moveToFront(ghostHead, g);
       return;
     }
     if (ghostSize >= getGhostMax()) {
       g = ghostHead.prev;
       Ghost.removeFromList(g);
-      boolean f = removeGhostFromHash(g, g.hash);
+      boolean f = removeGhost(g, g.hash);
     } else {
       g = new Ghost();
     }
@@ -176,8 +192,6 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
        * removeGhost(g, g.hash);  Ghost.removeFromList(g);
        */
       ghostHits++;
-    }
-    if (g != null || (coldSize == 0 && hotSize < getHotMax())) {
       e.setHot(true);
       hotSize++;
       handHot = Entry.insertIntoTailCyclicList(handHot, e);
@@ -188,19 +202,12 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
   }
 
   private Entry runHandHot() {
-    return runHandHot(hotSize >> 2 + 1);
-  }
-    /**
-     * Scan through hot entries.
-     *
-     * @return candidate for eviction or demotion
-     */
-  private Entry runHandHot(final int initialMaxScan) {
     hotRunCnt++;
     Entry hand = handHot;
     Entry coldCandidate = hand;
     long lowestHits = Long.MAX_VALUE;
     long hotHits = this.hotHits;
+    int initialMaxScan = hotSize >> 2 + 1;
     int maxScan = initialMaxScan;
     long decrease = ((hand.hitCnt + hand.next.hitCnt) >> tuning.hitCounterDecreaseShift) + 1;
     while (maxScan-- > 0) {
@@ -224,7 +231,10 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
     this.hotHits = hotHits;
     long scanCount = initialMaxScan - maxScan;
     hotScanCnt += scanCount;
-    handHot = coldCandidate.next;
+    reshuffleCnt++;
+    handHot = Entry.removeFromCyclicList(hand, coldCandidate);
+    hotSize--;
+    coldCandidate.setHot(false);
     return coldCandidate;
   }
 
@@ -232,41 +242,44 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
    * Runs cold hand an in turn hot hand to find eviction candidate.
    */
   protected Entry findEvictionCandidate() {
-    Entry hand = handCold;
-    if (hotSize > getHotMax() || hand == null) {
-      return runHandHot();
-    }
     coldRunCnt++;
+    Entry hand = handCold;
     int scanCnt = 1;
+    if (hand == null) {
+      hand = refillFromHot(hand);
+    }
     if (hand.hitCnt > 0) {
-      Entry evictFromHot = null;
+      hand = refillFromHot(hand);
       do {
-        if (hotSize >= getHotMax() && handHot != null) {
-          evictFromHot = runHandHot();
-        }
         scanCnt++;
         coldHits += hand.hitCnt;
         hand.hitCnt = 0;
         Entry e = hand;
+        reshuffleCnt++;
         hand = Entry.removeFromCyclicList(e);
         coldSize--;
         e.setHot(true);
         hotSize++;
         handHot = Entry.insertIntoTailCyclicList(handHot, e);
-        reshuffleCnt++;
-        if (evictFromHot != null) {
-          coldScanCnt += scanCnt;
-          handCold = hand;
-          return evictFromHot;
-        }
       } while (hand != null && hand.hitCnt > 0);
     }
-    coldScanCnt += scanCnt;
     if (hand == null) {
-      handCold = null;
-      return runHandHot();
+      hand = refillFromHot(hand);
     }
+    coldScanCnt += scanCnt;
     handCold = hand.next;
+    return hand;
+  }
+
+  private Entry refillFromHot(Entry hand) {
+    long hotMax = getHotMax();
+    while (hotSize >  hotMax || hand == null) {
+      Entry e = runHandHot();
+      if (e != null) {
+        hand =  Entry.insertIntoTailCyclicList(hand, e);
+        coldSize++;
+      }
+    }
     return hand;
   }
 
@@ -318,7 +331,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
     ghosts = newTab;
   }
 
-  private boolean removeGhostFromHash(Ghost g, int hash) {
+  private boolean removeGhost(Ghost g, int hash) {
     Ghost[] tab = ghosts;
     int n = tab.length;
     int mask = n - 1;
@@ -414,8 +427,8 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
 
   static class Entry extends LinkedEntry<Entry, Object, Object> {
 
-    private long hitCnt;
-		private boolean hot;
+    long hitCnt;
+    boolean hot;
 
     private Entry(final Object key, final Object value) {
       super(key, value);
@@ -430,7 +443,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
       hot = v;
     }
 
-    public boolean isHot() {
+    boolean isHot() {
       return hot;
     }
 

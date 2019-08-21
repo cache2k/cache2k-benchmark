@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.prototype.playGround;
+package org.cache2k.benchmark.prototype.evictionPolicies;
 
 /*
  * #%L
