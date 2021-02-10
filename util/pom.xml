@@ -1,35 +1,58 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  
-  <parent>
-    <groupId>org.cache2k.benchmark</groupId>
-    <artifactId>cache2k-benchmark-parent</artifactId>
-    <version>0.22-SNAPSHOT</version>
-  </parent>
+<?xml version="1.0" encoding="UTF-8"?>
 
-  <artifactId>util</artifactId>
-  <version>0.22-SNAPSHOT</version>
-  
-  <name>Benchmarks: utilities</name>
-
-  <dependencies>
-    <dependency>
-      <groupId>it.unimi.dsi</groupId>
-      <artifactId>dsiutils</artifactId>
-      <version>2.6.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-compress</artifactId>
-      <version>1.16.1</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.tukaani</groupId>
-      <artifactId>xz</artifactId>
-      <version>1.8</version>
-      <scope>compile</scope>
-    </dependency>
-  </dependencies>
-
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">  
+  <modelVersion>4.0.0</modelVersion>  
+  <parent> 
+    <groupId>org.cache2k.benchmark</groupId>  
+    <artifactId>cache2k-benchmark-parent</artifactId>  
+    <version>0.22-SNAPSHOT</version> 
+  </parent>  
+  <artifactId>util</artifactId>  
+  <version>0.22-SNAPSHOT</version>  
+  <name>Benchmarks: utilities</name>  
+  <dependencies> 
+    <dependency> 
+      <groupId>it.unimi.dsi</groupId>  
+      <artifactId>dsiutils</artifactId>  
+      <version>2.6.0</version>  
+      <exclusions> 
+        <exclusion> 
+          <groupId>com.sun.mail</groupId>  
+          <artifactId>javax.mail</artifactId> 
+        </exclusion>  
+        <exclusion> 
+          <groupId>org.codehaus.mojo</groupId>  
+          <artifactId>animal-sniffer-annotations</artifactId> 
+        </exclusion>  
+        <exclusion> 
+          <groupId>com.google.j2objc</groupId>  
+          <artifactId>j2objc-annotations</artifactId> 
+        </exclusion>  
+        <exclusion> 
+          <groupId>com.google.errorprone</groupId>  
+          <artifactId>error_prone_annotations</artifactId> 
+        </exclusion>  
+        <exclusion> 
+          <groupId>com.google.guava</groupId>  
+          <artifactId>listenablefuture</artifactId> 
+        </exclusion>  
+        <exclusion> 
+          <groupId>com.google.code.findbugs</groupId>  
+          <artifactId>jsr305</artifactId> 
+        </exclusion> 
+      </exclusions> 
+    </dependency>  
+    <dependency> 
+      <groupId>org.apache.commons</groupId>  
+      <artifactId>commons-compress</artifactId>  
+      <version>1.16.1</version>  
+      <scope>compile</scope> 
+    </dependency>  
+    <dependency> 
+      <groupId>org.tukaani</groupId>  
+      <artifactId>xz</artifactId>  
+      <version>1.8</version>  
+      <scope>compile</scope> 
+    </dependency> 
+  </dependencies> 
 </project>
