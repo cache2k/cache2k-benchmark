@@ -85,7 +85,7 @@ public abstract class BenchmarkCacheFactory<T extends EvictionTuning> extends An
     throw new UnsupportedOperationException();
   }
 
-  public AnyCacheFactory withEvictionListener(EvictionListener<?> listener) {
+  public BenchmarkCacheFactory<T> withEvictionListener(EvictionListener<?> listener) {
     evictionListeners.add(listener);
     return this;
   }

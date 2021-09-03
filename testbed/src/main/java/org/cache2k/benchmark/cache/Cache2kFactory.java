@@ -26,8 +26,10 @@ import org.cache2k.CacheEntry;
 import org.cache2k.IntCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
+import org.cache2k.benchmark.EvictionListener;
 import org.cache2k.benchmark.IntBenchmarkCache;
 import org.cache2k.benchmark.ProductCacheFactory;
+import org.cache2k.event.CacheEntryEvictedListener;
 import org.cache2k.event.CacheEntryUpdatedListener;
 import org.cache2k.integration.CacheLoader;
 
@@ -221,7 +223,11 @@ public class Cache2kFactory extends ProductCacheFactory {
     } else {
       b.strictEviction(true);
     }
-    final AtomicInteger _evictCount = new AtomicInteger();
+    for (final EvictionListener l : getEvictionListeners()) {
+      b.addListener((CacheEntryEvictedListener<K, V>) (cache, entry) -> {
+        l.evicted(entry.getKey());
+      });
+    }
     if (_source != null) {
       b.loader(new CacheLoader<K, V>() {
         @Override
