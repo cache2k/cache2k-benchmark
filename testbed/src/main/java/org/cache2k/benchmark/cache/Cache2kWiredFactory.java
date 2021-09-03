@@ -27,12 +27,11 @@ package org.cache2k.benchmark.cache;
  *
  * @author Jens Wilke
  */
-public class Cache2kStarFactory extends Cache2kFactory {
+public class Cache2kWiredFactory extends Cache2kFactory {
 
   {
-    setMaximumPerformance(false);
-    setStrictEviction(true);
-    setName("cache2k*");
+    setWiredCache(true);
+    setName("cache2k&");
   }
 
 }

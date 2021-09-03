@@ -1,4 +1,4 @@
-package org.cache2k.benchmark;
+package org.cache2k.benchmark.cache;
 
 /*
  * #%L
@@ -22,7 +22,13 @@ package org.cache2k.benchmark;
 
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
+import org.cache2k.CacheEntry;
 import org.cache2k.IntCache;
+import org.cache2k.benchmark.BenchmarkCache;
+import org.cache2k.benchmark.BenchmarkCacheLoader;
+import org.cache2k.benchmark.IntBenchmarkCache;
+import org.cache2k.benchmark.ProductCacheFactory;
+import org.cache2k.event.CacheEntryUpdatedListener;
 import org.cache2k.integration.CacheLoader;
 
 import java.util.concurrent.TimeUnit;
@@ -34,8 +40,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Cache2kFactory extends ProductCacheFactory {
 
   private AtomicInteger counter = new AtomicInteger();
-  private boolean disableStatistics = true;
+  private boolean maximumPerformance = true;
   private boolean strictEviction = false;
+  private boolean wiredCache = false;
 
   @Override
   protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
@@ -197,13 +204,20 @@ public class Cache2kFactory extends ProductCacheFactory {
         .entryCapacity(_maxElements)
         .refreshAhead(false)
         .strictEviction(strictEviction);
+    if (wiredCache) {
+      b.addListener(new CacheEntryUpdatedListener<K, V>() {
+        @Override
+        public void onEntryUpdated(final Cache<K, V> cache, final CacheEntry<K, V> currentEntry, final CacheEntry<K, V> entryWithNewData) {
+        }
+      });
+    }
     if (withExpiry) {
       b.expireAfterWrite(2 * 60, TimeUnit.SECONDS);
     } else {
       b.eternal(true);
     }
-    if (disableStatistics) {
-      b.disableStatistics(true).strictEviction(false).boostConcurrency(true);
+    if (maximumPerformance) {
+      b.disableStatistics(true).strictEviction(false).boostConcurrency(true).recordRefreshedTime(false);
     } else {
       b.strictEviction(true);
     }
@@ -219,11 +233,16 @@ public class Cache2kFactory extends ProductCacheFactory {
     return b.build();
   }
 
-  public void setDisableStatistics(final boolean _disableStatistics) {
-    disableStatistics = _disableStatistics;
+  public void setMaximumPerformance(final boolean v) {
+    maximumPerformance = v;
   }
 
-  public void setStrictEviction(final boolean _strictEviction) {
-    strictEviction = _strictEviction;
+  public void setStrictEviction(final boolean v) {
+    strictEviction = v;
   }
+
+  public void setWiredCache(boolean v) {
+    wiredCache = v;
+  }
+
 }

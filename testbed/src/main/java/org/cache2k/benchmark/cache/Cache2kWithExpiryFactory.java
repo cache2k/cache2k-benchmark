@@ -20,8 +20,6 @@ package org.cache2k.benchmark.cache;
  * #L%
  */
 
-import org.cache2k.benchmark.Cache2kFactory;
-
 /**
  * Turn on expiry. This leads to more memory consumption to hold the timer queue.
  */

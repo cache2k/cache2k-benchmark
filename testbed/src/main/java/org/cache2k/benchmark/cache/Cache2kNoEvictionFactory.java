@@ -20,8 +20,6 @@ package org.cache2k.benchmark.cache;
  * #L%
  */
 
-import org.cache2k.benchmark.Cache2kFactory;
-
 /**
  * Create a cache2k implementation variant optimized, if no eviction needs to take place.
  * We use the random eviction algorithm, which does not count hits. This is interesting to

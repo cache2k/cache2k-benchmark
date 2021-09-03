@@ -21,7 +21,7 @@ package org.cache2k.benchmark.jmh;
  */
 
 import org.cache2k.benchmark.BenchmarkCacheFactory;
-import org.cache2k.benchmark.Cache2kFactory;
+import org.cache2k.benchmark.cache.Cache2kFactory;
 import org.cache2k.benchmark.cache.JCacheCacheFactory;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
