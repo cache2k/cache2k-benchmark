@@ -23,11 +23,9 @@ package org.cache2k.benchmark.cache;
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
 import org.cache2k.CacheEntry;
-import org.cache2k.IntCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
 import org.cache2k.benchmark.EvictionListener;
-import org.cache2k.benchmark.IntBenchmarkCache;
 import org.cache2k.benchmark.ProductCacheFactory;
 import org.cache2k.event.CacheEntryEvictedListener;
 import org.cache2k.event.CacheEntryUpdatedListener;
@@ -47,130 +45,49 @@ public class Cache2kFactory extends ProductCacheFactory {
   private boolean wiredCache = false;
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-    final Cache<K, V> c = createInternal(_keyType, _valueType, _maxElements, null);
-    return returnCache(c, _maxElements);
+  protected <K, V> BenchmarkCache<K, V> createSpecialized(Class<K> keyType, Class<V> valueType,
+                                                          int maxElements) {
+    final Cache<K, V> c = createInternal(keyType, valueType, maxElements, null);
+    return wrapCache(c);
   }
 
   @SuppressWarnings("unchecked")
-  private <K, V> BenchmarkCache<K, V> returnCache(final Cache<K, V> _c, final int _maxElements) {
-    if (_c instanceof IntCache) {
-      final IntCache<V> ic = (IntCache<V>) _c;
-      return (BenchmarkCache<K, V>) new IntBenchmarkCache<V>() {
-
-        @Override
-        public V getIfPresent(int key) {
-          return ic.peek(key);
-        }
-
-        @Override
-        public void put(int key, V value) {
-          ic.put(key, value);
-        }
-
-        @Override
-        public void remove(int key) {
-          ic.remove(key);
-        }
-
-        @Override
-        public void close() {
-          ic.close();
-        }
-
-        @Override
-        public String toString() {
-          return ic.toString();
-        }
-      };
-    }
+  private <K, V> BenchmarkCache<K, V> wrapCache(final Cache<K, V> cache) {
     return new BenchmarkCache<K, V>() {
 
       @Override
       public V get(K key) {
-        return _c.peek(key);
+        return cache.peek(key);
       }
 
       @Override
       public void put(K key, V value) {
-        _c.put(key, value);
+        cache.put(key, value);
       }
 
       @Override
       public void remove(final K key) {
-        _c.remove(key);
+        cache.remove(key);
       }
 
       @Override
       public void close() {
-        _c.close();
+        cache.close();
       }
 
       @Override
       public String toString() {
-        return _c.toString();
+        return cache.toString();
       }
     };
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <K, V> BenchmarkCache<K, V> createLoadingCache(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements, final BenchmarkCacheLoader<K, V> _source) {
-    final Cache<K, V> c = createInternal(_keyType, _valueType, _maxElements, _source);
-    if (c instanceof IntCache) {
-      final IntCache<V> ic = (IntCache<V>) c;
-      return (BenchmarkCache<K, V>) new IntBenchmarkCache<V>() {
-        @Override
-        public V getIfPresent(final int key) {
-          return ic.get(key);
-        }
-
-        @Override
-        public void put(final int key, final V value) {
-          ic.put(key, value);
-        }
-
-        @Override
-        public void remove(final int key) { ic.remove(key); }
-
-        @Override
-        public String toString() {
-          return ic.toString();
-        }
-
-        @Override
-        public void close() {
-          ic.close();
-        }
-      };
-    }
-    if (_keyType == Integer.class) {
-      final Cache<Integer, V> ic = (Cache<Integer, V>) c;
-      return (BenchmarkCache<K, V>) new IntBenchmarkCache<V>() {
-        @Override
-        public V get(final Integer key) {
-          return ic.get(key);
-        }
-
-        @Override
-        public void put(final Integer key, final V value) {
-          ic.put(key, value);
-        }
-
-        @Override
-        public void remove(final Integer key) { ic.remove(key); }
-
-        @Override
-        public String toString() {
-          return ic.toString();
-        }
-
-        @Override
-        public void close() {
-          c.close();
-        }
-      };
-    }
+  public <K, V> BenchmarkCache<K, V> createLoadingCache(Class<K> keyType, Class<V> valueType,
+                                                        int maxElements,
+                                                        BenchmarkCacheLoader<K, V> source) {
+    final Cache<K, V> c = createInternal(keyType, valueType, maxElements, source);
     return new BenchmarkCache<K, V>() {
       @Override
       public V get(final K key) {
@@ -199,17 +116,19 @@ public class Cache2kFactory extends ProductCacheFactory {
     };
   }
 
-  private <K,V> Cache<K, V> createInternal(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements, final BenchmarkCacheLoader<K, V> _source) {
+  private <K,V> Cache<K, V> createInternal(Class<K> keyType, Class<V> valueType,
+                                           int maxElements, BenchmarkCacheLoader<K, V> source) {
     Cache2kBuilder<K, V> b =
-      Cache2kBuilder.of(_keyType, _valueType)
+      Cache2kBuilder.of(keyType, valueType)
         .name("testCache-" + counter.incrementAndGet())
-        .entryCapacity(_maxElements)
+        .entryCapacity(maxElements)
         .refreshAhead(false)
         .strictEviction(strictEviction);
     if (wiredCache) {
       b.addListener(new CacheEntryUpdatedListener<K, V>() {
         @Override
-        public void onEntryUpdated(final Cache<K, V> cache, final CacheEntry<K, V> currentEntry, final CacheEntry<K, V> entryWithNewData) {
+        public void onEntryUpdated(Cache<K, V> cache, CacheEntry<K, V> currentEntry,
+                                   CacheEntry<K, V> entryWithNewData) {
         }
       });
     }
@@ -219,7 +138,10 @@ public class Cache2kFactory extends ProductCacheFactory {
       b.eternal(true);
     }
     if (maximumPerformance) {
-      b.disableStatistics(true).strictEviction(false).boostConcurrency(true).recordRefreshedTime(false);
+      b.disableStatistics(true)
+        .strictEviction(false)
+        .boostConcurrency(true)
+        .recordModificationTime(false);
     } else {
       b.strictEviction(true);
     }
@@ -228,11 +150,11 @@ public class Cache2kFactory extends ProductCacheFactory {
         l.evicted(entry.getKey());
       });
     }
-    if (_source != null) {
+    if (source != null) {
       b.loader(new CacheLoader<K, V>() {
         @Override
         public V load(final K key) throws Exception {
-          return _source.load(key);
+          return source.load(key);
         }
       });
     }
