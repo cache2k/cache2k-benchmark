@@ -77,6 +77,16 @@ public class CaffeineTest {
 	}
 
 	@Test
+	public void testAfterWriteDistant() throws Exception {
+		Cache c =
+			Caffeine.newBuilder().expireAfterWrite(Duration.ofDays(123456)).build();
+		c.put(1, 123);
+		c.getIfPresent(1);
+		c.put(1, 456);
+		System.out.println(c.stats());
+	}
+
+	@Test
 	public void testJCacheDefault10000Configuration() {
 		JCacheCacheFactory f = new JCacheCacheFactory();
 		f.setProvider(com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider.class.getName());
