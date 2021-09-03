@@ -23,19 +23,28 @@ package org.cache2k.benchmark.thirdparty;
 import com.github.benmanes.caffeine.cache.AsyncCacheLoader;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.CacheWriter;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
+import com.github.benmanes.caffeine.cache.RemovalListener;
 import com.github.benmanes.caffeine.cache.Weigher;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
 import org.cache2k.benchmark.cache.JCacheCacheFactory;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Jens Wilke
@@ -54,6 +63,17 @@ public class CaffeineTest {
 		c.put(1, 123);
 		c.put(1, 512);
 		c.put(1, 0);
+	}
+
+	@Test
+	public void testExpire() throws Exception {
+		Cache c =
+			Caffeine.newBuilder().expireAfterWrite(Duration.ofNanos(1)).build();
+		c.put(1, 123);
+		c.put(1, 512);
+		c.put(1, 0);
+		Thread.sleep(123);
+		System.out.println(c.stats());
 	}
 
 	@Test
@@ -90,6 +110,50 @@ public class CaffeineTest {
 			});
 		CompletableFuture<Map> cf = c.getAll(Arrays.asList(1, 2, 3));
 		Map m = cf.get();
+	}
+
+	@Test
+	public void testExpiryWithRemovalListerner() {
+		final AtomicBoolean removed = new AtomicBoolean(false);
+		Cache c =
+			Caffeine.newBuilder()
+			.maximumSize(1000)
+			.expireAfterWrite(2, TimeUnit.SECONDS)
+			.removalListener(new RemovalListener<Object, Object>() {
+				@Override
+				public void onRemoval(@Nullable final Object key, @Nullable final Object value, @NonNull final RemovalCause cause) {
+					removed.set(true);
+				}
+			}).build();
+		c.put(1,2);
+		while (c.asMap().containsKey(1)) { }
+		assertTrue(removed.get());
+	}
+
+	@Test
+	public void testExpiryWithCacheWriter() throws Exception {
+		final AtomicBoolean removed = new AtomicBoolean(false);
+		Cache c =
+			Caffeine.newBuilder()
+				.maximumSize(1000)
+				.expireAfterWrite(2, TimeUnit.SECONDS)
+				.writer(new CacheWriter<Object, Object>() {
+					@Override
+					public void write(@NonNull final Object key, @NonNull final Object value) {
+
+					}
+
+					@Override
+					public void delete(@NonNull final Object key, @Nullable final Object value, @NonNull final RemovalCause cause) {
+						removed.set(true);
+					}
+				})
+				.build();
+		long t0 = System.currentTimeMillis();
+		c.put(1,2);
+		while (c.asMap().containsKey(1)) { }
+		System.out.println("Time elapsed: " + (System.currentTimeMillis() - t0) + ", removed=" + removed.get());
+		// assertTrue(removed.get());
 	}
 
 }
