@@ -45,8 +45,9 @@ import java.util.concurrent.atomic.LongAdder;
  * (entry count times factor). The cache loader has a penalty by burning CPU cycles.
  *
  * <p>This implementation uses precalculated zipfian sequence. To avoid adaption of the
- * cache to the repeating sequence the sequence lenght is much longer than the cache size.
- * Each thread increments the sequnce index by a unique prime number, so that each sequence
+ * cache to the repeating sequence the sequence length is much longer than the cache size.
+ * Each thread increments the sequence index by a unique prime number, so that each sequence
+ * Each thread increments the sequence index by a unique prime number, so that each sequence
  * used by each thread is unique as well.
  *
  * @author Jens Wilke

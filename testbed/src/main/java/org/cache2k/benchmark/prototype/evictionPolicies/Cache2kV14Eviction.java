@@ -54,7 +54,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
 
   private int coldSize;
   private int hotSize;
-  private int hotMax;
+  private int hotMax = Integer.MAX_VALUE;
 
   /** Maximum size of hot clock. 0 means normal clock behaviour */
 
@@ -66,16 +66,20 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
   private int ghostSize = 0;
   private static final int GHOST_LOAD_PERCENT = 63;
   private Cache2kV1Tuning tuning;
+  private boolean firstEvictSeen = false;
 
   public Cache2kV14Eviction(int capacity, Cache2kV1Tuning tuning) {
     super(capacity);
     this.tuning = tuning;
-    hotMax = capacity * tuning.hotMaxPercentage / 100;
     coldSize = 0;
     hotSize = 0;
     handCold = null;
     handHot = null;
     ghosts = new Ghost[4];
+  }
+
+  private void updateHotMax() {
+    hotMax = (int) (getSize() * tuning.hotMaxPercentage / 100);
   }
 
   @Override
@@ -92,6 +96,10 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
 
   @Override
   public Entry evict() {
+    if (!firstEvictSeen) {
+      updateHotMax();
+      firstEvictSeen = true;
+    }
     Entry e = findEvictionCandidate();
     removeFromReplacementListOnEvict(e);
     return e;
@@ -199,7 +207,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
     Entry coldCandidate = hand;
     long lowestHits = Long.MAX_VALUE;
     long hotHits = this.hotHits;
-    int initialMaxScan = hotSize >> 2 + 1;
+    int initialMaxScan = (hotSize >> 2) + 1;
     int maxScan = initialMaxScan;
     long decrease = ((hand.hitCnt + hand.next.hitCnt) >> tuning.hitCounterDecreaseShift) + 1;
     while (maxScan-- > 0) {
@@ -245,11 +253,11 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
           evictFromHot = runHandHot();
         }
         coldHits += hand.hitCnt;
-        hand.hitCnt = 0;
         Entry e = hand;
         hand = Entry.removeFromCyclicList(e);
         coldSize--;
         e.setHot(true);
+        e.hitCnt = 0;
         hotSize++;
         handHot = Entry.insertIntoTailCyclicList(handHot, e);
         reshuffleCnt++;
