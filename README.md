@@ -26,7 +26,7 @@ cd cache2k
 mvn install
 ```
 
-## Running the benchmarks
+## Running the eviction benchmarks
 
 The benchmarks are run via JUnit and the Maven surefire plugin.
 

@@ -20,6 +20,7 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
  * #L%
  */
 
+import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
 import org.cache2k.benchmark.IntBenchmarkCache;
@@ -88,7 +89,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     }
   }
 
-  IntBenchmarkCache<Integer> cache;
+  BenchmarkCache<Integer, Integer> cache;
 
   @Setup
   public void setupBenchmark() {
@@ -97,8 +98,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     if (expiry) {
       f.withExpiry(true);
     }
-    cache = (IntBenchmarkCache<Integer>)
-      f.createLoadingCache(Integer.class, Integer.class, entryCount, source);
+    cache = f.createLoadingCache(Integer.class, Integer.class, entryCount, source);
     /*
        fill the cache completely, so memory is already expanded at maximum
        this way the benchmark runs on better steady state and jitter is reduced.
@@ -132,7 +132,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @Benchmark @BenchmarkMode(Mode.Throughput)
   public long operation(ThreadState threadState, HitCountRecorder rec) {
     rec.opCount++;
-    Integer v = cache.getIfPresent(threadState.pattern.next());
+    Integer v = cache.get(threadState.pattern.next());
     return v;
   }
 

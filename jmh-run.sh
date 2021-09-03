@@ -61,6 +61,7 @@ test -n "$BENCHMARK_DILIGENT_LONG" || BENCHMARK_DILIGENT_LONG="-f 2 -wi 1 -w 180
 # install with e.g.: mv ~/Downloads/linux-hsdis-amd64.so jdk1.8.0_45/jre/lib/amd64/hsdis-amd64.so.
 # For profiling only do one fork, but more measurement iterations
 # profilers are described here: http://java-performance.info/introduction-jmh-profilers
+# hsdis is available as Ubuntu package: sudo apt-get install libhsdis0-fcml
 test -n "$BENCHMARK_PERFASM" || BENCHMARK_PERFASM="-f 1 -wi 1 -w 10s -i 1 -r 20s -prof perfasm";
 # longer test run for expiry tests
 test -n "$BENCHMARK_PERFASM_LONG" || BENCHMARK_PERFASM_LONG="-f 1 -wi 1 -w 180s -i 1 -r 180s -prof perfasm";
@@ -246,10 +247,11 @@ done
 }
 
 allImpls="`cat - << "EOF"
--p cacheFactory=org.cache2k.benchmark.Cache2kFactory
--p cacheFactory=org.cache2k.benchmark.thirdparty.GuavaCacheFactory
--p cacheFactory=org.cache2k.benchmark.thirdparty.CaffeineCacheFactory
--p cacheFactory=org.cache2k.benchmark.thirdparty.EhCache3Factory
+-p cacheFactory=org.cache2k.benchmark.cache.Cache2kFactory
+-p cacheFactory=org.cache2k.benchmark.cache.Cache2kWiredFactory
+-p cacheFactory=org.cache2k.benchmark.cache.GuavaCacheFactory
+-p cacheFactory=org.cache2k.benchmark.cache.CaffeineCacheFactory
+-p cacheFactory=org.cache2k.benchmark.cache.EhCache3Factory
 EOF
 `"
 
@@ -261,6 +263,7 @@ EOF
 
 cache2k="`cat - << "EOF"
 -p cacheFactory=org.cache2k.benchmark.Cache2kFactory
+-p cacheFactory=org.cache2k.benchmark.Cache2kWiredFactory
 EOF
 `"
 
@@ -415,16 +418,21 @@ done
 # benchmarks="ZipfianLoopingPrecomputedSequenceLoadingBenchmark ZipfianHoppingPrecomputedSequenceLoadingBenchmark";
 # benchmarks="RandomSequenceBenchmark";
 benchmarks="ZipfianSequenceLoadingBenchmark RandomSequenceBenchmark";
-for impl in $COMPLETE; do
+(
+  echo "$allImpls"
+  # echo "$maps"
+) | while read factory; do
   for benchmark in $benchmarks; do
     for threads in 1 2 4; do
+      # remove -p for a nice file name
+      impl="`echo "$factory" |sed "s/^\-p //g" | sed "s/ -p /:/g" `"
       runid="$impl-$benchmark-$threads";
       fn="$TARGET/result-$runid";
       echo;
       echo "## $runid";
       sync
       limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER  $EXTRA_PROFILER \
-           -t $threads -p cacheFactory=org.cache2k.benchmark.$impl \
+           -t $threads $factory \
            -rf json -rff "$fn.json" \
            2>&1 | tee $fn.out | filterProgress
       if test -n "$dry"; then
