@@ -195,9 +195,10 @@ public class EvictionRanking {
 
   private String summaryLine(Result result, List<Result> ranking, int count) {
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format("%s %d %.3f",
+    sb.append(String.format("%s %d %s %.3f",
         result.traceName,
         result.cacheSize,
+        result.implementationName,
         result.getHitPercent()));
     count = Math.min(count, ranking.size());
     for (int i = 0; i < count; i++) {

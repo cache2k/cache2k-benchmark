@@ -77,7 +77,7 @@ public class EvictionBenchmarkRunner {
         .filter(r -> !r.getImplementationName().equals(realCandidate)));
       out.println();
       out.println("== Summary - Top 3 ===");
-      out.println("trace size hitrate best hitrate diff " +
+      out.println("trace size reference hitrate best hitrate diff " +
         "2nd-best hitrate diff 3rd-best hitrate diff");
       others.writeTopSummary(out, current, 3);
       out.println();
