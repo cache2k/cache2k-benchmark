@@ -21,11 +21,12 @@ package org.cache2k.benchmark;
  */
 
 import java.io.Closeable;
+import java.util.Map;
 
 /**
  * Interface to a cache implementation we use for benchmarking.
  *
- * @author Jens Wilke; created: 2013-06-15
+ * @author Jens Wilke
  */
 public abstract class BenchmarkCache<K, V> implements Closeable {
 
@@ -35,6 +36,10 @@ public abstract class BenchmarkCache<K, V> implements Closeable {
    * the source will be called to populate the cache.
    */
   public V get(K key) {
+    throw new UnsupportedOperationException();
+  }
+
+  public Map<K, V> getAll(Iterable<K> keys) {
     throw new UnsupportedOperationException();
   }
 

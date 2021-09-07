@@ -91,7 +91,7 @@ public class CaffeineTest {
 		JCacheCacheFactory f = new JCacheCacheFactory();
 		f.setProvider(com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider.class.getName());
 		// f.setCacheName("benchmark");
-		BenchmarkCache<Integer, Integer> _cache = f.create(10000);
+		BenchmarkCache<Integer, Integer> _cache = f.create(Integer.class, Integer.class, 10000);
 		_cache.put(1, 3);
 	}
 

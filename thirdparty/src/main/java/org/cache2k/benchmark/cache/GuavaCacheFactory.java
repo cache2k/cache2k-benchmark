@@ -37,34 +37,34 @@ import java.util.concurrent.TimeUnit;
 public class GuavaCacheFactory extends ProductCacheFactory {
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+  public <K, V> BenchmarkCache<K, V> create(Class<K> keyType, Class<V> valueType, int capacity) {
     MyBenchmarkCache c = new MyBenchmarkCache();
-    c.size = _maxElements;
-    CacheBuilder cb = builder(_maxElements);
+    c.size = capacity;
+    CacheBuilder cb = builder(capacity);
     c.cache = cb.build();
     return c;
   }
 
   @Override
-  public <K, V> BenchmarkCache<K, V> createUnspecializedLoadingCache(
-    final Class<K> _keyType, final Class<V> _valueType,
-    final int _maxElements, final BenchmarkCacheLoader<K, V> _source) {
+  public <K, V> BenchmarkCache<K, V> createLoadingCache(
+    Class<K> keyType, Class<V> valueType,
+    int capacity, BenchmarkCacheLoader<K, V> loader) {
     MyLoadingBenchmarkCache c = new MyLoadingBenchmarkCache();
-    c.size = _maxElements;
-    CacheBuilder cb = builder(_maxElements);
+    c.size = capacity;
+    CacheBuilder cb = builder(capacity);
     c.cache = cb.build(new CacheLoader<K, V>() {
       @Override
-      public V load(final K key) throws Exception {
-        return _source.load(key);
+      public V load(K key) throws Exception {
+        return loader.load(key);
       }
     });
     return c;
   }
 
-  private CacheBuilder builder(final int _maxElements) {
+  private CacheBuilder builder(int capacity) {
     CacheBuilder cb =
       CacheBuilder.newBuilder()
-        .maximumSize(_maxElements);
+        .maximumSize(capacity);
     if (withExpiry) {
       cb.expireAfterWrite(2 * 60, TimeUnit.SECONDS);
     }
@@ -77,17 +77,17 @@ public class GuavaCacheFactory extends ProductCacheFactory {
     Cache<K, V> cache;
 
     @Override
-    public V get(final K key) {
+    public V get(K key) {
       return cache.getIfPresent(key);
     }
 
     @Override
-    public void put(final K key, final V value) {
+    public void put(K key, V value) {
       cache.put(key, value);
     }
 
     @Override
-    public void remove(final K key) {
+    public void remove(K key) {
       cache.invalidate(key);
     }
 
@@ -104,7 +104,7 @@ public class GuavaCacheFactory extends ProductCacheFactory {
     LoadingCache<K, V> cache;
 
     @Override
-    public V get(final K key) {
+    public V get(K key) {
       try {
         return cache.get(key);
       } catch (Exception ex) {
@@ -113,7 +113,7 @@ public class GuavaCacheFactory extends ProductCacheFactory {
     }
 
     @Override
-    public void put(final K key, final V value) {
+    public void put(K key, V value) {
       cache.put(key, value);
     }
 

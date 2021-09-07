@@ -69,7 +69,7 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
   @Setup(Level.Trial)
   public void setup() throws Exception {
     int _SAFETY_ADD = 20000;
-    cache = getFactory().createUnspecialized(entryCount + _SAFETY_ADD);
+    cache = getFactory().create(entryCount + _SAFETY_ADD);
     Cache2kMetricsRecorder.saveStatsAfterSetup(cache.toString());
     ints = new Integer[PATTERN_COUNT];
     RandomGenerator generator = new XorShift1024StarRandomGenerator(1802);

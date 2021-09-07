@@ -26,6 +26,10 @@ import org.cache2k.benchmark.cache.JCacheCacheFactory;
 import org.ehcache.jsr107.EhcacheCachingProvider;
 import org.junit.Test;
 
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+import javax.cache.configuration.MutableConfiguration;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -35,11 +39,20 @@ import static org.junit.Assert.assertTrue;
 public class EHCache3Test {
 
 	@Test
+	public void testCreateJCacheWithNoConfiguration() {
+		CacheManager mgr =
+			javax.cache.Caching.getCachingProvider(
+				EhcacheCachingProvider.class.getName()).getCacheManager();
+		Cache cache = mgr.createCache("test", new MutableConfiguration<>());
+		cache.put(1, 1);
+	}
+
+	@Test
 	public void testJCacheDefault10000Configuration() {
 		JCacheCacheFactory f = new JCacheCacheFactory();
 		f.setProvider(EhcacheCachingProvider.class.getName());
 		// f.setCacheName("benchmark");
-		BenchmarkCache<Integer, Integer> _cache = f.create(10000);
+		BenchmarkCache<Integer, Integer> _cache = f.create(Integer.class, Integer.class, 10000);
 		_cache.put(1, 3);
 	}
 

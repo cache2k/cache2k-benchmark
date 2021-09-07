@@ -25,12 +25,15 @@ import org.cache2k.Cache2kBuilder;
 import org.cache2k.CacheEntry;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
+import org.cache2k.benchmark.BulkBenchmarkCacheLoader;
 import org.cache2k.benchmark.EvictionListener;
 import org.cache2k.benchmark.ProductCacheFactory;
 import org.cache2k.event.CacheEntryEvictedListener;
 import org.cache2k.event.CacheEntryUpdatedListener;
-import org.cache2k.integration.CacheLoader;
+import org.cache2k.io.BulkCacheLoader;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -39,20 +42,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Cache2kFactory extends ProductCacheFactory {
 
-  private AtomicInteger counter = new AtomicInteger();
+  private final AtomicInteger counter = new AtomicInteger();
   private boolean maximumPerformance = true;
   private boolean strictEviction = false;
   private boolean wiredCache = false;
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(Class<K> keyType, Class<V> valueType,
-                                                          int maxElements) {
-    final Cache<K, V> c = createInternal(keyType, valueType, maxElements, null);
-    return wrapCache(c);
-  }
-
-  @SuppressWarnings("unchecked")
-  private <K, V> BenchmarkCache<K, V> wrapCache(final Cache<K, V> cache) {
+  public <K, V> BenchmarkCache<K, V> create(Class<K> keyType, Class<V> valueType, int capacity) {
+    Cache<K, V> cache = createInternal(keyType, valueType, capacity, null);
     return new BenchmarkCache<K, V>() {
 
       @Override
@@ -66,7 +63,7 @@ public class Cache2kFactory extends ProductCacheFactory {
       }
 
       @Override
-      public void remove(final K key) {
+      public void remove(K key) {
         cache.remove(key);
       }
 
@@ -86,21 +83,24 @@ public class Cache2kFactory extends ProductCacheFactory {
   @Override
   public <K, V> BenchmarkCache<K, V> createLoadingCache(Class<K> keyType, Class<V> valueType,
                                                         int maxElements,
-                                                        BenchmarkCacheLoader<K, V> source) {
-    final Cache<K, V> c = createInternal(keyType, valueType, maxElements, source);
+                                                        BenchmarkCacheLoader<K, V> loader) {
+    Cache<K, V> c = createInternal(keyType, valueType, maxElements, loader);
     return new BenchmarkCache<K, V>() {
       @Override
-      public V get(final K key) {
+      public V get(K key) {
         return c.get(key);
       }
 
       @Override
-      public void put(final K key, final V value) {
+      public Map<K, V> getAll(Iterable<K> keys) { return c.getAll(keys); }
+
+      @Override
+      public void put(K key, V value) {
         c.put(key, value);
       }
 
       @Override
-      public void remove(final K key) {
+      public void remove(K key) {
         c.remove(key);
       }
 
@@ -117,7 +117,7 @@ public class Cache2kFactory extends ProductCacheFactory {
   }
 
   private <K,V> Cache<K, V> createInternal(Class<K> keyType, Class<V> valueType,
-                                           int maxElements, BenchmarkCacheLoader<K, V> source) {
+                                           int maxElements, BenchmarkCacheLoader<K, V> loader) {
     Cache2kBuilder<K, V> b =
       Cache2kBuilder.of(keyType, valueType)
         .name("testCache-" + counter.incrementAndGet())
@@ -145,27 +145,35 @@ public class Cache2kFactory extends ProductCacheFactory {
     } else {
       b.strictEviction(true);
     }
-    for (final EvictionListener l : getEvictionListeners()) {
+    for (EvictionListener l : getEvictionListeners()) {
       b.addListener((CacheEntryEvictedListener<K, V>) (cache, entry) -> {
         l.evicted(entry.getKey());
       });
     }
-    if (source != null) {
-      b.loader(new CacheLoader<K, V>() {
-        @Override
-        public V load(final K key) throws Exception {
-          return source.load(key);
-        }
-      });
+    if (loader != null) {
+      if (loader instanceof BulkBenchmarkCacheLoader) {
+        b.bulkLoader(new BulkCacheLoader<K, V>() {
+          @Override
+          public V load(K key) throws Exception {
+            return loader.load(key);
+          }
+          @Override
+          public Map<K, V> loadAll(Set<? extends K> set) throws Exception {
+            return ((BulkBenchmarkCacheLoader<K, V>) loader).loadAll(set);
+          }
+        });
+      } else {
+        b.loader(key -> loader.load(key));
+      }
     }
     return b.build();
   }
 
-  public void setMaximumPerformance(final boolean v) {
+  public void setMaximumPerformance(boolean v) {
     maximumPerformance = v;
   }
 
-  public void setStrictEviction(final boolean v) {
+  public void setStrictEviction(boolean v) {
     strictEviction = v;
   }
 

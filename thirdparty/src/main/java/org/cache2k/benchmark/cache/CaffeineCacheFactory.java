@@ -27,8 +27,13 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
+import org.cache2k.benchmark.BulkBenchmarkCacheLoader;
 import org.cache2k.benchmark.ProductCacheFactory;
+import org.cache2k.io.BulkCacheLoader;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,35 +57,42 @@ public class CaffeineCacheFactory extends ProductCacheFactory {
   }
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(
-    final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+  public <K, V> BenchmarkCache<K, V> create(Class<K> keyType, Class<V> valueType, int capacity) {
     MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
-    c.cache = createCache(_maxElements).build();
+    c.cache = createCache(capacity).build();
     return c;
   }
 
   @Override
-  public <K, V> BenchmarkCache<K, V> createUnspecializedLoadingCache(
-    final Class<K> _keyType, final Class<V> _valueType,
-    final int _maxElements, final BenchmarkCacheLoader<K, V> _source) {
-    CacheLoader<K,V> l = new CacheLoader<K, V>() {
-      @Override
-      public V load(final K key) {
-        return _source.load(key);
-      }
-    };
+  public <K, V> BenchmarkCache<K, V> createLoadingCache(
+    Class<K> keyType, Class<V> valueType, int capacity, BenchmarkCacheLoader<K, V> loader) {
+    CacheLoader<K, V> l;
+    if (loader instanceof BulkBenchmarkCacheLoader) {
+      l = new CacheLoader<K, V>() {
+        @Override
+        public @Nullable V load(@NonNull K key) throws Exception {
+          return loader.load(key);
+        }
+        @Override
+        public @NonNull Map<K, V> loadAll(@NonNull Iterable<? extends K> keys) {
+          return ((BulkBenchmarkCacheLoader<K, V>) loader).loadAll(keys);
+        }
+      };
+    } else {
+      l = key -> loader.load(key);
+    }
     MyLoadingBenchmarkCache c = new MyLoadingBenchmarkCache();
-    c.cache = createCache(_maxElements).build(l);
+    c.cache = createCache(capacity).build(l);
     return c;
   }
 
-  private Caffeine createCache(final int _maxElements) {
-    Caffeine b = Caffeine.newBuilder().maximumSize(_maxElements);
+  private Caffeine createCache(int capacity) {
+    Caffeine b = Caffeine.newBuilder().maximumSize(capacity);
     if (sameThreadEviction) {
       b.executor(Runnable::run);
     }
     if (fullEvictionCapacity) {
-      b.initialCapacity(_maxElements);
+      b.initialCapacity(capacity);
     }
     if (withExpiry) {
       b.expireAfterWrite(2 * 60, TimeUnit.SECONDS);
@@ -93,17 +105,17 @@ public class CaffeineCacheFactory extends ProductCacheFactory {
     private Cache<K, V> cache;
 
     @Override
-    public V get(final K key) {
+    public V get(K key) {
       return cache.getIfPresent(key);
     }
 
     @Override
-    public void put(final K key, final V value) {
+    public void put(K key, V value) {
       cache.put(key, value);
     }
 
     @Override
-    public void remove(final K key) {
+    public void remove(K key) {
       cache.invalidate(key);
     }
 
@@ -124,12 +136,17 @@ public class CaffeineCacheFactory extends ProductCacheFactory {
     private LoadingCache<K, V> cache;
 
     @Override
-    public V get(final K key) {
+    public V get(K key) {
       return cache.get(key);
     }
 
     @Override
-    public void put(final K key, final V value) {
+    public Map<K, V> getAll(Iterable<K> keys) {
+      return cache.getAll(keys);
+    }
+
+    @Override
+    public void put(K key, V value) {
       cache.put(key, value);
     }
 

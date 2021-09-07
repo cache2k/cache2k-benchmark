@@ -21,7 +21,6 @@ package org.cache2k.benchmark.jmh.suite.noEviction.symmetrical;
  */
 
 import org.cache2k.benchmark.BenchmarkCache;
-import org.cache2k.benchmark.IntBenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -48,7 +47,7 @@ public class PopulateParallelOnceBenchmark extends BenchmarkBase {
   public int entryCount = 1000 * 1000;
   protected final AtomicInteger offset = new AtomicInteger(0);
 
-  IntBenchmarkCache<Integer> cache;
+  BenchmarkCache<Integer, Integer> cache;
 
   @Setup(Level.Iteration)
   public void setup() {

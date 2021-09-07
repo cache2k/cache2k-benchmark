@@ -33,8 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConcurrentHashMapFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-    return new MyCache(new ConcurrentHashMap<K, V>(), _maxElements);
+  public <K, V> BenchmarkCache<K, V> create(Class<K> keyType, Class<V> valueType, int capacity) {
+    return new MyCache(new ConcurrentHashMap<K, V>(), capacity);
   }
 
   static class MyCache<K,V> extends BenchmarkCache<K, V> {
@@ -63,7 +63,7 @@ public class ConcurrentHashMapFactory extends BenchmarkCacheFactory<EvictionTuni
     }
 
     @Override
-    public void remove(final K key) {
+    public void remove(K key) {
       map.remove(key);
     }
 

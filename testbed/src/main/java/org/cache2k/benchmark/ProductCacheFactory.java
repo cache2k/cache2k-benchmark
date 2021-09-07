@@ -23,5 +23,5 @@ package org.cache2k.benchmark;
 /**
  * @author Jens Wilke
  */
-public class ProductCacheFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
+public abstract class ProductCacheFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
 }

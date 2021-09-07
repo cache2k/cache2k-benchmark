@@ -28,9 +28,8 @@ import java.util.HashMap;
 public class HashMapFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(
-    final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-    return new ConcurrentHashMapFactory.MyCache(new HashMap<K, V>(), _maxElements);
+  public <K, V> BenchmarkCache<K, V> create(Class<K> keyType, Class<V> valueType, int capacity) {
+    return new ConcurrentHashMapFactory.MyCache(new HashMap<K, V>(), capacity);
   }
 
 }

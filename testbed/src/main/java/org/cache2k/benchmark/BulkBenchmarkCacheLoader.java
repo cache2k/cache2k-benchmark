@@ -20,11 +20,23 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import java.util.Collections;
+import java.util.Map;
+
 /**
+ * Bulk version of cache loader
+ *
  * @author Jens Wilke
  */
-public abstract class BenchmarkCacheLoader<K, V> {
+public abstract class BulkBenchmarkCacheLoader<K, V> extends BenchmarkCacheLoader<K, V> {
 
-  public abstract V load(K key);
+  public V load(K key) {
+    return loadAll(Collections.singleton(key)).get(key);
+  }
+
+  /**
+   * Bulk load.
+   */
+  public abstract Map<K, V> loadAll(Iterable<? extends K> keys);
 
 }

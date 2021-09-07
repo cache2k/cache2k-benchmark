@@ -32,8 +32,8 @@ import org.cache2k.benchmark.impls.SynchronizedLinkedHashMapCache;
 public class PartitionedLinkedHashMapFactory extends BenchmarkCacheFactory<EvictionTuning.None> {
 
 	@Override
-	protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-		return new PartitionedLinkedHashMapCache<>(_maxElements);
+	public <K, V> BenchmarkCache<K, V> create(Class<K> keyType, Class<V> valueType, int capacity) {
+		return new PartitionedLinkedHashMapCache<>(capacity);
 	}
 
 }

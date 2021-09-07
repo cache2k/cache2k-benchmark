@@ -27,7 +27,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cache2k-version>2.0.0.Final</cache2k-version>
+    <cache2k-version>2.2.1.Final</cache2k-version>
   </properties>
 
   <modules>

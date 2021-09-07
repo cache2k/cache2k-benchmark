@@ -22,7 +22,7 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
-import org.cache2k.benchmark.BenchmarkCacheLoader;
+import org.cache2k.benchmark.BulkBenchmarkCacheLoader;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
 import org.cache2k.benchmark.util.ZipfianPattern;
@@ -37,26 +37,19 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.Blackhole;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * Penetrate loading cache with a Zipfian pattern with distribution sizes
- * (entry count times factor). The cache loader has a penalty by burning CPU cycles.
- *
- * <p>This implementation uses a separate Zipfian pattern generator in each thread,
- * since the generation is not thread safe.
- *
- * <p>Generating the pattern during the benchmark run has some overhead, but when
- * the pattern is precomputed we cannot run the benchmark with huge cache sizes, since
- * the precomputed pattern needs to be bigger than the cache since to avoid the
- * cache is benefiting from repetition. This benchmark is about 40% slower then
- * {@link ZipfianLoopingPrecomputedSequenceLoadingBenchmark} with 100k entry count.
  *
  * @author Jens Wilke
  */
 @State(Scope.Benchmark)
-public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
+public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
 
   @Param({"5", "20"})
   public int factor = 0;
@@ -75,17 +68,19 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @State(Scope.Thread)
   public static class ThreadState {
 
-    ZipfianPattern pattern;
+    ZipfianPattern keyPattern;
+    ZipfianPattern bulkPattern;
 
     @Setup(Level.Iteration)
-    public void setup(ZipfianSequenceLoadingBenchmark benchmark) {
-      pattern = new ZipfianPattern(benchmark.offsetSeed.nextLong(),
+    public void setup(ZipfianSequenceBulkLoadingBenchmark benchmark) {
+      keyPattern = new ZipfianPattern(benchmark.offsetSeed.nextLong(),
         benchmark.entryCount * benchmark.factor);
+      bulkPattern = new ZipfianPattern(benchmark.offsetSeed.nextLong(), 100);
     }
 
     @TearDown(Level.Iteration)
     public void tearDown() {
-      pattern = null;
+      keyPattern = null;
     }
   }
 
@@ -107,7 +102,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     ZipfianPattern generator = new ZipfianPattern(1802, range);
     for (int i = 0; i < entryCount * 3; i++) {
       Integer v = generator.next();
-      cache.put(v, v);
+      cache.put(v, keyToValue(v));
     }
     String statString = cache.toString();
     System.out.println("Cache stats after seeding: " + statString);
@@ -122,6 +117,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @TearDown(Level.Iteration)
   public void tearDown() {
     HitCountRecorder.recordMissCount(source.missCount.longValue());
+    HitCountRecorder.recordBulkLoadCount(source.bulkCount.longValue());
     ForcedGcMemoryProfiler.keepReference(this);
     String statString = cache.toString();
     System.out.println(statString);
@@ -131,14 +127,40 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
   public long operation(ThreadState threadState, HitCountRecorder rec) {
-    rec.opCount++;
-    Integer v = cache.get(threadState.pattern.next());
-    return v;
+    int bulkCount = threadState.bulkPattern.next();
+    if (bulkCount < 50) {
+      rec.opCount++;
+      Integer v = cache.get(threadState.keyPattern.next());
+      return v;
+    }
+    Set<Integer> keySet = new HashSet<>(bulkCount);
+    int base = threadState.keyPattern.next();
+    for (int i = 0; i < bulkCount; i++) {
+      keySet.add(base + i);
+    }
+    rec.bulkOpCount++;
+    rec.opCount += bulkCount;
+    Map<Integer, Integer> result = cache.getAll(keySet);
+    if (result.size() != keySet.size()) {
+      throw new AssertionError("result map size mismatch expected=" + keySet.size() + ", actual=" + result.size());
+    }
+    int sum = 0;
+    for (Map.Entry<Integer, Integer> entry : result.entrySet()) {
+      if (!keySet.contains(entry.getKey())) {
+        throw new AssertionError("unexpected key: " + entry.getKey());
+      }
+      if (entry.getValue() != keyToValue(entry.getKey())) {
+        throw new AssertionError("unexpected value in result key=" + entry.getKey() + ", value=" + entry.getValue());
+      }
+      sum += entry.getValue();
+    }
+    return sum;
   }
 
-  static class DataLoader extends BenchmarkCacheLoader<Integer, Integer> {
+  static class DataLoader extends BulkBenchmarkCacheLoader<Integer, Integer> {
 
     LongAdder missCount = new LongAdder();
+    LongAdder bulkCount = new LongAdder();
 
     /**
      * The loader increments the miss counter and  burns CPU via JMH's blackhole
@@ -147,10 +169,28 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     @Override
     public Integer load(Integer key) {
       missCount.increment();
-      Blackhole.consumeCPU(1000);
-      return key * 2 + 11;
+      Blackhole.consumeCPU(1234);
+      return keyToValue(key);
     }
 
+    @Override
+    public Map<Integer, Integer> loadAll(Iterable<? extends Integer> keys) {
+      bulkCount.increment();
+      Map<Integer, Integer> result = new HashMap<>();
+      int cnt = 0;
+      for (Integer key : keys) {
+        result.put(key, keyToValue(key));
+        cnt++;
+      }
+      Blackhole.consumeCPU(56789 + cnt * 1234);
+      missCount.add(cnt);
+      return result;
+    }
+
+  }
+
+  private static int keyToValue(int key) {
+    return key * 2 + 11;
   }
 
 }

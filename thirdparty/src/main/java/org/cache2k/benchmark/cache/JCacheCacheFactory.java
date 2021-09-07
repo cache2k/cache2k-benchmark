@@ -61,22 +61,22 @@ public class JCacheCacheFactory extends ProductCacheFactory {
   }
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(
-    final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+  public <K, V> BenchmarkCache<K, V> create(
+    Class<K> keyType, Class<V> valueType, int capacity) {
     MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
-    String _cacheName = constructCacheName(_maxElements);
+    String _cacheName = constructCacheName(capacity);
     CacheManager mgr = resolveCacheManager();
     if (mgr.getClass().getName().toString().contains("Eh107")) {
        CacheConfiguration<K, V> _eh107Configuration =
-         CacheConfigurationBuilder.newCacheConfigurationBuilder(_keyType, _valueType,
-          ResourcePoolsBuilder.heap(_maxElements)).build();
+         CacheConfigurationBuilder.newCacheConfigurationBuilder(keyType, valueType,
+          ResourcePoolsBuilder.heap(capacity)).build();
         c.cache = mgr.createCache(_cacheName,
           Eh107Configuration.fromEhcacheCacheConfiguration(_eh107Configuration));
     } else if (mgr.getClass().getName().toString().contains("cache2k")) {
       c.cache = mgr.createCache(_cacheName,
         ExtendedMutableConfiguration.of(
-          Cache2kBuilder.of(_keyType, _valueType)
-            .entryCapacity(_maxElements)));
+          Cache2kBuilder.of(keyType, valueType)
+            .entryCapacity(capacity)));
     } else {
       c.cache = mgr.getCache(_cacheName);
     }
@@ -87,32 +87,31 @@ public class JCacheCacheFactory extends ProductCacheFactory {
   }
 
   @Override
-  public <K, V> BenchmarkCache<K, V> createUnspecializedLoadingCache(
-    final Class<K> _keyType, final Class<V> _valueType,
-    final int _maxElements, final BenchmarkCacheLoader<K, V> _source) {
+  public <K, V> BenchmarkCache<K, V> createLoadingCache(Class<K> keyType, Class<V> valueType,
+    int capacity, BenchmarkCacheLoader<K, V> loader) {
 
-    final CacheLoader<K,V> l = new CacheLoader<K, V>() {
+    CacheLoader<K,V> l = new CacheLoader<K, V>() {
       @Override
-      public Map<K, V> loadAll(final Iterable<? extends K> keys) throws CacheLoaderException {
+      public Map<K, V> loadAll(Iterable<? extends K> keys) throws CacheLoaderException {
         throw new UnsupportedOperationException();
       }
       @Override
-      public V load(final K key) {
-        return _source.load(key);
+      public V load(K key) {
+        return loader.load(key);
 
       }
     };
-    String _cacheName = constructCacheName(_maxElements);
+    String cacheName = constructCacheName(capacity);
     MyBenchmarkCacheAdapter c = new MyBenchmarkCacheAdapter();
     CacheManager mgr = resolveCacheManager();
     if (mgr.getClass().getName().toString().contains("Eh107")) {
       CacheConfiguration<K, V> _eh107Configuration =
-        CacheConfigurationBuilder.newCacheConfigurationBuilder(_keyType, _valueType,
-          ResourcePoolsBuilder.heap(_maxElements))
+        CacheConfigurationBuilder.newCacheConfigurationBuilder(keyType, valueType,
+          ResourcePoolsBuilder.heap(capacity))
           .withLoaderWriter(new CacheLoaderWriter<K, V>() {
             @Override
-            public V load(final K _k) throws Exception {
-              return _source.load(_k);
+            public V load(K key) throws Exception {
+              return loader.load(key);
             }
 
             @Override
@@ -145,27 +144,27 @@ public class JCacheCacheFactory extends ProductCacheFactory {
             }
           })
           .build();
-      c.cache = mgr.createCache(_cacheName,
+      c.cache = mgr.createCache(cacheName,
         Eh107Configuration.fromEhcacheCacheConfiguration(_eh107Configuration));
     } else if (mgr.getClass().getName().toString().contains("cache2k")) {
-      c.cache = mgr.createCache(_cacheName,
+      c.cache = mgr.createCache(cacheName,
         ExtendedMutableConfiguration.of(
-          Cache2kBuilder.of(_keyType, _valueType)
-            .loader(k -> _source.load(k))
-            .entryCapacity(_maxElements)));
+          Cache2kBuilder.of(keyType, valueType)
+            .loader(k -> loader.load(k))
+            .entryCapacity(capacity)));
     } else if (mgr.getClass().getName().contains("caffeine")) {
       CaffeineConfiguration<K,V> cfg = new CaffeineConfiguration<>();
       cfg.setCacheLoaderFactory(new FactoryBuilder.SingletonFactory(l));
-      cfg.setMaximumSize(OptionalLong.of(_maxElements));
-      c.cache = mgr.createCache(_cacheName, cfg);
+      cfg.setMaximumSize(OptionalLong.of(capacity));
+      c.cache = mgr.createCache(cacheName, cfg);
     } else {
-      c.cache = mgr.createCache(_cacheName,
+      c.cache = mgr.createCache(cacheName,
         new MutableConfiguration<>().setCacheLoaderFactory(
           new FactoryBuilder.SingletonFactory(l)
         ));
     }
     if (c.cache == null) {
-      throw new NullPointerException("No cache returned for name: " + _cacheName);
+      throw new NullPointerException("No cache returned for name: " + cacheName);
     }
     return c;
   }
@@ -195,12 +194,12 @@ public class JCacheCacheFactory extends ProductCacheFactory {
     private Cache<K, V> cache;
 
     @Override
-    public V get(final K key) {
+    public V get(K key) {
       return cache.get(key);
     }
 
     @Override
-    public void put(final K key, final V value) {
+    public void put(K key, V value) {
       cache.put(key, value);
     }
 

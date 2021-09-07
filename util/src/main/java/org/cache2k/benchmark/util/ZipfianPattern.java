@@ -100,19 +100,19 @@ public class ZipfianPattern extends AbstractEternalAccessPattern {
 
   /**
    * Create a zipfian generator for the specified number of items.
-   * @param _items The number of items in the distribution.
+   * @param items The number of items in the distribution.
    */
-  public ZipfianPattern(long _randomSeed, long _items) {
-    this(_randomSeed, 0,_items-1);
+  public ZipfianPattern(long randomSeed, long items) {
+    this(randomSeed, 0,items - 1);
   }
 
   /**
    * Create a zipfian generator for items between min and max.
-   * @param _min The smallest integer to generate in the sequence.
-   * @param _max The largest integer to generate in the sequence.
+   * @param min The smallest integer to generate in the sequence.
+   * @param max The largest integer to generate in the sequence.
    */
-  public ZipfianPattern(long _randomSeed, long _min, long _max) {
-    this(_randomSeed, _min, _max, ZIPFIAN_CONSTANT);
+  public ZipfianPattern(long randomSeed, long min, long max) {
+    this(randomSeed, min, max, ZIPFIAN_CONSTANT);
   }
 
   /**

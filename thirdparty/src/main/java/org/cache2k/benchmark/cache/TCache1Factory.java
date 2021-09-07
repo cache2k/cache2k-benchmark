@@ -43,10 +43,10 @@ public class TCache1Factory extends ProductCacheFactory {
   AtomicInteger counter = new AtomicInteger();
 
   @Override
-  public <K, V> BenchmarkCache<K, V> create(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+  public <K, V> BenchmarkCache<K, V> create(final Class<K> keyType, final Class<V> valueType, final int capacity) {
     TCacheFactory factory = TCacheFactory.standardFactory();
     Builder<K, V> b = factory.builder();
-    b.setExpectedMapSize(_maxElements);
+    b.setExpectedMapSize(capacity);
 
     /**
      * Set a cache name. For some reason, auto-assigning a name does not work properly in this JMH based test.
@@ -62,7 +62,7 @@ public class TCache1Factory extends ProductCacheFactory {
       b.setMaxIdleTime(5 * 60);
     }
 
-    return new MyBenchmarkCacheAdapter<K,V>(b, _maxElements, factory);
+    return new MyBenchmarkCacheAdapter<K,V>(b, capacity, factory);
   }
 
   static class MyBenchmarkCacheAdapter<K,V> extends BenchmarkCache<K, V> {

@@ -46,6 +46,7 @@ public class HitCountRecorder {
   public long hitCount;
   public long missCount;
   public long opCount;
+  public long bulkOpCount;
 
   @TearDown(Level.Iteration)
   public void tearDown() {
@@ -56,11 +57,14 @@ public class HitCountRecorder {
       if (missCount > 0) {
         addCounterResult("missCount", missCount, "miss", AggregationPolicy.AVG);
       }
+      if (bulkOpCount > 0) {
+        addCounterResult("bulkOpCount", bulkOpCount, "op", AggregationPolicy.AVG);
+      }
       if (opCount == 0) {
         opCount = hitCount + missCount;
       }
       addCounterResult("opCount", opCount, "op", AggregationPolicy.AVG);
-      updateHitrate("tearDown(), hitCount=" + hitCount + ", missCount=" + missCount + ", opCount=" + opCount);
+      updateHitrate("tearDown(), hitCount=" + hitCount + ", missCount=" + missCount + ", opCount=" + opCount + ", bulkOpCount=" + bulkOpCount);
       hitCount = missCount = opCount = 0;
     }
   }
@@ -80,6 +84,14 @@ public class HitCountRecorder {
         "missCount", _missCount, "op", AggregationPolicy.AVG
       );
       updateHitrate("miss=" + _missCount);
+    }
+  }
+
+  public static void recordBulkLoadCount(long value) {
+    synchronized (LOCK) {
+      addCounterResult(
+        "bulkLoadCount", value, "miss", AggregationPolicy.AVG
+      );
     }
   }
 

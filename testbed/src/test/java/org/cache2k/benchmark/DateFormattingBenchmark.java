@@ -23,7 +23,7 @@ package org.cache2k.benchmark;
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
 import org.cache2k.CacheEntry;
-import org.cache2k.integration.CacheLoader;
+import org.cache2k.io.CacheLoader;
 import org.junit.Test;
 
 import java.io.CharArrayWriter;

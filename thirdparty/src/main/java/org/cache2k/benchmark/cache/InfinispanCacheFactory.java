@@ -54,11 +54,11 @@ public class InfinispanCacheFactory extends ProductCacheFactory {
   }
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
+  public <K, V> BenchmarkCache<K, V> create(Class<K> keyType, Class<V> valueType, int capacity) {
     EmbeddedCacheManager m = getCacheMangaer();
     ConfigurationBuilder cb = new ConfigurationBuilder();
 
-    cb.eviction().maxEntries(_maxElements);
+    cb.eviction().maxEntries(capacity);
     cb.storeAsBinary().disable();
     if (!withExpiry) {
       cb.expiration().disableReaper().lifespan(-1);
@@ -87,7 +87,7 @@ public class InfinispanCacheFactory extends ProductCacheFactory {
     }
 
     @Override
-    public V get(final K key) {
+    public V get(K key) {
       return cache.get(key);
     }
 
@@ -97,7 +97,7 @@ public class InfinispanCacheFactory extends ProductCacheFactory {
     }
 
     @Override
-    public void remove(final K key) {
+    public void remove(K key) {
       cache.remove(key);
     }
 

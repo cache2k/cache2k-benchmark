@@ -39,37 +39,38 @@ public class EhCache3Factory extends ProductCacheFactory {
   static final String CACHE_NAME = "testCache";
 
   @Override
-  protected <K, V> BenchmarkCache<K, V> createSpecialized(final Class<K> _keyType, final Class<V> _valueType, final int _maxElements) {
-    return new MyBenchmarkCache<K,V>(createCacheConfiguration(_keyType, _valueType, _maxElements));
+  public <K, V> BenchmarkCache<K, V> create(Class<K> keyType, Class<V> valueType, int capacity) {
+    return new MyBenchmarkCache<K,V>(createCacheConfiguration(keyType, valueType, capacity));
   }
 
-  protected <K,V> CacheConfiguration<K,V> createCacheConfiguration(final Class<K> _keyType, final Class<V> _valueType, int _maxElements) {
-    return CacheConfigurationBuilder.newCacheConfigurationBuilder(_keyType, _valueType,
-      ResourcePoolsBuilder.heap(_maxElements)).build();
+  protected <K,V> CacheConfiguration<K,V> createCacheConfiguration(
+    Class<K> keyType, Class<V> valueType, int capacity) {
+    return CacheConfigurationBuilder.newCacheConfigurationBuilder(keyType, valueType,
+      ResourcePoolsBuilder.heap(capacity)).build();
   }
 
   @Override
-  public <K, V> BenchmarkCache<K, V> createUnspecializedLoadingCache(final Class<K> _keyType, final Class<V> _valueType,
-                                                                     final int _maxElements, final BenchmarkCacheLoader<K, V> _source) {
+  public <K, V> BenchmarkCache<K, V> createLoadingCache(Class<K> keyType, Class<V> valueType,
+                                                        int capacity, BenchmarkCacheLoader<K, V> loader) {
     CacheLoaderWriter<K,V> lw = new CacheLoaderWriter<K, V>() {
       @Override
-      public V load(final K key) throws Exception {
-        return _source.load(key);
+      public V load(K key) throws Exception {
+        return loader.load(key);
       }
 
       @Override
-      public void write(final K key, final V value) throws Exception {
+      public void write(K key, V value) throws Exception {
 
       }
 
       @Override
-      public void delete(final K key) throws Exception {
+      public void delete(K key) throws Exception {
 
       }
     };
     CacheConfiguration<K,V> cfg =
-      CacheConfigurationBuilder.newCacheConfigurationBuilder(_keyType, _valueType,
-        ResourcePoolsBuilder.heap(_maxElements))
+      CacheConfigurationBuilder.newCacheConfigurationBuilder(keyType, valueType,
+        ResourcePoolsBuilder.heap(capacity))
         .withLoaderWriter(lw)
         .build();
     return new MyBenchmarkCache<K,V>(cfg);
@@ -91,12 +92,12 @@ public class EhCache3Factory extends ProductCacheFactory {
     }
 
     @Override
-    public void put(final K key, final V value) {
+    public void put(K key, V value) {
       cache.put(key, value);
     }
 
     @Override
-    public void remove(final K key) {
+    public void remove(K key) {
       cache.remove(key);
     }
 

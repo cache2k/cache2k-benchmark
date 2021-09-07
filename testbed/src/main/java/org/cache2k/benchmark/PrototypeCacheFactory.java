@@ -88,8 +88,8 @@ public final class PrototypeCacheFactory<T extends EvictionTuning> extends Bench
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected <K, V> BenchmarkCache<K, V> createSpecialized(
-		final Class<K> _keyType, final Class<V> _valueType, final int capacity) {
+	public <K, V> BenchmarkCache<K, V> create(
+		Class<K> keyType, Class<V> valueType, int capacity) {
 		return (BenchmarkCache<K,V>) new PrototypeCache(createPolicy(capacity), getEvictionListeners());
 	}
 
