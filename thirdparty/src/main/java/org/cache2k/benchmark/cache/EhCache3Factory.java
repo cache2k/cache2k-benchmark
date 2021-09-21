@@ -111,6 +111,9 @@ public class EhCache3Factory extends ProductCacheFactory {
       return cache.toString();
     }
 
+    @Override
+    public void clear() { cache.clear(); }
+
   }
 
 }

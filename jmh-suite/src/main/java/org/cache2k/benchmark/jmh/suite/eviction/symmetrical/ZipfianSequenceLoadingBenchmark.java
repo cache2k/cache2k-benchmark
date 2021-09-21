@@ -80,7 +80,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     @Setup(Level.Iteration)
     public void setup(ZipfianSequenceLoadingBenchmark benchmark) {
       pattern = new ZipfianPattern(benchmark.offsetSeed.nextLong(),
-        benchmark.entryCount * benchmark.factor);
+        calculateRange(benchmark.entryCount, benchmark.factor));
     }
 
     @TearDown(Level.Iteration)
@@ -91,9 +91,13 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
   BenchmarkCache<Integer, Integer> cache;
 
+  static int calculateRange(int entryCount, int factor) {
+    return (int) (entryCount * (factor / 100.0));
+  }
+
   @Setup
   public void setupBenchmark() {
-    int range = entryCount * factor;
+    int range = calculateRange(entryCount, factor);
     BenchmarkCacheFactory f = getFactory();
     if (expiry) {
       f.withExpiry(true);
@@ -147,7 +151,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     @Override
     public Integer load(Integer key) {
       missCount.increment();
-      Blackhole.consumeCPU(1000);
+      Blackhole.consumeCPU(200);
       return key * 2 + 11;
     }
 

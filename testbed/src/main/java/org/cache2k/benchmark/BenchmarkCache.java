@@ -63,4 +63,6 @@ public abstract class BenchmarkCache<K, V> implements Closeable {
     return new EvictionStatistics() {};
   }
 
+  public void clear() { throw new UnsupportedOperationException(); }
+
 }

@@ -71,6 +71,10 @@ public class ConcurrentHashMapFactory extends BenchmarkCacheFactory<EvictionTuni
     public String toString() {
       return "mapimpl=" + map.getClass().getName();
     }
+
+    @Override
+    public void clear() { map.clear(); }
+
   }
 
 }

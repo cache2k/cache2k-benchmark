@@ -48,19 +48,25 @@ public class BenchmarkBase {
   @Param("")
   public String cacheName;
 
+  @Param("")
+  public String enableStatistics;
+
   public BenchmarkCacheFactory getFactory() {
     try {
       if ("DEFAULT".equals(cacheFactory)) {
         cacheFactory = Cache2kFactory.class.getCanonicalName();
       }
-      BenchmarkCacheFactory _factoryInstance =
+      BenchmarkCacheFactory factoryInstance =
         (BenchmarkCacheFactory) Class.forName(cacheFactory).newInstance();
-      if (_factoryInstance instanceof JCacheCacheFactory) {
-      	JCacheCacheFactory _jCacheCacheFactory = (JCacheCacheFactory) _factoryInstance;
-      	_jCacheCacheFactory.setCacheName(cacheName);
-      	_jCacheCacheFactory.setProvider(cacheProvider);
+      if (factoryInstance instanceof JCacheCacheFactory) {
+      	JCacheCacheFactory jCacheCacheFactory = (JCacheCacheFactory) factoryInstance;
+      	jCacheCacheFactory.setCacheName(cacheName);
+      	jCacheCacheFactory.setProvider(cacheProvider);
 			}
-      return _factoryInstance;
+      if (!"".equals(enableStatistics)) {
+        factoryInstance.withStatistics(true);
+      }
+      return factoryInstance;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -71,14 +77,14 @@ public class BenchmarkBase {
     closeIfNeeded(_closeable);
   }
 
-  public void closeIfNeeded(final Closeable _closeable) {
-    if (_closeable != null) {
+  public void closeIfNeeded(final Closeable closeable) {
+    if (closeable != null) {
       System.out.println();
-      String _statString = _closeable.toString();
-      System.out.println(_statString);
+      String startString = closeable.toString();
+      System.out.println(startString);
       System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
       try {
-        _closeable.close();
+        closeable.close();
       } catch (IOException _ignore) {
       }
     }

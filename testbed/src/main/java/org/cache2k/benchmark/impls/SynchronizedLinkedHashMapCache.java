@@ -65,4 +65,10 @@ public class SynchronizedLinkedHashMapCache<K,V> extends BenchmarkCache<K,V> {
 		}
 	}
 
+	@Override
+	public void clear() {
+		synchronized (backingMap) {
+			backingMap.clear();
+		}
+	}
 }

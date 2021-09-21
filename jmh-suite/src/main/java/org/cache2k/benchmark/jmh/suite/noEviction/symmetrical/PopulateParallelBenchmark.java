@@ -22,6 +22,8 @@ package org.cache2k.benchmark.jmh.suite.noEviction.symmetrical;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
+import org.cache2k.benchmark.jmh.suite.eviction.symmetrical.ZipfianSequenceLoadingBenchmark;
+import org.cache2k.benchmark.util.ZipfianPattern;
 import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -38,12 +40,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Populate a cache with in parallel with multiple threads.
- * The benchmark runs in single shot
  */
 @State(Scope.Benchmark)
-public class PopulateParallelOnceBenchmark extends BenchmarkBase {
+public class PopulateParallelBenchmark extends BenchmarkBase {
 
-  @Param({ "2000000", "4000000", "8000000"})
+  @Param({"2147483647"})
   public int entryCount = 1000 * 1000;
   protected final AtomicInteger offset = new AtomicInteger(0);
 
@@ -59,21 +60,27 @@ public class PopulateParallelOnceBenchmark extends BenchmarkBase {
     recordMemoryAndDestroy(cache);
   }
 
-  @AuxCounters @State(Scope.Thread)
+  @State(Scope.Thread)
   public static class ThreadState {
-    public long operations;
+    public int index;
+    public int limit;
+
+    @Setup(Level.Iteration)
+    public void setup(PopulateParallelBenchmark benchmark, BenchmarkParams params) {
+      int delta = Integer.MAX_VALUE / params.getThreads();
+      index = benchmark.offset.getAndAdd(delta);
+      limit = index + delta;
+    }
+
   }
 
-  @Benchmark @BenchmarkMode(Mode.SingleShotTime)
-  public long populateChunkInCache(ThreadState ts, BenchmarkParams p) {
-    int chunkSize = entryCount / p.getThreads();
-    int startIndex = offset.getAndAdd(chunkSize);
-    int endIndex = startIndex + chunkSize;
-    for (int i = startIndex; i < endIndex; i++) {
-      cache.put(i, i);
+  @Benchmark @BenchmarkMode(Mode.Throughput)
+  public long operation(ThreadState ts, BenchmarkParams p) {
+    if (ts.index == ts.limit) {
+      throw new RuntimeException("limit reached");
     }
-    ts.operations = chunkSize;
-    return chunkSize;
+    cache.put(ts.index, ts.index++);
+    return ts.index;
   }
 
 }

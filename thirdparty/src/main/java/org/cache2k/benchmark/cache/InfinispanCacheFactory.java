@@ -107,6 +107,9 @@ public class InfinispanCacheFactory extends ProductCacheFactory {
     }
 
     @Override
+    public void clear() { cache.clear(); }
+
+    @Override
     public String toString() {
       return cache.toString() + ": size=" + cache.size();
     }

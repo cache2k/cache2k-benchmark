@@ -129,6 +129,9 @@ public class CaffeineCacheFactory extends ProductCacheFactory {
       return cache.toString();
     }
 
+    @Override
+    public void clear() { cache.asMap().clear(); }
+
   }
 
   static class MyLoadingBenchmarkCache<K, V> extends BenchmarkCache<K, V> {
@@ -159,6 +162,9 @@ public class CaffeineCacheFactory extends ProductCacheFactory {
     public String toString() {
       return cache.toString();
     }
+
+    @Override
+    public void clear() { cache.asMap().clear(); }
 
   }
 

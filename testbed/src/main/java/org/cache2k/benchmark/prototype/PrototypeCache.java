@@ -101,6 +101,11 @@ public class PrototypeCache<E extends Entry<K,V>, K,V>
 	}
 
 	@Override
+	public void clear() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public EvictionStatistics getEvictionStatistics() {
 		final EvictionStatistics sts = eviction.getEvictionStats();
 		assert sts.getEvictionCount() < 0 || sts.getEvictionCount() == evictionCnt;

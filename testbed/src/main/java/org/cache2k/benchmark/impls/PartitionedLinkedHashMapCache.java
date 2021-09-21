@@ -70,4 +70,12 @@ public class PartitionedLinkedHashMapCache<K,V> extends BenchmarkCache<K,V> {
 		}
 	}
 
+	@Override
+	public void clear() {
+		synchronized (backingMaps) {
+			for (LinkedHashMapCache<K, V> backingMap : backingMaps) {
+				backingMap.clear();
+			}
+		}
+	}
 }

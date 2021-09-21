@@ -31,6 +31,7 @@ public abstract class BenchmarkCacheFactory<T extends EvictionTuning> extends An
 
   private List<EvictionListener<?>> evictionListeners = new ArrayList<>();
   protected boolean withExpiry;
+  protected boolean withStatistics;
 
   @SuppressWarnings("unchecked")
   public <K, V> BenchmarkCache<K, V> create(int capacity) {
@@ -44,6 +45,11 @@ public abstract class BenchmarkCacheFactory<T extends EvictionTuning> extends An
     Class<K> keyType, Class<V> valueType,
     int maxElements, BenchmarkCacheLoader<K,V> loader) {
     throw new UnsupportedOperationException();
+  }
+
+  public BenchmarkCacheFactory withStatistics(boolean v) {
+    withStatistics = v;
+    return this;
   }
 
   public BenchmarkCacheFactory withExpiry(boolean v) {

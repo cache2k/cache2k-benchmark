@@ -73,6 +73,9 @@ public class Cache2kFactory extends ProductCacheFactory {
       }
 
       @Override
+      public void clear() { cache.clear(); }
+
+      @Override
       public String toString() {
         return cache.toString();
       }
@@ -113,6 +116,9 @@ public class Cache2kFactory extends ProductCacheFactory {
       public void close() {
         c.close();
       }
+
+      @Override
+      public void clear() { c.clear(); }
     };
   }
 
@@ -165,6 +171,9 @@ public class Cache2kFactory extends ProductCacheFactory {
       } else {
         b.loader(key -> loader.load(key));
       }
+    }
+    if (withStatistics) {
+      b.disableStatistics(false);
     }
     return b.build();
   }

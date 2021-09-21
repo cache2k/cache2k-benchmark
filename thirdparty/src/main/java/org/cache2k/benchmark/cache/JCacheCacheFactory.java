@@ -218,6 +218,10 @@ public class JCacheCacheFactory extends ProductCacheFactory {
       return cache.toString();
     }
 
+    @Override
+    public void clear() {
+      cache.clear();
+    }
   }
 
 }

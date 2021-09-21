@@ -53,6 +53,17 @@ test -n "$BENCHMARK_DILIGENT_LONG" || BENCHMARK_DILIGENT_LONG="-f 2 -wi 1 -w 180
 # test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 3 -wi 5 -w 30s -i 5 -r 30s";
 # test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-gc true -f 2 -wi 0 -w 40s -i 8 -r 20s";
 
+
+# How to use -perf perf and -perf perfasm profiler with Ubuntu: Provide perf support and
+# disassembler
+
+# apt-get install perf linux-tools-generic libhsdis0-fcml
+#
+# When using the hwe kernel, e.g.:
+#
+# apt-get install linux-tools-generic-hwe-20.04
+
+# Old information:
 # Tinker benchmark options to do profiling and add assembler code output (linux only).
 # Needs additional disassembly library to display assembler code
 # see: http://psy-lob-saw.blogspot.de/2013/01/java-print-assembly.html

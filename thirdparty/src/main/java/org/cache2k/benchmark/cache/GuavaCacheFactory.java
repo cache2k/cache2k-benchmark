@@ -96,6 +96,9 @@ public class GuavaCacheFactory extends ProductCacheFactory {
       cache.cleanUp();
     }
 
+    @Override
+    public void clear() { cache.asMap().clear(); }
+
   }
 
   static class MyLoadingBenchmarkCache<K, V> extends BenchmarkCache<K, V> {
@@ -121,6 +124,9 @@ public class GuavaCacheFactory extends ProductCacheFactory {
     public void close() {
       cache.cleanUp();
     }
+
+    @Override
+    public void clear() { cache.asMap().clear(); }
 
   }
 
