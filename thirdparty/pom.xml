@@ -14,7 +14,7 @@
   <name>Benchmarks: third party products.</name>
 
   <properties>
-    <caffeine.version>2.8.0</caffeine.version>
+    <caffeine.version>3.0.4</caffeine.version>
   </properties>
 
   <dependencies>

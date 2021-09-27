@@ -34,6 +34,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -74,7 +75,7 @@ public class CaffeineCacheFactory extends ProductCacheFactory {
           return loader.load(key);
         }
         @Override
-        public @NonNull Map<K, V> loadAll(@NonNull Iterable<? extends K> keys) {
+        public @NonNull Map<K, V> loadAll(@NonNull Set<? extends K> keys) {
           return ((BulkBenchmarkCacheLoader<K, V>) loader).loadAll(keys);
         }
       };

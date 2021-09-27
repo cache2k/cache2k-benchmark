@@ -20,6 +20,7 @@ package org.cache2k.benchmark.cache;
  * #L%
  */
 
+import com.github.benmanes.caffeine.cache.simulator.policy.AccessEvent;
 import com.github.benmanes.caffeine.cache.simulator.policy.Policy;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -55,7 +56,7 @@ public abstract class CaffeineSimulatorPolicyFactory<T extends EvictionTuning> e
 
     @Override
     public void record(Integer v) {
-      policy.record(v);
+      policy.record(AccessEvent.forKey(v));
     }
 
     @Override
