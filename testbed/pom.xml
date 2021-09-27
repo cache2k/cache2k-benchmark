@@ -19,6 +19,7 @@
       <artifactId>util</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <!-- FIXME: move eviction benchmark separately -->
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>traces</artifactId>

@@ -101,7 +101,15 @@
           <artifactId>collision</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>com.github.FastFilter</groupId>
+          <groupId>io.github.fastfilter</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.clearspring.analytics</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>site.ycsb</groupId>
           <artifactId>*</artifactId>
         </exclusion>
       </exclusions>
