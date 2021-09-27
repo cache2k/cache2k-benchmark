@@ -20,42 +20,42 @@ package org.cache2k.benchmark.jmh.suite.noEviction.symmetrical;
  * #L%
  */
 
+import it.unimi.dsi.util.XoShiRo256StarStarRandom;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
-import org.cache2k.benchmark.jmh.suite.eviction.symmetrical.ZipfianSequenceLoadingBenchmark;
-import org.cache2k.benchmark.util.ZipfianPattern;
 import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.BenchmarkParams;
 
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Populate a cache with in parallel with multiple threads. Instead of a one shot
- * benchmark this benchmark is continuously inserting new entries into a cache.
- * This way the test may run for a preset period of time in contrast to variable
- * time with the one shot benchmark. OTOH, the memory consumption depends on the
- * test runtime.
+ * Insert into the cache and clear at random intervals at average
+ * every {@link #AVERAGE_CLEAR_INTERVAL} per thread.
+ *
+ * @see PopulateParallelBenchmark
  */
 @State(Scope.Benchmark)
-public class PopulateParallelBenchmark extends BenchmarkBase {
+public class PopulateClearParallelBenchmark extends BenchmarkBase {
 
-  public int entryCount = Integer.MAX_VALUE;
+  public static final int ENTRY_COUNT = Integer.MAX_VALUE;
+  public static final int AVERAGE_CLEAR_INTERVAL = 100_000;
+
   protected final AtomicInteger offset = new AtomicInteger(0);
 
   BenchmarkCache<Integer, Integer> cache;
 
   @Setup(Level.Iteration)
   public void setup() {
-    cache = getFactory().create(Integer.class, Integer.class, entryCount);
+    cache = getFactory().create(Integer.class, Integer.class, ENTRY_COUNT);
   }
 
   @TearDown(Level.Iteration)
@@ -63,16 +63,21 @@ public class PopulateParallelBenchmark extends BenchmarkBase {
     recordMemoryAndDestroy(cache);
   }
 
-  @State(Scope.Thread)
+  @State(Scope.Thread) @AuxCounters
   public static class ThreadState {
-    public int index;
-    public int limit;
+    int index;
+    int limit;
+    int nextClear;
+    Random random;
+    public long clearCount;
 
     @Setup(Level.Iteration)
-    public void setup(PopulateParallelBenchmark benchmark, BenchmarkParams params) {
+    public void setup(PopulateClearParallelBenchmark benchmark, BenchmarkParams params) {
       int delta = Integer.MAX_VALUE / params.getThreads();
       index = benchmark.offset.getAndAdd(delta);
       limit = index + delta;
+      random = new XoShiRo256StarStarRandom(index);
+      nextClear = index + random.nextInt(AVERAGE_CLEAR_INTERVAL);
     }
 
   }
@@ -83,6 +88,11 @@ public class PopulateParallelBenchmark extends BenchmarkBase {
       throw new RuntimeException("limit reached");
     }
     cache.put(ts.index, ts.index++);
+    if (ts.index == ts.nextClear) {
+      cache.clear();
+      ts.clearCount++;
+      ts.nextClear = ts.index + ts.random.nextInt(AVERAGE_CLEAR_INTERVAL);
+    }
     return ts.index;
   }
 
