@@ -20,7 +20,6 @@ package org.cache2k.benchmark.jmh.suite.noEviction.symmetrical;
  * #L%
  */
 
-import it.unimi.dsi.util.XoShiRo256StarStarRandom;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.openjdk.jmh.annotations.AuxCounters;
@@ -28,34 +27,36 @@ import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.BenchmarkParams;
+import org.openjdk.jmh.infra.ThreadParams;
 
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Insert into the cache and clear at random intervals at average
- * every {@link #AVERAGE_CLEAR_INTERVAL} per thread.
- *
- * @see PopulateParallelBenchmark
+ * Insert new entries in multiple threads. Roughly, after the double capacity is reached
+ * the cache is cleared. That means the benchmark is about pure inserting half of the time and
+ * inserting with eviction of another entry half of the time.
  */
 @State(Scope.Benchmark)
-public class PopulateClearParallelBenchmark extends BenchmarkBase {
+public class PopulateParallelClearBenchmark extends BenchmarkBase {
 
-  public static final int ENTRY_COUNT = Integer.MAX_VALUE;
-  public static final int AVERAGE_CLEAR_INTERVAL = 100_000;
-
-  protected final AtomicInteger offset = new AtomicInteger(0);
+  @Param({"100000", "1000000" , "10000000"})
+  public int entryCount = 100_000;
+  @Param({"200"})
+  public int clearPercent = 200;
 
   BenchmarkCache<Integer, Integer> cache;
+  AtomicInteger clearArbiter = new AtomicInteger();
 
   @Setup(Level.Iteration)
   public void setup() {
-    cache = getFactory().create(Integer.class, Integer.class, ENTRY_COUNT);
+    clearArbiter.set(0);
+    cache = getFactory().create(Integer.class, Integer.class, entryCount);
   }
 
   @TearDown(Level.Iteration)
@@ -65,33 +66,40 @@ public class PopulateClearParallelBenchmark extends BenchmarkBase {
 
   @State(Scope.Thread) @AuxCounters
   public static class ThreadState {
+
     int index;
     int limit;
     int nextClear;
-    Random random;
-    public long clearCount;
+    int nextClearOffset;
+    int clearCount;
+    public long clearOpCounter;
 
     @Setup(Level.Iteration)
-    public void setup(PopulateClearParallelBenchmark benchmark, BenchmarkParams params) {
+    public void setup(PopulateParallelClearBenchmark benchmark, BenchmarkParams params,
+                      ThreadParams threadParams) {
+      clearCount = 0;
       int delta = Integer.MAX_VALUE / params.getThreads();
-      index = benchmark.offset.getAndAdd(delta);
+      index = delta * threadParams.getThreadIndex();
       limit = index + delta;
-      random = new XoShiRo256StarStarRandom(index);
-      nextClear = index + random.nextInt(AVERAGE_CLEAR_INTERVAL);
+      nextClearOffset =
+        benchmark.entryCount / params.getThreads() * benchmark.clearPercent / 100;
+      nextClear = index + nextClearOffset;
     }
 
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
-  public long operation(ThreadState ts, BenchmarkParams p) {
+  public long operation(ThreadState ts) {
     if (ts.index == ts.limit) {
       throw new RuntimeException("limit reached");
     }
     cache.put(ts.index, ts.index++);
     if (ts.index == ts.nextClear) {
-      cache.clear();
-      ts.clearCount++;
-      ts.nextClear = ts.index + ts.random.nextInt(AVERAGE_CLEAR_INTERVAL);
+      if (clearArbiter.compareAndSet(ts.clearCount++, ts.clearCount)) {
+        cache.clear();
+        ts.clearOpCounter++;
+      }
+      ts.nextClear = ts.nextClear + ts.nextClearOffset;
     }
     return ts.index;
   }
