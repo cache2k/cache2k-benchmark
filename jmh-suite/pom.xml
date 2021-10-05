@@ -126,13 +126,4 @@
         </plugins>
     </build>
 
-    <profiles>
-        <profile>
-            <id>jmh-snapshot</id>
-              <properties>
-                  <jmh.version>[1.22,)</jmh.version>
-              </properties>
-        </profile>
-    </profiles>
-
 </project>

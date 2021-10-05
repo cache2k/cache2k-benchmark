@@ -38,9 +38,9 @@ import org.openjdk.jmh.infra.ThreadParams;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Insert new entries in multiple threads. Roughly, after the double capacity is reached
+ * Insert new keys in multiple threads. After the double capacity is reached
  * the cache is cleared. That means the benchmark is about pure inserting half of the time and
- * inserting with eviction of another entry half of the time.
+ * inserting with eviction of another half of the time.
  */
 @State(Scope.Benchmark)
 public class PopulateParallelClearBenchmark extends BenchmarkBase {
@@ -53,6 +53,7 @@ public class PopulateParallelClearBenchmark extends BenchmarkBase {
   BenchmarkCache<Integer, Integer> cache;
   AtomicInteger clearArbiter = new AtomicInteger();
 
+  @SuppressWarnings("unchecked")
   @Setup(Level.Iteration)
   public void setup() {
     clearArbiter.set(0);
