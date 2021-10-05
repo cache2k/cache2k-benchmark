@@ -16,13 +16,15 @@
 set -e;
 # set -x;
 
+test -n "$BENCHMARK_THREADS" || BENCHMARK_THREADS="2 4 8"
+
 # http://mechanical-sympathy.blogspot.de/2011/11/biased-locking-osr-and-benchmarking-fun.html
 # http://www.oracle.com/technetwork/tutorials/tutorials-1876574.html
 # test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx2G -XX:+UseG1GC";
 
 # biased locking delay is 4000 by default, enable from the start to minimize effects on the first benchmark iteration
 # (check with: ava  -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal 2>/dev/null | grep BiasedLockingStartupDelay)
-test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedLockingStartupDelay=0 -verbose:gc";
+test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedLockingStartupDelay=0";
 # extra G1 args
 # BENCHMARK_JVM_ARGS="$BENCHMARK_JVM_ARGS -XX:+UseG1GC -XX:-G1UseAdaptiveConcRefinement -XX:G1ConcRefinementGreenZone=2G -XX:G1ConcRefinementThreads=0";
 
@@ -32,9 +34,14 @@ test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedL
 # -r time
 # -f how many time to fork a single benchmark
 
-test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 1 -w 3s -i 2 -r 3s -foe true";
+# only test whether everything is running through
+test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 1 -w 1s -i 1 -r 1s -foe true";
 
-# -f 2 / -i 2 has not enough confidence, there is sometime one outlier
+# have at least one fork and three iterations to detect outliers
+# test -n "$BENCHMARK_NORMAL" || BENCHMARK_NORMAL="-f 2 -wi 2 -w 10s -i 3 -r 10s";
+test -n "$BENCHMARK_NORMAL" || BENCHMARK_NORMAL="-f 1 -wi 2 -w 5s -i 3 -r 5s";
+
+# -f 2 / -i 2 has not enough confidence, there is sometimes one outlier
 # 2 full warmups otherwise there is big jitter with G1
 # -gc true: careful with -gc true, this seems to influence the measures performance significantly
 test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 3 -wi 2 -w 60s -i 3 -r 60s";
@@ -73,25 +80,27 @@ test -n "$BENCHMARK_DILIGENT_LONG" || BENCHMARK_DILIGENT_LONG="-f 2 -wi 1 -w 180
 # For profiling only do one fork, but more measurement iterations
 # profilers are described here: http://java-performance.info/introduction-jmh-profilers
 # hsdis is available as Ubuntu package: sudo apt-get install libhsdis0-fcml
-test -n "$BENCHMARK_PERFASM" || BENCHMARK_PERFASM="-f 1 -wi 1 -w 10s -i 1 -r 20s -prof perfasm";
+test -n "$BENCHMARK_PERFASM" || BENCHMARK_PERFASM="-f 1 -wi 1 -w 10s -i 1 -r 20s -prof perfasm:hotThreshold=0.05";
 # longer test run for expiry tests
-test -n "$BENCHMARK_PERFASM_LONG" || BENCHMARK_PERFASM_LONG="-f 1 -wi 1 -w 180s -i 1 -r 180s -prof perfasm";
+test -n "$BENCHMARK_PERFASM_LONG" || BENCHMARK_PERFASM_LONG="-f 1 -wi 1 -w 180s -i 1 -r 180s -prof perfasm:hotThreshold=0.05";
 
 # hs_gc: detailed counters from the GC implementation
-STANDARD_PROFILER="-prof comp -prof gc -prof hs_rt -prof hs_gc";
+STANDARD_PROFILER="-prof comp -prof gc";
 
-STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler";
+# STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.LinuxVmProfiler";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.MiscResultRecorderProfiler";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.GcProfiler";
 
 EXTRA_PROFILER="";
 
+EXTRA_PARAMETERS="";
+
 # not used yet
 PERF_NORM_OPTIONS="-prof perfnorm:useDefaultStat=true"
 
-OPTIONS="$BENCHMARK_DILIGENT";
-OPTIONS_LONG="$BENCHMARK_DILIGENT_LONG";
+OPTIONS="$BENCHMARK_NORMAL";
+OPTIONS_LONG="$BENCHMARK_NORMAL_LONG";
 
 if test -z "$JAVA_HOME"; then
   echo "JAVA_HOME needs to be set" 1>&2
@@ -120,8 +129,12 @@ processCommandLine() {
   while true; do
     case "$1" in
       --quick) quick=true;
+               EXTRA_PARAMETERS="-p entryCount=100000 -p percent=110"
+               BENCHMARK_THREADS="4";
                OPTIONS="$BENCHMARK_QUICK";
                OPTIONS_LONG="$BENCHMARK_QUICK";;
+      --diligent) OPTIONS="$BENCHMARK_DILIGENT";
+                   OPTIONS_LONG="$BENCHMARK_DILIGENT_LONG";;
       --perfasm) OPTIONS="$BENCHMARK_PERFASM";
                  OPTIONS_LONG="$BENCHMARK_PERFASM_LONG";;
       --perfnorm) EXTRA_PROFILER=$EXTRA_PROFILER" $PERF_NORM_OPTIONS";;
@@ -199,19 +212,7 @@ fi
 
 startTimer;
 
-cpuList() {
-if [ "$1" = 1 ]; then
-  echo "1";
-elif [ "$1" = 2 ]; then
-  echo "1,2";
-elif [ "$1" = 3 ]; then
-  echo "1,2,3";
-elif [ "$1" = 4 ]; then
-  echo "1,2,3,0";
-fi
-}
-
-limitCoresViaTaskSet() {
+limitCores() {
 if test -n "$dry"; then
   shift;
   "$@";
@@ -219,10 +220,11 @@ if test -n "$dry"; then
 fi
 local cnt=$1;
 shift;
-taskset -c `cpuList $cnt` "$@";
+taskset -c 0-$(( $cnt - 1)) "$@";
 }
 
-limitCores() {
+# fallback for old VMs
+limitCoresViaOs() {
 if test -z "$dry"; then
   ./limitCoreCount.sh $1;
 fi
@@ -257,10 +259,21 @@ for benchmark in $benchmarks; do
 done
 }
 
+implementations="`cat - << "EOF"
+cache2k -p cacheFactory=org.cache2k.benchmark.cache.Cache2kFactory
+cache2kj -p cacheFactory=org.cache2k.benchmark.JCacheFactory -p cacheProvider=org.cache2k.jcache.provider.JCacheProvider
+cache2kw -p cacheFactory=org.cache2k.benchmark.Cache2kWiredFactory
+caffeine -p cacheFactory=org.cache2k.benchmark.cache.CaffeineCacheFactory
+ehcache3 -p cacheFactory=org.cache2k.benchmark.cache.EhCache3Factory
+chm -p cacheFactory=org.cache2k.benchmark.ConcurrentHashMapFactory
+slhm -p cacheFactory=org.cache2k.benchmark.SynchronizedLinkedHashMapFactory
+plhm -p cacheFactory=org.cache2k.benchmark.PartitionedLinkedHashMapFactory
+guava -p cacheFactory=org.cache2k.benchmark.thirdparty.GuavaCacheFactory
+EOF
+`"
+
 allImpls="`cat - << "EOF"
 -p cacheFactory=org.cache2k.benchmark.cache.Cache2kFactory
--p cacheFactory=org.cache2k.benchmark.cache.Cache2kWiredFactory
--p cacheFactory=org.cache2k.benchmark.cache.GuavaCacheFactory
 -p cacheFactory=org.cache2k.benchmark.cache.CaffeineCacheFactory
 -p cacheFactory=org.cache2k.benchmark.cache.EhCache3Factory
 EOF
@@ -428,22 +441,19 @@ done
 # benchmarks="RandomSequenceBenchmark ZipfianSequenceLoadingBenchmark ZipfianLoopingSequenceLoadingBenchmark";
 # benchmarks="ZipfianLoopingPrecomputedSequenceLoadingBenchmark ZipfianHoppingPrecomputedSequenceLoadingBenchmark";
 # benchmarks="RandomSequenceBenchmark";
-benchmarks="ZipfianSequenceLoadingBenchmark RandomSequenceBenchmark";
-(
-  echo "$allImpls"
-  # echo "$maps"
-) | while read factory; do
+# benchmarks="ZipfianSequenceLoadingBenchmark RandomSequenceBenchmark";
+benchmarks="ZipfianSequenceLoadingBenchmark PopulateParallelClearBenchmark";
+for impl in ehcache3 caffeine; do
   for benchmark in $benchmarks; do
-    for threads in 1 2 4; do
-      # remove -p for a nice file name
-      impl="`echo "$factory" |sed "s/^\-p //g" | sed "s/ -p /:/g" `"
+    for threads in $BENCHMARK_THREADS; do
+      factory="`echo "$implementations" | awk "/^$impl / { print substr(\\$0, length(\\$1) + 2); }"`"
       runid="$impl-$benchmark-$threads";
       fn="$TARGET/result-$runid";
       echo;
       echo "## $runid";
       sync
       limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER  $EXTRA_PROFILER \
-           -t $threads $factory \
+           $EXTRA_PARAMETERS -t $threads $factory \
            -rf json -rff "$fn.json" \
            2>&1 | tee $fn.out | filterProgress
       if test -n "$dry"; then
@@ -479,6 +489,7 @@ for impl in $NO_EVICTION $COMPLETE; do
   done
 done
 }
+
 
 # complete;
 
