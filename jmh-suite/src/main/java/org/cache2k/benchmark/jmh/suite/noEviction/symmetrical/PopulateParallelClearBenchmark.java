@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @State(Scope.Benchmark)
 public class PopulateParallelClearBenchmark extends BenchmarkBase {
 
-  @Param({"100000", "1000000" , "10000000"})
+  @Param({"100000", "1000000"})
   public int entryCount = 100_000;
   @Param({"200"})
   public int clearPercent = 200;

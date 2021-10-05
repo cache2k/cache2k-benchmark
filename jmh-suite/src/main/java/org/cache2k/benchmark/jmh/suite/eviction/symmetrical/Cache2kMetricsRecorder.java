@@ -43,7 +43,7 @@ public class Cache2kMetricsRecorder {
       return null;
     }
     Stat x = new Stat();
-    String[] sa = _statisticsString.split(", |\\(|\\), ");
+    String[] sa = _statisticsString.split(", |\\(|\\), |\\)\\)");
     for (String s : sa) {
       if (s.startsWith("coldScanCnt=") || s.startsWith("hotScanCnt=")) {
         x.scanCount += Long.parseLong(s.split("=")[1]);

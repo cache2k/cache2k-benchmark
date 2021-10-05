@@ -58,10 +58,10 @@ import java.util.concurrent.atomic.LongAdder;
 @State(Scope.Benchmark)
 public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
-  @Param({"5", "20"})
-  public int factor = 0;
+  @Param({"110", "500"})
+  public int percent = 0;
 
-  @Param({"100000", "1000000" , "10000000"})
+  @Param({"100000", "1000000"})
   public int entryCount = 100_000;
 
   @Param({"false"})
@@ -80,7 +80,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     @Setup(Level.Iteration)
     public void setup(ZipfianSequenceLoadingBenchmark benchmark) {
       pattern = new ZipfianPattern(benchmark.offsetSeed.nextLong(),
-        calculateRange(benchmark.entryCount, benchmark.factor));
+        calculateRange(benchmark.entryCount, benchmark.percent));
     }
 
     @TearDown(Level.Iteration)
@@ -97,7 +97,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
   @Setup
   public void setupBenchmark() {
-    int range = calculateRange(entryCount, factor);
+    int range = calculateRange(entryCount, percent);
     BenchmarkCacheFactory f = getFactory();
     if (expiry) {
       f.withExpiry(true);
