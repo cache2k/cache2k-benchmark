@@ -68,12 +68,13 @@ public class Cache2kMetricsRecorder {
 
   static volatile Stat before;
 
-  public static void saveStatsAfterSetup(String _statisticsString) {
-    before = extract(_statisticsString);
+  public static void saveStatsAfterSetup(String statisticsString) {
+    before = extract(statisticsString);
   }
 
-  public static void recordStatsAfterIteration(String _statisticsString) {
-    Stat now = extract(_statisticsString);
+  public static void recordStatsAfterIteration(String statisticsString) {
+    System.err.println(statisticsString);
+    Stat now = extract(statisticsString);
     if (now == null) {
       return;
     }

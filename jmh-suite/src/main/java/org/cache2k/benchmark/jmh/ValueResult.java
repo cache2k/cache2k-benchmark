@@ -49,7 +49,7 @@ public class ValueResult extends Result<ValueResult> {
 
     @Override
     protected Aggregator<ValueResult> getIterationAggregator() {
-        return new ValueResultAggregator(policy);
+        return new ValueResultAggregator(AggregationPolicy.AVG);
     }
 
     @Override

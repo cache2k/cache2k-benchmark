@@ -59,26 +59,25 @@ public class RequestRecorder {
     if (misses > 0) { addCounter(MISSES_METRIC, misses); }
     if (bulkRequests > 0) { addCounter("bulkRequests", bulkRequests); }
     addCounterWithThroughput(REQUESTS_METRIC, requests);
+    updateHitRate();
   }
 
   /**
    * If not present at thread level, add the miss count at the end of the iteration.
    */
   public static void recordMissCount(long missCount) {
-    System.err.println(Thread.currentThread() + " missCount=" + missCount);
     addCounter("misses", missCount);
     updateHitRate();
   }
 
-  public static void updateHitRate() {
-    long missCount = getIterationCounterResult("misses");
-    long requestCount = getIterationCounterResult("cacheRequests");
+  public synchronized static void updateHitRate() {
+    long missCount = getIterationCounterResult(MISSES_METRIC);
+    long requestCount = getIterationCounterResult(REQUESTS_METRIC);
     if (requestCount == 0L) {
       return;
     }
-    double hitRate = 100.0 - missCount * 100.0 / requestCount;
-    removeMetric(HITRATE_METRIC);
-    addValue(HITRATE_METRIC, hitRate, "percent");
+    double hitRate = 100.0 - missCount * 100.0D / requestCount;
+    setValue(HITRATE_METRIC, hitRate, "percent");
   }
 
 }

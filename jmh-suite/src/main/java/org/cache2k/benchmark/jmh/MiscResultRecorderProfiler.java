@@ -34,7 +34,8 @@ import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,9 +45,17 @@ import java.util.concurrent.TimeUnit;
  */
 public class MiscResultRecorderProfiler implements InternalProfiler {
 
-  public static final String SECONDARY_COUNTER_PREFIX = "+misc.";
+  public static final String PREFIX = "+misc.";
 
+  /**
+   * Collection of multiple results per metric, possibly multiple for an iteration,
+   * e.g. reported by threads
+   */
   static final ConcurrentHashSet<Result<?>>  resultSet = new ConcurrentHashSet<>();
+  /**
+   * Collection of a single result per metric
+   */
+  static final ConcurrentMap<String, Result<?>> resultMap = new ConcurrentHashMap<>();
 
   public static void addResult(Result<?> result) {
     resultSet.add(result);
@@ -60,28 +69,30 @@ public class MiscResultRecorderProfiler implements InternalProfiler {
     addCounter(name, count, true);
   }
   public static void addCounter(String name, long count, boolean withThroughPut) {
-    addResult(new ValueResult(ResultRole.SECONDARY, SECONDARY_COUNTER_PREFIX + name, (double) count,
+    addResult(new ValueResult(ResultRole.SECONDARY, PREFIX + name, (double) count,
       "counts", AggregationPolicy.AVG, withThroughPut));
   }
 
+  /**
+   * Add a value to the secondary results, multiple values per iteration will be added.
+   */
   public static void addValue(String name, double result, String unit) {
-    addResult(new ValueResult(ResultRole.SECONDARY, SECONDARY_COUNTER_PREFIX + name, result,
+    addResult(new ValueResult(ResultRole.SECONDARY, PREFIX + name, result,
       unit, AggregationPolicy.AVG, false));
   }
 
-  public static void removeMetric(String name) {
-    String effectiveLabel = SECONDARY_COUNTER_PREFIX + name;
-    Iterator<Result<?>> it = resultSet.iterator();
-    while (it.hasNext()) {
-      if (it.next().getLabel().equals(effectiveLabel)) {
-        it.remove();
-      }
-    }
+  /**
+   * Adds a value to the results, possibly overriding a previously value.
+   */
+  public static void setValue(String name, double result, String unit) {
+    resultMap.put(name, new ValueResult(ResultRole.SECONDARY, PREFIX + name, result,
+      unit, AggregationPolicy.AVG, false));
   }
 
   @Override
   public void beforeIteration(BenchmarkParams benchmarkParams, IterationParams iterationParams) {
     resultSet.clear();
+    resultMap.clear();
   }
 
   public static long getIterationCounterResult(String label) {
@@ -93,7 +104,7 @@ public class MiscResultRecorderProfiler implements InternalProfiler {
    * Get aggregated result from iteration.
    */
   public static ValueResult getIterationValueResult(String label) {
-    String effectiveLabel = SECONDARY_COUNTER_PREFIX + label;
+    String effectiveLabel = PREFIX + label;
     Collection<ValueResult> results = new ArrayList<>();
     for (Result<?> x : resultSet) {
       if (effectiveLabel.equals(x.getLabel())) {
@@ -110,7 +121,6 @@ public class MiscResultRecorderProfiler implements InternalProfiler {
   public Collection<? extends Result> afterIteration(BenchmarkParams benchmarkParams,
                                                      IterationParams iterationParams,
                                                      IterationResult result) {
-    System.err.println(Thread.currentThread() + " WRAP UP");
     Collection<Result<? extends Result>> results = new ArrayList<>();
     results.addAll(resultSet);
     for (Result<?> r : resultSet) {
@@ -123,6 +133,7 @@ public class MiscResultRecorderProfiler implements InternalProfiler {
         }
       }
     }
+    results.addAll(resultMap.values());
     return results;
   }
 
