@@ -21,6 +21,7 @@ package org.cache2k.benchmark;
  */
 
 import java.io.Closeable;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -55,6 +56,17 @@ public abstract class BenchmarkCache<K, V> implements Closeable {
    * we do not return a boolean.
    */
   public void remove(K key) { throw new UnsupportedOperationException();}
+
+  /**
+   * Get the exact cache size, preferably via iteration.
+   */
+  public long getSize() { return -1; }
+
+  protected static long count(Iterator<?> it) {
+    int cnt = 0;
+    while(it.hasNext()) { it.next(); cnt++; }
+    return cnt;
+  }
 
   /** free up all resources of the cache */
   public void close() { }

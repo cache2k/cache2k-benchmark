@@ -136,6 +136,9 @@ public class EhCache3Factory extends ProductCacheFactory {
     }
 
     @Override
+    public long getSize() { return count(cache.iterator()); }
+
+    @Override
     public String toString() {
       return cache.toString();
     }

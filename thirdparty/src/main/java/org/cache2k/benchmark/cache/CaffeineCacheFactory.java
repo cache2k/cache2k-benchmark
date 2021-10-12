@@ -126,6 +126,9 @@ public class CaffeineCacheFactory extends ProductCacheFactory {
     }
 
     @Override
+    public long getSize() { return count(cache.asMap().keySet().iterator()); }
+
+    @Override
     public String toString() {
       return cache.toString();
     }
@@ -158,6 +161,9 @@ public class CaffeineCacheFactory extends ProductCacheFactory {
     public void close() {
       cache.cleanUp();
     }
+
+    @Override
+    public long getSize() { return count(cache.asMap().keySet().iterator()); }
 
     @Override
     public String toString() {

@@ -76,6 +76,9 @@ public class Cache2kFactory extends ProductCacheFactory {
       public void clear() { cache.clear(); }
 
       @Override
+      public long getSize() { return cache.asMap().size(); }
+
+      @Override
       public String toString() {
         return cache.toString();
       }
@@ -111,6 +114,9 @@ public class Cache2kFactory extends ProductCacheFactory {
       public String toString() {
         return c.toString();
       }
+
+      @Override
+      public long getSize() { return c.asMap().size(); }
 
       @Override
       public void close() {
