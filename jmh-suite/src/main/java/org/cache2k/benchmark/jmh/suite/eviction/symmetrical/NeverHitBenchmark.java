@@ -61,18 +61,18 @@ public class NeverHitBenchmark extends BenchmarkBase {
   @TearDown(Level.Iteration)
   public void tearDown() {
     recordMemoryAndDestroy(cache);
+    RequestRecorder.updateHitRate();
     cache = null;
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
-  public long operation(ThreadState threadState, HitCountRecorder rec) {
+  public long operation(ThreadState threadState, RequestRecorder rec) {
     int idx = (int) (threadState.index++);
     Integer k = idx;
     Integer v = cache.get(k);
-    if (v != null) {
-      rec.hitCount++;
-    } else {
-      rec.missCount++;
+    rec.requests++;
+    if (v == null) {
+      rec.misses++;
     }
     cache.put(k, k);
     return idx;

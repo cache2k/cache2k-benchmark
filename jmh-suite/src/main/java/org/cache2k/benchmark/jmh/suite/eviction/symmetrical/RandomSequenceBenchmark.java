@@ -84,6 +84,7 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
 
   @TearDown(Level.Iteration)
   public void tearDown() {
+    RequestRecorder.updateHitRate();
     ForcedGcMemoryProfiler.keepReference(this);
     String _statString = cache.toString();
     System.out.println(_statString);
@@ -92,14 +93,13 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
-  public long operation(ThreadState threadState, HitCountRecorder rec) {
+  public long operation(ThreadState threadState, RequestRecorder rec) {
     int k = threadState.generator.nextInt(range);
+    rec.requests++;
     Integer v = cache.get(k);
     if (v == null) {
       cache.put(k, (Integer) k);
-      rec.missCount++;
-    } else {
-      rec.hitCount++;
+      rec.misses++;
     }
     return k;
   }

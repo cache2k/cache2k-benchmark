@@ -80,17 +80,17 @@ public class Cache2kMetricsRecorder {
     if (before == null) {
       throw new IllegalStateException("saveStats() needs to be called before iteration.");
     }
-    long _scanCount = now.scanCount - before.scanCount;
-    long _evictCount = now.evictCount - before.evictCount;
-    long _getCount = now.getCount - before.getCount;
+    long scanCount = now.scanCount - before.scanCount;
+    long evictCount = now.evictCount - before.evictCount;
+    long getCount = now.getCount - before.getCount;
     List<Result> l = new ArrayList<>();
-    l.add(new ScalarResult(RESULT_PREFIX + "scanCount", _scanCount, "counter", AggregationPolicy.AVG));
-    l.add(new ScalarResult(RESULT_PREFIX + "evictCount", _evictCount, "counter", AggregationPolicy.AVG));
-    l.add(new ScalarResult(RESULT_PREFIX + "getCount", _getCount, "counter", AggregationPolicy.AVG));
-    if (_evictCount > 0) {
-      l.add(new ScalarResult(RESULT_PREFIX + "scanPerEviction", _scanCount * 1.0D / _evictCount, "counter", AggregationPolicy.AVG));
+    l.add(new ScalarResult(RESULT_PREFIX + "scanCount", scanCount, "counter", AggregationPolicy.AVG));
+    l.add(new ScalarResult(RESULT_PREFIX + "evictCount", evictCount, "counter", AggregationPolicy.AVG));
+    l.add(new ScalarResult(RESULT_PREFIX + "getCount", getCount, "counter", AggregationPolicy.AVG));
+    if (evictCount > 0) {
+      l.add(new ScalarResult(RESULT_PREFIX + "scanPerEviction", scanCount * 1.0D / evictCount, "counter", AggregationPolicy.AVG));
     }
-    l.forEach(MiscResultRecorderProfiler::setResult);
+    l.forEach(MiscResultRecorderProfiler::addResult);
     before = now;
   }
 

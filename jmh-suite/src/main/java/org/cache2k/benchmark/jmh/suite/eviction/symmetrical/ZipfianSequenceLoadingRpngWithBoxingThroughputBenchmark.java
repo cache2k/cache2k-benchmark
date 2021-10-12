@@ -32,7 +32,6 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
-import org.openjdk.jmh.infra.Blackhole;
 
 import java.util.Random;
 
@@ -78,8 +77,8 @@ public class ZipfianSequenceLoadingRpngWithBoxingThroughputBenchmark extends Ben
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
-  public long operation(ThreadState threadState, HitCountRecorder rec) {
-    rec.opCount++;
+  public long operation(ThreadState threadState, RequestRecorder rec) {
+    rec.requests++;
     Integer i = threadState.pattern.next();
     return System.identityHashCode(i);
   }

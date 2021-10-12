@@ -128,7 +128,7 @@ processCommandLine() {
   while true; do
     case "$1" in
       --quick) quick=true;
-               EXTRA_PARAMETERS="-p entryCount=100000 -p percent=110"
+               EXTRA_PARAMETERS="-p entryCount=100000 -p percent=110,500"
                BENCHMARK_THREADS="4";
                OPTIONS="$BENCHMARK_QUICK";
                OPTIONS_LONG="$BENCHMARK_QUICK";;

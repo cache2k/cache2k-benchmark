@@ -125,7 +125,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    HitCountRecorder.recordMissCount(source.missCount.longValue());
+    RequestRecorder.recordMissCount(source.missCount.longValue());
     ForcedGcMemoryProfiler.keepReference(this);
     String statString = cache.toString();
     System.out.println(statString);
@@ -134,8 +134,8 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
-  public long operation(ThreadState threadState, HitCountRecorder rec) {
-    rec.opCount++;
+  public long operation(ThreadState threadState, RequestRecorder rec) {
+    rec.requests++;
     Integer v = cache.get(threadState.pattern.next());
     return v;
   }

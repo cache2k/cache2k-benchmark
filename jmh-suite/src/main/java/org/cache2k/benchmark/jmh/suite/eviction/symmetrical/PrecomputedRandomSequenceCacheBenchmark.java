@@ -78,20 +78,20 @@ public class PrecomputedRandomSequenceCacheBenchmark extends BenchmarkBase {
 
   @TearDown(Level.Iteration)
   public void tearDown() {
+    RequestRecorder.updateHitRate();
     recordMemoryAndDestroy(cache);
     cache = null;
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
-  public long operation(ThreadState threadState, HitCountRecorder rec) {
+  public long operation(ThreadState threadState, RequestRecorder rec) {
     int idx = (int) (threadState.index++ % PATTERN_COUNT);
     Integer k = ints[idx];
+    rec.requests++;
     Integer v = cache.get(k);
     if (v == null) {
       cache.put(k, k);
-      rec.missCount++;
-    } else {
-      rec.hitCount++;
+      rec.misses++;
     }
     return idx;
   }

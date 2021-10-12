@@ -20,6 +20,7 @@ package org.cache2k.benchmark.jmh;
  * #L%
  */
 
+import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.InternalProfiler;
@@ -27,14 +28,14 @@ import org.openjdk.jmh.profile.InternalProfiler;
 import org.openjdk.jmh.results.AggregationPolicy;
 import org.openjdk.jmh.results.IterationResult;
 import org.openjdk.jmh.results.Result;
-import org.openjdk.jmh.results.ScalarResult;
+import org.openjdk.jmh.results.ResultRole;
+import org.openjdk.jmh.results.ThroughputResult;
+import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Record misc secondary result metrics.
@@ -43,90 +44,91 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class MiscResultRecorderProfiler implements InternalProfiler {
 
-  public static final String SECONDARY_RESULT_PREFIX = "+misc.";
+  public static final String SECONDARY_COUNTER_PREFIX = "+misc.";
 
-  static final Map<String, CounterResult> counters = new ConcurrentHashMap<>();
-  static final Map<String, Result<?>> results = new ConcurrentHashMap<>();
-  static final Map<Class, ThreadAggregator> threadAggregators = new ConcurrentHashMap<>();
+  static final ConcurrentHashSet<Result<?>>  resultSet = new ConcurrentHashSet<>();
 
-  /**
-   * Insert the counter value as secondary result. If a value is already inserted the
-   * counter value is added to the existing one. This can be used to collect and sum up
-   * results from different threads.
-   */
-  public static void addCounterResult(String key, long counter, String unit,
-                                      AggregationPolicy aggregationPolicy) {
-    CounterResult r = counters.computeIfAbsent(key, any -> new CounterResult());
-    r.aggregationPolicy = aggregationPolicy;
-    r.unit = unit;
-    r.counter.addAndGet(counter);
-    r.key = key;
+  public static void addResult(Result<?> result) {
+    resultSet.add(result);
   }
 
-  public static long getCounterResult(String key) {
-    return counters.getOrDefault(key, new CounterResult()).counter.get();
+  public static void addCounter(String name, long count) {
+    addCounter(name, count, false);
   }
 
-  /**
-   * Insert the counter value as secondary result. An existing counter value is replaced.
-   */
-  public static void setResult(String key, double result, String unit,
-                               AggregationPolicy aggregationPolicy) {
-    setResult(new ScalarResult(SECONDARY_RESULT_PREFIX + key, result, unit, aggregationPolicy));
+  public static void addCounterWithThroughput(String name, long count) {
+    addCounter(name, count, true);
+  }
+  public static void addCounter(String name, long count, boolean withThroughPut) {
+    addResult(new ValueResult(ResultRole.SECONDARY, SECONDARY_COUNTER_PREFIX + name, (double) count,
+      "counts", AggregationPolicy.AVG, withThroughPut));
   }
 
-  /**
-   * Add result to the JMH result data. If called multiple times with the same label only the last one will be added.
-   */
-  public static void setResult(Result r) {
-    results.put(r.getLabel(), r);
+  public static void addValue(String name, double result, String unit) {
+    addResult(new ValueResult(ResultRole.SECONDARY, SECONDARY_COUNTER_PREFIX + name, result,
+      unit, AggregationPolicy.AVG, false));
   }
 
-  /**
-   * Register an aggregator function, however. This operation can be called multiple
-   * times, but the aggregator of the same type is only used once.
-   */
-  public static void registerThreadAggregator(ThreadAggregator ta) {
-    threadAggregators.put(ta.getClass(), ta);
+  public static void removeMetric(String name) {
+    String effectiveLabel = SECONDARY_COUNTER_PREFIX + name;
+    Iterator<Result<?>> it = resultSet.iterator();
+    while (it.hasNext()) {
+      if (it.next().getLabel().equals(effectiveLabel)) {
+        it.remove();
+      }
+    }
   }
 
   @Override
   public void beforeIteration(BenchmarkParams benchmarkParams, IterationParams iterationParams) {
-    counters.clear();
+    resultSet.clear();
+  }
+
+  public static long getIterationCounterResult(String label) {
+    ValueResult vr = getIterationValueResult(label);
+    return vr == null ? 0 : (long) vr.getScore();
+  }
+
+  /**
+   * Get aggregated result from iteration.
+   */
+  public static ValueResult getIterationValueResult(String label) {
+    String effectiveLabel = SECONDARY_COUNTER_PREFIX + label;
+    Collection<ValueResult> results = new ArrayList<>();
+    for (Result<?> x : resultSet) {
+      if (effectiveLabel.equals(x.getLabel())) {
+        results.add((ValueResult) x);
+      }
+    }
+    if (results.isEmpty()) {
+      return null;
+    }
+    return new ValueResult.ValueResultAggregator(AggregationPolicy.SUM).aggregate(results);
   }
 
   @Override
   public Collection<? extends Result> afterIteration(BenchmarkParams benchmarkParams,
                                                      IterationParams iterationParams,
                                                      IterationResult result) {
-    for (ThreadAggregator it : threadAggregators.values()) {
-      it.aggregate(benchmarkParams, iterationParams, result);
+    System.err.println(Thread.currentThread() + " WRAP UP");
+    Collection<Result<? extends Result>> results = new ArrayList<>();
+    results.addAll(resultSet);
+    for (Result<?> r : resultSet) {
+      if (r instanceof ValueResult) {
+        ValueResult cr = (ValueResult) r;
+        if (cr.isWithThroughput()) {
+          TimeValue time = benchmarkParams.getMeasurement().getTime();
+          results.add(new ThroughputResult(ResultRole.SECONDARY, cr.getLabel() + ".throughput",
+                  cr.getScore(), time.getTimeUnit().toNanos(time.getTime()), TimeUnit.SECONDS));
+        }
+      }
     }
-    List<Result<?>> all = new ArrayList<>();
-    counters.values().stream()
-      .map(e ->
-        new ScalarResult(SECONDARY_RESULT_PREFIX + e.key, (double) e.counter.get(), e.unit, e.aggregationPolicy))
-      .sequential().forEach(e -> all.add(e));
-    all.addAll(results.values());
-    return all;
+    return results;
   }
 
   @Override
   public String getDescription() {
     return "Adds additional results gathered by the benchmark as secondary results.";
-  }
-
-  public interface ThreadAggregator {
-    void aggregate(BenchmarkParams benchmarkParams,
-                   IterationParams iterationParams,
-                   IterationResult result);
-  }
-
-  private static class CounterResult {
-    String key;
-    String unit;
-    AggregationPolicy aggregationPolicy;
-    final AtomicLong counter = new AtomicLong();
   }
 
 }

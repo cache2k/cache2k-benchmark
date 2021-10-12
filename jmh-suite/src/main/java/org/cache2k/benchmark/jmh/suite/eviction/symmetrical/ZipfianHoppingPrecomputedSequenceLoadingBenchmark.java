@@ -91,15 +91,15 @@ public class ZipfianHoppingPrecomputedSequenceLoadingBenchmark extends Benchmark
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    HitCountRecorder.recordMissCount(source.missCount.longValue());
+    RequestRecorder.recordMissCount(source.missCount.longValue());
     recordMemoryAndDestroy(cache);
     cache = null;
   }
 
   @Benchmark
   @BenchmarkMode(Mode.Throughput)
-  public long operation(ThreadState _threadState, HitCountRecorder _recorder) {
-    _recorder.opCount++;
+  public long operation(ThreadState _threadState, RequestRecorder _recorder) {
+    _recorder.requests++;
     Integer k = pattern[_threadState.generator.nextInt(PATTERN_COUNT)];
     Integer v = cache.get(k);
     return k + v;

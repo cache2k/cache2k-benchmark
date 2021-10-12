@@ -70,10 +70,6 @@ public class ZipfianLoopingPrecomputedSequenceLoadingBenchmark extends Benchmark
 
     long index = PATTERN_COUNT / 16 * offsetCount.getAndIncrement();
 
-    @TearDown(Level.Iteration)
-    public void tearDown() {
-      HitCountRecorder.recordOpCount(index);
-    }
   }
 
   BenchmarkCache<Integer, Integer> cache;
@@ -90,7 +86,7 @@ public class ZipfianLoopingPrecomputedSequenceLoadingBenchmark extends Benchmark
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    HitCountRecorder.recordMissCount(source.missCount.longValue());
+    RequestRecorder.recordMissCount(source.missCount.longValue());
     recordMemoryAndDestroy(cache);
     cache = null;
   }

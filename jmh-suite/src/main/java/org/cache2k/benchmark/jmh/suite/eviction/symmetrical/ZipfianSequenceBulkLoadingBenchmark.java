@@ -26,6 +26,7 @@ import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BulkBenchmarkCacheLoader;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
+import org.cache2k.benchmark.jmh.MiscResultRecorderProfiler;
 import org.cache2k.benchmark.util.ZipfianPattern;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -52,20 +53,27 @@ import java.util.concurrent.atomic.LongAdder;
 @State(Scope.Benchmark)
 public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
 
-  @Param({"500", "2000"})
+  public final static int READTHROUGH_OVERHEAD_TOKES = 56789;
+
+  @Param({"110", "500"})
   public int percent = 0;
 
-  @Param({"100000", "1000000" , "10000000"})
+  @Param({"100_000", "1000_000"})
   public int entryCount = 100_000;
 
   /**
    * Make every nth request a bulk request.
    */
-  public static final int bulkStep = 10;
-
-  public static final int bulkRangeStart = 31;
-  public static final int bulkRangeEnd = 71;
-  public static final int bulkRange = bulkRangeEnd - bulkRangeStart;
+  public static final int BULK_STEP = 5;
+  /**
+   * Minimum number of entries requested in one bulk request
+   */
+  public static final int BULK_COUNT_MINIMUM = 10;
+  /**
+   * Maximum number of entries requested in one bulk request
+   */
+  public static final int BULK_COUNT_MAXIMUM = 30;
+  public static final int BULK_RANGE = BULK_COUNT_MAXIMUM - BULK_COUNT_MINIMUM;
 
   @Param({"false"})
   public boolean expiry = false;
@@ -84,9 +92,12 @@ public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
 
     @Setup(Level.Iteration)
     public void setup(ZipfianSequenceBulkLoadingBenchmark benchmark) {
-      bulkCountDown = bulkStep;
-      keyPattern = new ZipfianPattern(benchmark.offsetSeed.nextLong(),
-        benchmark.entryCount * benchmark.percent / 100);
+      bulkCountDown = BULK_STEP;
+      final long items = benchmark.entryCount * 1L * benchmark.percent / 100;
+      if (items > Integer.MAX_VALUE) {
+        throw new IllegalArgumentException("Overflow, key range to high");
+      }
+      keyPattern = new ZipfianPattern(benchmark.offsetSeed.nextLong(), items);
       bulkSizeRandom = new XoShiRo256StarStarRandom(benchmark.offsetSeed.nextLong());
     }
 
@@ -111,48 +122,45 @@ public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
        this way the benchmark runs on better steady state and jitter is reduced.
        we don't want to measure insert performance, but read + eviction
      */
-    ZipfianPattern generator = new ZipfianPattern(1802, range);
-    for (int i = 0; i < entryCount * 3; i++) {
-      Integer v = generator.next();
-      cache.put(v, keyToValue(v));
-    }
-    String statString = cache.toString();
-    System.out.println("Cache stats after seeding: " + statString);
-    Cache2kMetricsRecorder.saveStatsAfterSetup(statString);
   }
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
-    source.missCount.reset();
+    source.bulkMissCount.reset();
+    source.bulkCallCount.reset();
+    source.singleCallCount.reset();
+    Cache2kMetricsRecorder.saveStatsAfterSetup(cache.toString());
   }
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    HitCountRecorder.recordMissCount(source.missCount.longValue());
-    HitCountRecorder.recordBulkLoadCount(source.bulkCount.longValue());
+    MiscResultRecorderProfiler.addCounter("singleLoaderCalls", source.singleCallCount.longValue());
+    MiscResultRecorderProfiler.addCounter("bulkLoaderCalls", source.bulkCallCount.longValue());
+    RequestRecorder.recordMissCount(source.bulkMissCount.longValue() + source.singleCallCount.longValue());
     ForcedGcMemoryProfiler.keepReference(this);
-    String statString = cache.toString();
-    System.out.println(statString);
-    System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
-    Cache2kMetricsRecorder.recordStatsAfterIteration(statString);
+    Cache2kMetricsRecorder.recordStatsAfterIteration(cache.toString());
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
-  public long operation(ThreadState threadState, HitCountRecorder rec) {
+  public long operation(ThreadState threadState, RequestRecorder rec) {
     if (--threadState.bulkCountDown > 0) {
-      rec.opCount++;
+      rec.requests++;
       return cache.get(threadState.keyPattern.next());
     }
-    threadState.bulkCountDown = bulkStep;
-    int bulkCount = threadState.bulkSizeRandom.nextInt(bulkRange) + bulkRangeStart;
+    threadState.bulkCountDown = BULK_STEP;
+    int bulkCount = threadState.bulkSizeRandom.nextInt(BULK_RANGE) + BULK_COUNT_MINIMUM;
     Set<Integer> keySet = new HashSet<>(bulkCount);
     int base = threadState.keyPattern.next();
     for (int i = 0; i < bulkCount; i++) {
       keySet.add(base + i);
     }
-    rec.bulkOpCount++;
-    rec.opCount += bulkCount;
+    rec.bulkRequests++;
+    rec.requests += bulkCount;
     Map<Integer, Integer> result = cache.getAll(keySet);
+    return validateResult(keySet, result);
+  }
+
+  private int validateResult(Set<Integer> keySet, Map<Integer, Integer> result) {
     if (result.size() != keySet.size()) {
       throw new AssertionError("result map size mismatch expected=" + keySet.size() + ", actual=" + result.size());
     }
@@ -171,8 +179,9 @@ public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
 
   static class DataLoader extends BulkBenchmarkCacheLoader<Integer, Integer> {
 
-    LongAdder missCount = new LongAdder();
-    LongAdder bulkCount = new LongAdder();
+    LongAdder bulkMissCount = new LongAdder();
+    LongAdder bulkCallCount = new LongAdder();
+    LongAdder singleCallCount = new LongAdder();
 
     /**
      * The loader increments the miss counter and  burns CPU via JMH's blackhole
@@ -180,22 +189,22 @@ public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
      */
     @Override
     public Integer load(Integer key) {
-      missCount.increment();
-      Blackhole.consumeCPU(1234);
+      singleCallCount.increment();
+      Blackhole.consumeCPU(READTHROUGH_OVERHEAD_TOKES);
       return keyToValue(key);
     }
 
     @Override
     public Map<Integer, Integer> loadAll(Iterable<? extends Integer> keys) {
-      bulkCount.increment();
+      bulkCallCount.increment();
       Map<Integer, Integer> result = new HashMap<>();
       int cnt = 0;
       for (Integer key : keys) {
         result.put(key, keyToValue(key));
         cnt++;
       }
-      Blackhole.consumeCPU(56789 + cnt * 1234);
-      missCount.add(cnt);
+      Blackhole.consumeCPU(READTHROUGH_OVERHEAD_TOKES);
+      bulkMissCount.add(cnt);
       return result;
     }
 
