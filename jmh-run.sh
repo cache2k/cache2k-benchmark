@@ -2,21 +2,18 @@
 
 # jmh-run.sh
 
-# Copyright 2016 headissue GmbH, Jens Wilke
+# Copyright 2016 - 2021 headissue GmbH, Jens Wilke
 
 # This script to run a benchmark suite with JMH.
-#
-# Parameters:
-#
-# --quick   quick run with reduced benchmark time, to check for errors
-# --no3pty  only benchmark cache2k and JDK build ins, used for continuous benchmarking against performance regressions
-# --perf    run the benchmark with Linux perf (needs testing)
-# JAVA_HOME
 
 set -e;
+
+# switch command echo on for debugging
 # set -x;
 
 test -n "$BENCHMARK_THREADS" || BENCHMARK_THREADS="2 4 8"
+
+test -n "$BENCHMARK_IMPLS" || BENCHMARK_IMPLS="caffeine ehcache3 cache2k"
 
 # http://mechanical-sympathy.blogspot.de/2011/11/biased-locking-osr-and-benchmarking-fun.html
 # http://www.oracle.com/technetwork/tutorials/tutorials-1876574.html
@@ -37,14 +34,14 @@ test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedL
 # only test whether everything is running through
 test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 1 -w 1s -i 1 -r 1s -foe true";
 
-# have at least one fork and three iterations to detect outliers
+# have fast but at least three iterations to detect outliers
 # test -n "$BENCHMARK_NORMAL" || BENCHMARK_NORMAL="-f 2 -wi 2 -w 10s -i 3 -r 10s";
 test -n "$BENCHMARK_NORMAL" || BENCHMARK_NORMAL="-f 1 -wi 2 -w 5s -i 3 -r 5s";
 
 # -f 2 / -i 2 has not enough confidence, there is sometimes one outlier
 # 2 full warmups otherwise there is big jitter with G1
 # -gc true: careful with -gc true, this seems to influence the measures performance significantly
-test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 3 -wi 2 -w 60s -i 3 -r 60s";
+test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 3 -wi 2 -w 10s -i 3 -r 10s";
 
 # longer test run for expiry tests
 test -n "$BENCHMARK_DILIGENT_LONG" || BENCHMARK_DILIGENT_LONG="-f 2 -wi 1 -w 180s -i 2 -r 180s";
@@ -115,13 +112,15 @@ unset dry;
 unset backends;
 unset quick;
 
+impls="cache2k ehcache3 caffeine"
+
 usage() {
   echo "Usage: $0 options"
   echo "--quick              Run smoke test only, not the full benchmark"
   echo "--perfasm"
   echo "--perfnorm"
   echo "--no3pty             Do not test 3rd-party backends"
-  echo "--backends backends  Test the given backends, e.g. 'thirdparty.TCache1Factory Cache2kFactory"
+  echo "--impls impls  Test only the given cache implementations, default: $BENCHMARK_IMPLS"
   echo "--dry                Log the command lines to execute, but do not run test"
 }
 
@@ -140,9 +139,10 @@ processCommandLine() {
       --perfnorm) EXTRA_PROFILER=$EXTRA_PROFILER" $PERF_NORM_OPTIONS";;
       --no3pty) no3pty=true;;
       --cache2k) cache2k=true;;
-      --backends) backends="$2"; shift; ;;
+      --impls) BENCHMARK_IMPLS="$2"; shift; ;;
       --dry) dry=true;
              java="dryEcho";;
+      --echo) set -x;;
       -*) echo "unknown option: $1"; usage; exit 1;;
       *) "$1";
          stopTimer;
@@ -437,13 +437,12 @@ done
 #
 # Multi threaded with variable thread counts, with eviction
 #
-# benchmarks="NeverHitBenchmark MultiRandomAccessBenchmark GeneratedRandomSequenceBenchmark ZipfianLoadingSequenceBenchmark";
-# benchmarks="RandomSequenceBenchmark ZipfianSequenceLoadingBenchmark ZipfianLoopingSequenceLoadingBenchmark";
-# benchmarks="ZipfianLoopingPrecomputedSequenceLoadingBenchmark ZipfianHoppingPrecomputedSequenceLoadingBenchmark";
 # benchmarks="RandomSequenceBenchmark";
-# benchmarks="ZipfianSequenceLoadingBenchmark RandomSequenceBenchmark";
-benchmarks="ZipfianSequenceLoadingBenchmark PopulateParallelClearBenchmark";
-for impl in ehcache3 caffeine; do
+
+# benchmarks="ZipfianSequenceLoadingBenchmark PopulateParallelClearBenchmark";
+benchmarks="ZipfianSequenceBulkLoadingBenchmark";
+echo $BENCHMARK_IMPLS;
+for impl in $BENCHMARK_IMPLS; do
   for benchmark in $benchmarks; do
     for threads in $BENCHMARK_THREADS; do
       factory="`echo "$implementations" | awk "/^$impl / { print substr(\\$0, length(\\$1) + 2); }"`"
@@ -453,7 +452,7 @@ for impl in ehcache3 caffeine; do
       echo "## $runid";
       sync
       limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER  $EXTRA_PROFILER \
-           $EXTRA_PARAMETERS -t $threads $factory \
+           $EXTRA_PARAMETERS -t $threads -p shortName=$impl $factory \
            -rf json -rff "$fn.json" \
            2>&1 | tee $fn.out | filterProgress
       if test -n "$dry"; then

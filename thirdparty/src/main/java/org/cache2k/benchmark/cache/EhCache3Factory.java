@@ -23,12 +23,18 @@ package org.cache2k.benchmark.cache;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
+import org.cache2k.benchmark.BulkBenchmarkCacheLoader;
 import org.cache2k.benchmark.ProductCacheFactory;
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.spi.loaderwriter.BulkCacheLoadingException;
 import org.ehcache.spi.loaderwriter.CacheLoaderWriter;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Jens Wilke
@@ -52,22 +58,38 @@ public class EhCache3Factory extends ProductCacheFactory {
   @Override
   public <K, V> BenchmarkCache<K, V> createLoadingCache(Class<K> keyType, Class<V> valueType,
                                                         int capacity, BenchmarkCacheLoader<K, V> loader) {
-    CacheLoaderWriter<K,V> lw = new CacheLoaderWriter<K, V>() {
-      @Override
-      public V load(K key) throws Exception {
-        return loader.load(key);
-      }
-
-      @Override
-      public void write(K key, V value) throws Exception {
-
-      }
-
-      @Override
-      public void delete(K key) throws Exception {
-
-      }
-    };
+    CacheLoaderWriter<K, V> lw;
+    if (loader instanceof BulkBenchmarkCacheLoader) {
+      lw = new CacheLoaderWriter<K, V>() {
+        @Override
+        public V load(K key) {
+          return loader.load(key);
+        }
+        @Override
+        public Map<K, V> loadAll(Iterable<? extends K> keys) {
+          return ((BulkBenchmarkCacheLoader) loader).loadAll(keys);
+        }
+        @Override
+        public void write(K key, V value) { }
+        @Override
+        public void delete(K key) throws Exception { }
+       };
+    } else {
+     lw = new CacheLoaderWriter<K, V>() {
+        @Override
+        public V load(K key) throws Exception {
+          return loader.load(key);
+        }
+        @Override
+        public Map<K, V> loadAll(Iterable<? extends K> keys) {
+         return ((BulkBenchmarkCacheLoader) loader).loadAll(keys);
+        }
+        @Override
+        public void write(K key, V value) { }
+        @Override
+        public void delete(K key) { }
+      };
+    }
     CacheConfiguration<K,V> cfg =
       CacheConfigurationBuilder.newCacheConfigurationBuilder(keyType, valueType,
         ResourcePoolsBuilder.heap(capacity))
@@ -89,6 +111,13 @@ public class EhCache3Factory extends ProductCacheFactory {
     @Override
     public V get(K key) {
       return cache.get(key);
+    }
+
+    @Override
+    public Map<K, V> getAll(Iterable<K> keys) {
+      Set<K> keySet = new HashSet<>();
+      for (K key : keys) { keySet.add(key); }
+      return cache.getAll(keySet);
     }
 
     @Override

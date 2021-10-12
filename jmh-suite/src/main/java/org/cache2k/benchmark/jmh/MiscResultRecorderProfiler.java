@@ -47,17 +47,19 @@ public class MiscResultRecorderProfiler implements InternalProfiler {
 
   static final Map<String, CounterResult> counters = new ConcurrentHashMap<>();
   static final Map<String, Result<?>> results = new ConcurrentHashMap<>();
+  static final Map<Class, ThreadAggregator> threadAggregators = new ConcurrentHashMap<>();
 
   /**
    * Insert the counter value as secondary result. If a value is already inserted the
    * counter value is added to the existing one. This can be used to collect and sum up
    * results from different threads.
    */
-  public static void addCounterResult(String key, long _counter, String _unit, AggregationPolicy _aggregationPolicy) {
+  public static void addCounterResult(String key, long counter, String unit,
+                                      AggregationPolicy aggregationPolicy) {
     CounterResult r = counters.computeIfAbsent(key, any -> new CounterResult());
-    r.aggregationPolicy = _aggregationPolicy;
-    r.unit = _unit;
-    r.counter.addAndGet(_counter);
+    r.aggregationPolicy = aggregationPolicy;
+    r.unit = unit;
+    r.counter.addAndGet(counter);
     r.key = key;
   }
 
@@ -68,8 +70,9 @@ public class MiscResultRecorderProfiler implements InternalProfiler {
   /**
    * Insert the counter value as secondary result. An existing counter value is replaced.
    */
-  public static void setResult(String key, double _result, String _unit, AggregationPolicy _aggregationPolicy) {
-    setResult(new ScalarResult(SECONDARY_RESULT_PREFIX + key, _result, _unit, _aggregationPolicy));
+  public static void setResult(String key, double result, String unit,
+                               AggregationPolicy aggregationPolicy) {
+    setResult(new ScalarResult(SECONDARY_RESULT_PREFIX + key, result, unit, aggregationPolicy));
   }
 
   /**
@@ -79,13 +82,26 @@ public class MiscResultRecorderProfiler implements InternalProfiler {
     results.put(r.getLabel(), r);
   }
 
+  /**
+   * Register an aggregator function, however. This operation can be called multiple
+   * times, but the aggregator of the same type is only used once.
+   */
+  public static void registerThreadAggregator(ThreadAggregator ta) {
+    threadAggregators.put(ta.getClass(), ta);
+  }
+
   @Override
-  public void beforeIteration(final BenchmarkParams benchmarkParams, final IterationParams iterationParams) {
+  public void beforeIteration(BenchmarkParams benchmarkParams, IterationParams iterationParams) {
     counters.clear();
   }
 
   @Override
-  public Collection<? extends Result> afterIteration(final BenchmarkParams benchmarkParams, final IterationParams iterationParams, final IterationResult result) {
+  public Collection<? extends Result> afterIteration(BenchmarkParams benchmarkParams,
+                                                     IterationParams iterationParams,
+                                                     IterationResult result) {
+    for (ThreadAggregator it : threadAggregators.values()) {
+      it.aggregate(benchmarkParams, iterationParams, result);
+    }
     List<Result<?>> all = new ArrayList<>();
     counters.values().stream()
       .map(e ->
@@ -100,11 +116,17 @@ public class MiscResultRecorderProfiler implements InternalProfiler {
     return "Adds additional results gathered by the benchmark as secondary results.";
   }
 
-  static class CounterResult {
+  public interface ThreadAggregator {
+    void aggregate(BenchmarkParams benchmarkParams,
+                   IterationParams iterationParams,
+                   IterationResult result);
+  }
+
+  private static class CounterResult {
     String key;
     String unit;
     AggregationPolicy aggregationPolicy;
-    AtomicLong counter = new AtomicLong();
+    final AtomicLong counter = new AtomicLong();
   }
 
 }

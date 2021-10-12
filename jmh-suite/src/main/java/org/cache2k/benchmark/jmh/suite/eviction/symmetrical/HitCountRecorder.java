@@ -20,11 +20,16 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
  * #L%
  */
 
+import org.cache2k.benchmark.jmh.MiscResultRecorderProfiler;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.infra.BenchmarkParams;
+import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.results.AggregationPolicy;
+import org.openjdk.jmh.results.IterationResult;
 
 import static org.cache2k.benchmark.jmh.MiscResultRecorderProfiler.*;
 
@@ -41,70 +46,64 @@ import static org.cache2k.benchmark.jmh.MiscResultRecorderProfiler.*;
 @State(Scope.Thread)
 public class HitCountRecorder {
 
-  private static final Object LOCK = new Object();
-
   public long hitCount;
   public long missCount;
   public long opCount;
   public long bulkOpCount;
 
+  @Setup(Level.Iteration)
+  public void setup() {
+    MiscResultRecorderProfiler.registerThreadAggregator(
+      (benchmarkParams, iterationParams, result) -> {
+        updateHitrate("aggregator");
+      });
+  }
+
   @TearDown(Level.Iteration)
   public void tearDown() {
-    synchronized (LOCK) {
-      if (hitCount > 0) {
-        addCounterResult("hitCount", hitCount, "hit", AggregationPolicy.AVG);
-      }
-      if (missCount > 0) {
-        addCounterResult("missCount", missCount, "miss", AggregationPolicy.AVG);
-      }
-      if (bulkOpCount > 0) {
-        addCounterResult("bulkOpCount", bulkOpCount, "op", AggregationPolicy.AVG);
-      }
-      if (opCount == 0) {
-        opCount = hitCount + missCount;
-      }
-      addCounterResult("opCount", opCount, "op", AggregationPolicy.AVG);
-      updateHitrate("tearDown(), hitCount=" + hitCount + ", missCount=" + missCount + ", opCount=" + opCount + ", bulkOpCount=" + bulkOpCount);
-      hitCount = missCount = opCount = 0;
+    if (hitCount > 0) {
+      addCounterResult("hitCount", hitCount, "op", AggregationPolicy.AVG);
     }
+    if (missCount > 0) {
+      addCounterResult("missCount", missCount, "op", AggregationPolicy.AVG);
+    }
+    if (bulkOpCount > 0) {
+      addCounterResult("bulkOpCount", bulkOpCount, "op", AggregationPolicy.AVG);
+    }
+    if (opCount == 0) {
+      opCount = hitCount + missCount;
+    }
+    addCounterResult("opCount", opCount, "op", AggregationPolicy.AVG);
+    hitCount = missCount = opCount = 0;
   }
 
-  public static void recordOpCount(long _opCount) {
-    synchronized (LOCK) {
-      addCounterResult(
-        "opCount", _opCount, "op", AggregationPolicy.AVG
-      );
-      updateHitrate("ops=" + _opCount);
-    }
+  public static void recordOpCount(long opCount) {
+    addCounterResult(
+      "opCount", opCount, "op", AggregationPolicy.AVG
+    );
   }
 
-  public static void recordMissCount(long _missCount) {
-    synchronized (LOCK) {
-      addCounterResult(
-        "missCount", _missCount, "op", AggregationPolicy.AVG
-      );
-      updateHitrate("miss=" + _missCount);
-    }
+  public static void recordMissCount(long missCount) {
+    addCounterResult(
+      "missCount", missCount, "op", AggregationPolicy.AVG
+    );
   }
 
   public static void recordBulkLoadCount(long value) {
-    synchronized (LOCK) {
-      addCounterResult(
-        "bulkLoadCount", value, "miss", AggregationPolicy.AVG
-      );
-    }
+    addCounterResult(
+      "bulkLoadCount", value, "op", AggregationPolicy.AVG
+    );
   }
 
   /** Called for each thread */
   private static void updateHitrate(String s) {
-    long _missCountSum = getCounterResult("missCount");
-    long _opCountSum = getCounterResult("opCount");
-    if (_opCountSum == 0L) {
+    long missCountSum = getCounterResult("missCount");
+    long opCountSum = getCounterResult("opCount");
+    if (opCountSum == 0L) {
       return;
     }
-    double _hitRate = 100.0 - _missCountSum * 100.0 / _opCountSum;
-    System.err.println(Thread.currentThread() + " " + s + ", opSum=" + _opCountSum + ", missSum=" + _missCountSum + ", hitRate=" + _hitRate);
-    setResult("hitrate", _hitRate, "percent", AggregationPolicy.AVG);
+    double hitRate = 100.0 - missCountSum * 100.0 / opCountSum;
+    setResult("hitrate", hitRate, "percent", AggregationPolicy.AVG);
   }
 
 }

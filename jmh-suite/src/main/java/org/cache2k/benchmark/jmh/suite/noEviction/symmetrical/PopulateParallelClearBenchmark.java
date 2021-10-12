@@ -47,6 +47,7 @@ public class PopulateParallelClearBenchmark extends BenchmarkBase {
 
   @Param({"100000", "1000000"})
   public int entryCount = 100_000;
+
   @Param({"200"})
   public int clearPercent = 200;
 

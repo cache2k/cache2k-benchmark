@@ -25,12 +25,12 @@ local script=`cat << EOF
 s/org.cache2k.benchmark.ConcurrentHashMapFactory/CHM/
 s/org.cache2k.benchmark.SynchronizedLinkedHashMapFactory/SLHM/
 s/org.cache2k.benchmark.PartitionedLinkedHashMapFactory/PLHM/
-s/org.cache2k.benchmark.thirdparty.EhCache2Factory/EhCache2/
-s/org.cache2k.benchmark.thirdparty.EhCache3Factory/EhCache3/
-s/org.cache2k.benchmark.thirdparty.CaffeineCacheFactory/Caffeine/
-s/org.cache2k.benchmark.thirdparty.GuavaCacheFactory/Guava/
-s/org.cache2k.benchmark.Cache2kFactory/cache2k/
-s/org.cache2k.benchmark.thirdparty.TCache1Factory/tCache/
+s/org.cache2k.benchmark.cache.EhCache2Factory/EhCache2/
+s/org.cache2k.benchmark.cache.EhCache3Factory/EhCache3/
+s/org.cache2k.benchmark.cache.CaffeineCacheFactory/Caffeine/
+s/org.cache2k.benchmark.cache.GuavaCacheFactory/Guava/
+s/org.cache2k.benchmark.cache.Cache2kFactory/cache2k/
+s/org.cache2k.benchmark.cache.TCache1Factory/tCache/
 s/org.cache2k.benchmark.ConcurrentHashMapFactory0/CHM~/
 s/org.cache2k.benchmark.SynchronizedLinkedHashMapFactory0/SLHM~/
 s/org.cache2k.benchmark.thirdparty.EhCache2Factory0/EhCache2~/
@@ -44,14 +44,12 @@ EOF
 sed "$script";
 }
 
-CACHE_FACTORY_LIST="org.cache2k.benchmark.Cache2kFactory \
-org.cache2k.benchmark.thirdparty.CaffeineCacheFactory \
-org.cache2k.benchmark.thirdparty.GuavaCacheFactory \
-org.cache2k.benchmark.thirdparty.EhCache3Factory";
-CACHE_FACTORY_LIST_BASE="org.cache2k.benchmark.Cache2kFactory0 \
-org.cache2k.benchmark.thirdparty.CaffeineCacheFactory0 \
-org.cache2k.benchmark.thirdparty.GuavaCacheFactory0 \
-org.cache2k.benchmark.thirdparty.EhCache3Factory0";
+CACHE_FACTORY_LIST="org.cache2k.benchmark.cache.Cache2kFactory \
+org.cache2k.benchmark.cache.CaffeineCacheFactory \
+org.cache2k.benchmark.cache.EhCache3Factory";
+CACHE_FACTORY_LIST_BASE="org.cache2k.cache.Cache2kFactory0 \
+org.cache2k.benchmark.cache.CaffeineCacheFactory0 \
+org.cache2k.benchmark.cache.EhCache3Factory0";
 
 # "org.cache2k.benchmark.thirdparty.EhCache3Factory";
 
@@ -709,7 +707,7 @@ name="$1";
 param="$2";
 suffix="$3";
 filter="$4";
-local prods="org.cache2k.benchmark.Cache2kFactory";
+local prods="org.cache2k.benchmark.cache.Cache2kFactory";
 if test -n "$suffix"; then
 f=$RESULT/${name}ScanCount-${suffix}.dat
 else
@@ -785,10 +783,10 @@ echo "";
 # 8-100000-20 gets to: 8-1E5-20
 #
 shortenParamValuesWithE() {
-awk "$shorten_awk";
+awk "$shorten_awk_withE";
 }
 
-shorten_awk=`cat <<"EOF"
+shorten_awk_withE=`cat <<"EOF"
 {
   cnt = split($1, params, "-");
   out = "";
@@ -831,7 +829,9 @@ shorten_awk=`cat <<"EOF"
         ex += 3;
       }
       suffix = "E" ex;
-      if (ex == 3) {
+      if (ex == 0) {
+        suffix = "";
+      } else if (ex == 3) {
         suffix = "K";
       } else if (ex == 6) {
         suffix = "M";
@@ -846,6 +846,10 @@ shorten_awk=`cat <<"EOF"
       out = out val;
     }
   }
+  # third parameter might not be used, remove
+  if (substr(out, length(out)) == "-") {
+    out=substr(out, 0, length(out) -1);
+  }
   $1 = out;
   print;
 }
@@ -853,6 +857,7 @@ EOF
 `
 
 # plot main score, typically through put in operations per second.
+# in case the benchmark has no additional parameter "none" can be specified
 plotOps() {
 name="$1";
 param="$2";
@@ -876,10 +881,15 @@ local tmp="$RESULT/tmp-plotOps-$name-$param$tmpext.data"
 test -f "$tmp" || json | \
     jq -r ".[] |  select (.benchmark | contains (\".${name}\") ) | [ (.threads | tostring) + \"-\" + .params.entryCount + \"-\" + .params.$param, .params.cacheFactory, .primaryMetric.score, .primaryMetric.scoreError, .primaryMetric.scoreConfidence[0], .primaryMetric.scoreConfidence[1]  ] | @csv" | \
     sort | tr -d '"' | \
-    pivot4 $prods | sort -n -t- -k1,1 -k2,2 -k3,3 | shortenParamValues > "$tmp"
+    pivot4 $prods | \
+    sort -n -t- -k1,1 -k2,2 -k3,3 | shortenParamValues > "$tmp"
     cat "$tmp" | grep "$filter" | stripEmpty
 ) > $f
-plot --withConfidence $f "${name} / Throughput (higher is better)" "threads-size-$param" "ops/s"
+xLabel="threads-size-$param";
+if [ "$param" = "none" ]; then
+  xLabel="threads-size";
+fi
+plot --withConfidence $f "${name} / Throughput (higher is better)" "$xLabel" "ops/s"
 }
 
 # plot main score, typically runtime
@@ -1062,75 +1072,94 @@ for I in $benchmarks; do
   }
 done
 
+# benchmarks with percent parameter
 benchmarks="ZipfianSequenceLoadingBenchmark PrecalculatedZipfianSequenceLoadingBenchmark"
 for I in $benchmarks; do
   noBenchmark $I || {
-      plotOps $I factor;
-      graph "$graphName" "$I, operations per second by Zipfian distribution factor (complete)";
-
+      plotOps $I percent;
+      graph "$graphName" "$I, operations per second by Zipfian distribution percentage (complete)";
 #      plotEffectiveHitrate $I factor;
 #      graph "$graphName" "$I, Effective hitrate by Zipfian distribution factor (complete)";
 
-      for TC in 10 4; do
-        for F in 5 10 20; do
-          plotOps $I factor "bySize-${TC}x$F" "^$TC-.*-$F .*";
-          graph "$graphName" "$I, operations per second by cache size at $TC threads and Zipfian factor $F";
-          plotEffectiveHitrate $I factor "bySize-${TC}x$F" "^$TC-.*-$F .*";
-          graph "$graphName" "$I, effective hit rate by cache size at $TC threads and Zipfian factor $F";
-          plotScanCount $I factor "bySize-${TC}x$F" "^$TC-.*-$F .*";
-          graph "$graphName" "$I, scan count by cache size at $TC threads and Zipfian factor $F";
+      for TC in 2 4 8; do
+        for P in 110 500; do
+          plotOps $I percent "bySize-${TC}x$P" "^$TC-.*-$P .*";
+          graph "$graphName" "$I, operations per second by cache size at $TC threads and Zipfian percentage $P";
+          plotEffectiveHitrate $I percent "bySize-${TC}x$P" "^$TC-.*-$P .*";
+          graph "$graphName" "$I, effective hit rate by cache size at $TC threads and Zipfian percentage $P";
+          plotScanCount $I percent "bySize-${TC}x$P" "^$TC-.*-$P .*";
+          graph "$graphName" "$I, scan count by cache size at $TC threads and Zipfian percentage $P";
         done
       done
 
       for S in 100K 1M 10M; do
-        for F in 5 10 20; do
-          plotOps $I factor "byThread-${S}x$F" "^.*-${S}-$F .*";
-          graph "$graphName" "$I, operations per second by thread count with cache size ${S} and Zipfian factor $F";
+        for P in 110 500; do
+          plotOps $I percent "byThread-${S}x$P" "^.*-${S}-$P .*";
+          graph "$graphName" "$I, operations per second by thread count with cache size ${S} and Zipfian percentage $P";
         done
       done
 
-      for TC in 10 4; do
+      for TC in 2 4 8; do
           for S in 100K 1M 10M; do
-              plotOps $I factor "byFactor-${S}-${TC}" "^$TC-$S-.* .*";
-              graph "$graphName" "$I, operations per second by Zipfian factor with cache size ${S} at $TC threads";
-              plotEffectiveHitrate $I factor "byFactor-${S}-${TC}" "^$TC-$S-.* .*";
-              graph "$graphName" "$I, effective hit rate by Zipfian factor with cache size ${S} at $TC threads";
-              plotScanCount $I factor "byFactor-${S}-${TC}" "^$TC-$S-.* .*";
-              graph "$graphName" "$I, scan count by Zipfian factor with cache size ${S} at $TC threads";
+              plotOps $I percent "byPercent-${S}-${TC}" "^$TC-$S-.* .*";
+              graph "$graphName" "$I, operations per second by Zipfian percentage with cache size ${S} at $TC threads";
+              plotEffectiveHitrate $I percent "byPercent-${S}-${TC}" "^$TC-$S-.* .*";
+              graph "$graphName" "$I, effective hit rate by Zipfian percentage with cache size ${S} at $TC threads";
+              plotScanCount $I percent "byPercent-${S}-${TC}" "^$TC-$S-.* .*";
+              graph "$graphName" "$I, scan count by Zipfian percentage with cache size ${S} at $TC threads";
           done
       done
-
-
-false && (
-      plotOps $I factor "strip4x100Kx10" "^4-100K-10 .*";
-      graph "$graphName" "$I, operations per second at 4 threads, 100K cache entries and Zipfian factor 10";
-
-      plotOps $I factor "stripXx100Kx10" "^.*-100K-10 .*";
-      graph "$graphName" "$I, operations per second with 100K cache entries and Zipfian factor 10";
-
-      plotOps $I factor "stripXxXx10" "^.*-.*-10 .*";
-      graph "$graphName" "$I, operations per second with Zipfian factor 10";
-
-      plotOps $I factor "stripXxXx5" "^.*-.*-5 .*";
-      graph "$graphName" "$I, operations per second with Zipfian factor 5";
-
-      plotOps $I factor "strip4x80" "^4-.*-80 .*";
-      graph "$graphName" "$I, operations per second at 4 threads and Zipfian factor 80";
-
-      plotEffectiveHitrate $I factor "strip4x80" "^4-.*-80 .*";
-      graph "$graphName" "$I, Effective hit rate at 4 threads and Zipfian factor 80";
-
-      plotOps $I factor "strip10x80" "^10-.*-80 .*";
-      graph "$graphName" "$I, operations per second at 10 threads and Zipfian factor 80";
-
-      plotEffectiveHitrate $I factor "strip10x80" "^10-.*-80 .*";
-      graph "$graphName" "$I, Effective hit rate at 10 threads and Zipfian factor 80";
-)
 
 #      plotMemUsed $I factor;
 #      plotMemUsedSettled $I factor;
   }
 done
+
+benchmarks="PopulateParallelClearBenchmark"
+for I in $benchmarks; do
+  noBenchmark $I || {
+      plotOps $I none;
+      graph "$graphName" "$I, operations per second by Zipfian distribution percentage (complete)";
+#      plotEffectiveHitrate $I factor;
+#      graph "$graphName" "$I, Effective hitrate by Zipfian distribution factor (complete)";
+
+       asdf
+
+      for TC in 2 4 8; do
+        for P in 110 500; do
+          plotOps $I none "bySize-${TC}x$P" "^$TC-.*-$P .*";
+          graph "$graphName" "$I, operations per second by cache size at $TC threads and Zipfian percentage $P";
+          plotEffectiveHitrate $I none "bySize-${TC}x$P" "^$TC-.*-$P .*";
+          graph "$graphName" "$I, effective hit rate by cache size at $TC threads and Zipfian percentage $P";
+          plotScanCount $I none "bySize-${TC}x$P" "^$TC-.*-$P .*";
+          graph "$graphName" "$I, scan count by cache size at $TC threads and Zipfian percentage $P";
+        done
+      done
+
+      for S in 100K 1M 10M; do
+        for P in 110 500; do
+          plotOps $I percent "byThread-${S}x$P" "^.*-${S}-$P .*";
+          graph "$graphName" "$I, operations per second by thread count with cache size ${S} and Zipfian percentage $P";
+        done
+      done
+
+      for TC in 2 4 8; do
+          for S in 100K 1M 10M; do
+              plotOps $I percent "byPercent-${S}-${TC}" "^$TC-$S-.* .*";
+              graph "$graphName" "$I, operations per second by Zipfian percentage with cache size ${S} at $TC threads";
+              plotEffectiveHitrate $I percent "byPercent-${S}-${TC}" "^$TC-$S-.* .*";
+              graph "$graphName" "$I, effective hit rate by Zipfian percentage with cache size ${S} at $TC threads";
+              plotScanCount $I percent "byPercent-${S}-${TC}" "^$TC-$S-.* .*";
+              graph "$graphName" "$I, scan count by Zipfian percentage with cache size ${S} at $TC threads";
+          done
+      done
+
+#      plotMemUsed $I factor;
+#      plotMemUsedSettled $I factor;
+  }
+done
+
+asdf
 
 name=RandomSequenceBenchmark
 noBenchmark $name || {

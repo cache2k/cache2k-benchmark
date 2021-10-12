@@ -20,6 +20,7 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
  * #L%
  */
 
+import it.unimi.dsi.util.XoShiRo256StarStarRandom;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BulkBenchmarkCacheLoader;
@@ -51,11 +52,20 @@ import java.util.concurrent.atomic.LongAdder;
 @State(Scope.Benchmark)
 public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
 
-  @Param({"5", "20"})
-  public int factor = 0;
+  @Param({"500", "2000"})
+  public int percent = 0;
 
   @Param({"100000", "1000000" , "10000000"})
   public int entryCount = 100_000;
+
+  /**
+   * Make every nth request a bulk request.
+   */
+  public static final int bulkStep = 10;
+
+  public static final int bulkRangeStart = 31;
+  public static final int bulkRangeEnd = 71;
+  public static final int bulkRange = bulkRangeEnd - bulkRangeStart;
 
   @Param({"false"})
   public boolean expiry = false;
@@ -69,13 +79,15 @@ public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
   public static class ThreadState {
 
     ZipfianPattern keyPattern;
-    ZipfianPattern bulkPattern;
+    XoShiRo256StarStarRandom bulkSizeRandom;
+    int bulkCountDown;
 
     @Setup(Level.Iteration)
     public void setup(ZipfianSequenceBulkLoadingBenchmark benchmark) {
+      bulkCountDown = bulkStep;
       keyPattern = new ZipfianPattern(benchmark.offsetSeed.nextLong(),
-        benchmark.entryCount * benchmark.factor);
-      bulkPattern = new ZipfianPattern(benchmark.offsetSeed.nextLong(), 100);
+        benchmark.entryCount * benchmark.percent / 100);
+      bulkSizeRandom = new XoShiRo256StarStarRandom(benchmark.offsetSeed.nextLong());
     }
 
     @TearDown(Level.Iteration)
@@ -88,7 +100,7 @@ public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
 
   @Setup
   public void setupBenchmark() {
-    int range = entryCount * factor;
+    int range = entryCount * percent / 100;
     BenchmarkCacheFactory f = getFactory();
     if (expiry) {
       f.withExpiry(true);
@@ -127,12 +139,12 @@ public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
   public long operation(ThreadState threadState, HitCountRecorder rec) {
-    int bulkCount = threadState.bulkPattern.next();
-    if (bulkCount < 50) {
+    if (--threadState.bulkCountDown > 0) {
       rec.opCount++;
-      Integer v = cache.get(threadState.keyPattern.next());
-      return v;
+      return cache.get(threadState.keyPattern.next());
     }
+    threadState.bulkCountDown = bulkStep;
+    int bulkCount = threadState.bulkSizeRandom.nextInt(bulkRange) + bulkRangeStart;
     Set<Integer> keySet = new HashSet<>(bulkCount);
     int base = threadState.keyPattern.next();
     for (int i = 0; i < bulkCount; i++) {

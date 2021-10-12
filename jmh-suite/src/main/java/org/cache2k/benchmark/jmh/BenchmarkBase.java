@@ -51,6 +51,9 @@ public class BenchmarkBase {
   @Param("")
   public String enableStatistics;
 
+  @Param("")
+  public String shortName;
+
   public BenchmarkCacheFactory getFactory() {
     try {
       if ("DEFAULT".equals(cacheFactory)) {
