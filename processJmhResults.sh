@@ -878,8 +878,21 @@ fi
 (
 header4 "$prods";
 local tmp="$RESULT/tmp-plotOps-$name-$param$tmpext.data"
+# old query: jq -r ".[] |  select (.benchmark | contains (\".${name}\") ) | [ (.threads | tostring) + \"-\" + .params.entryCount + \"-\" + .params.$param, .params.cacheFactory, .primaryMetric.score, .primaryMetric.scoreError, .primaryMetric.scoreConfidence[0], .primaryMetric.scoreConfidence[1]  ] | @csv" | \
+local query=`cat << EOF
+.[] |  select (.benchmark | contains (".${name}") ) |
+  [ (.threads | tostring) +  "-" + .params.entryCount + "-" + .params.$param,
+     .params.cacheFactory,
+     .["secondaryMetrics"]["requests"].score,
+     .["secondaryMetrics"]["requests"].scoreError,
+     .["secondaryMetrics"]["requests"].scoreConfidence[0],
+     .["secondaryMetrics"]["requests"].scoreConfidence[1]
+  ] | @csv
+EOF
+`
+
 test -f "$tmp" || json | \
-    jq -r ".[] |  select (.benchmark | contains (\".${name}\") ) | [ (.threads | tostring) + \"-\" + .params.entryCount + \"-\" + .params.$param, .params.cacheFactory, .primaryMetric.score, .primaryMetric.scoreError, .primaryMetric.scoreConfidence[0], .primaryMetric.scoreConfidence[1]  ] | @csv" | \
+    jq -r "$query" | \
     sort | tr -d '"' | \
     pivot4 $prods | \
     sort -n -t- -k1,1 -k2,2 -k3,3 | shortenParamValues > "$tmp"
@@ -1073,7 +1086,7 @@ for I in $benchmarks; do
 done
 
 # benchmarks with percent parameter
-benchmarks="ZipfianSequenceLoadingBenchmark PrecalculatedZipfianSequenceLoadingBenchmark"
+benchmarks="ZipfianSequenceLoadingBenchmark PrecalculatedZipfianSequenceLoadingBenchmark ZipfianSequenceBulkLoadingBenchmark"
 for I in $benchmarks; do
   noBenchmark $I || {
       plotOps $I percent;

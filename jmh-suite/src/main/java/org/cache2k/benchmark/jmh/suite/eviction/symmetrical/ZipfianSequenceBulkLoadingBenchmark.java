@@ -58,7 +58,7 @@ public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
   @Param({"110", "500"})
   public int percent = 0;
 
-  @Param({"100_000", "1000_000"})
+  @Param({"100000", "1000000"})
   public int entryCount = 100_000;
 
   /**
@@ -136,6 +136,7 @@ public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
   public void tearDown() {
     MiscResultRecorderProfiler.addCounter("singleLoaderCalls", source.singleCallCount.longValue());
     MiscResultRecorderProfiler.addCounter("bulkLoaderCalls", source.bulkCallCount.longValue());
+    MiscResultRecorderProfiler.setValue("cacheSize", cache.getSize(), "entries");
     RequestRecorder.recordMissCount(source.bulkMissCount.longValue() + source.singleCallCount.longValue());
     ForcedGcMemoryProfiler.keepReference(this);
     Cache2kMetricsRecorder.recordStatsAfterIteration(cache.toString());
