@@ -22,6 +22,7 @@ package org.cache2k.benchmark.jmh.suite.noEviction.symmetrical;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
+import org.cache2k.benchmark.jmh.suite.eviction.symmetrical.RequestRecorder;
 import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -33,12 +34,14 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.BenchmarkParams;
+import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.infra.ThreadParams;
+import org.openjdk.jmh.results.IterationResult;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Insert new keys in multiple threads. After the double capacity is reached
+ * Insert new keys in multiple threads. After the double capacity count of inserts is reached
  * the cache is cleared. That means the benchmark is about pure inserting half of the time and
  * inserting with eviction of another half of the time.
  */
@@ -48,6 +51,9 @@ public class PopulateParallelClearBenchmark extends BenchmarkBase {
   @Param({"100000", "1000000"})
   public int entryCount = 100_000;
 
+  /**
+   * Clear after x percent of cache size inserts
+   */
   @Param({"200"})
   public int clearPercent = 200;
 
@@ -69,6 +75,7 @@ public class PopulateParallelClearBenchmark extends BenchmarkBase {
   @State(Scope.Thread) @AuxCounters
   public static class ThreadState {
 
+    int startIndex;
     int index;
     int limit;
     int nextClear;
@@ -81,11 +88,16 @@ public class PopulateParallelClearBenchmark extends BenchmarkBase {
                       ThreadParams threadParams) {
       clearCount = 0;
       int delta = Integer.MAX_VALUE / params.getThreads();
-      index = delta * threadParams.getThreadIndex();
+      startIndex = index = delta * threadParams.getThreadIndex();
       limit = index + delta;
       nextClearOffset =
         benchmark.entryCount / params.getThreads() * benchmark.clearPercent / 100;
       nextClear = index + nextClearOffset;
+    }
+
+    @TearDown(Level.Iteration)
+    public void tearDown() {
+      RequestRecorder.recordRequestCount(index - startIndex);
     }
 
   }

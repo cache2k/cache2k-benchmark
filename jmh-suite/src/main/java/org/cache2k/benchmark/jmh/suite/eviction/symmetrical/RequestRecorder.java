@@ -56,17 +56,25 @@ public class RequestRecorder {
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    if (misses > 0) { addCounter(MISSES_METRIC, misses); }
-    if (bulkRequests > 0) { addCounter("bulkRequests", bulkRequests); }
-    addCounterWithThroughput(REQUESTS_METRIC, requests);
+    addCounter(MISSES_METRIC, misses);
+    addCounter("bulkRequests", bulkRequests);
+    recordRequestCount(requests);
     updateHitRate();
   }
 
   /**
    * If not present at thread level, add the miss count at the end of the iteration.
    */
-  public static void recordMissCount(long missCount) {
-    addCounter("misses", missCount);
+  public static void recordMissCount(long count) {
+    addCounter(MISSES_METRIC, count);
+    updateHitRate();
+  }
+
+  /**
+   * Alternative to record the request count if the {@link #requests} field is not updated.
+   */
+  public static void recordRequestCount(long count) {
+    addCounterWithThroughput(REQUESTS_METRIC, count);
     updateHitRate();
   }
 
