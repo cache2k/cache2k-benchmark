@@ -28,6 +28,9 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <cache2k-version>2.2.1.Final</cache2k-version>
+    <ehcache3-version>3.9.6</ehcache3-version>
+    <caffeine-version>3.0.4</caffeine-version>
+    <dsiutils-version>2.6.0</dsiutils-version>
   </properties>
 
   <modules>
@@ -40,17 +43,6 @@
   </modules>
 
   <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
-    </dependency>
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-library</artifactId>
-      <version>1.2.1</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <profiles>

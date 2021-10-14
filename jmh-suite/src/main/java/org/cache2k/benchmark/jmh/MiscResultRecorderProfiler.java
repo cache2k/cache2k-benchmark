@@ -20,7 +20,6 @@ package org.cache2k.benchmark.jmh;
  * #L%
  */
 
-import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.InternalProfiler;
@@ -36,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,7 +51,7 @@ public class MiscResultRecorderProfiler implements InternalProfiler {
    * Collection of multiple results per metric, possibly multiple for an iteration,
    * e.g. reported by threads
    */
-  static final ConcurrentHashSet<Result<?>>  resultSet = new ConcurrentHashSet<>();
+  static final Collection<Result<?>>  resultSet = new CopyOnWriteArraySet<>();
   /**
    * Collection of a single result per metric
    */

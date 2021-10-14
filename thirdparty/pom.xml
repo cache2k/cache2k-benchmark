@@ -13,10 +13,6 @@
 
   <name>Benchmarks: third party products.</name>
 
-  <properties>
-    <caffeine.version>3.0.4</caffeine.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
@@ -39,14 +35,9 @@
       <version>26.0-jre</version>
     </dependency>
     <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-core</artifactId>
-      <version>7.1.0.CR2</version>
-    </dependency>
-    <dependency>
       <groupId>org.ehcache</groupId>
       <artifactId>ehcache</artifactId>
-      <version>3.9.6</version>
+      <version>${ehcache3-version}</version>
     </dependency>
     <dependency>
       <groupId>javax.cache</groupId>
@@ -56,17 +47,17 @@
     <dependency>
       <groupId>com.github.ben-manes.caffeine</groupId>
       <artifactId>caffeine</artifactId>
-      <version>${caffeine.version}</version>
+      <version>${caffeine-version}</version>
     </dependency>
     <dependency>
       <groupId>com.github.ben-manes.caffeine</groupId>
       <artifactId>jcache</artifactId>
-      <version>${caffeine.version}</version>
+      <version>${caffeine-version}</version>
     </dependency>
     <dependency>
       <groupId>com.github.ben-manes.caffeine</groupId>
       <artifactId>simulator</artifactId>
-      <version>${caffeine.version}</version>
+      <version>${caffeine-version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.cache2k</groupId>
