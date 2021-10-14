@@ -28,7 +28,8 @@ test -n "$BENCHMARK_IMPLS" || BENCHMARK_IMPLS="caffeine ehcache3 cache2k"
 
 # biased locking delay is 4000 by default, enable from the start to minimize effects on the first benchmark iteration
 # (check with: ava  -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal 2>/dev/null | grep BiasedLockingStartupDelay)
-test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -Xmx10G -XX:BiasedLockingStartupDelay=0";
+# -Xmx10G: we don't limit the heap, so Java is taking plenty from the OS
+test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -XX:BiasedLockingStartupDelay=0";
 # extra G1 args
 # BENCHMARK_JVM_ARGS="$BENCHMARK_JVM_ARGS -XX:+UseG1GC -XX:-G1UseAdaptiveConcRefinement -XX:G1ConcRefinementGreenZone=2G -XX:G1ConcRefinementThreads=0";
 
@@ -48,7 +49,7 @@ test -n "$BENCHMARK_NORMAL" || BENCHMARK_NORMAL="-f 1 -wi 2 -w 5s -i 3 -r 5s";
 # -f 2 / -i 2 has not enough confidence, there is sometimes one outlier
 # 2 full warmups otherwise there is big jitter with G1
 # -gc true: careful with -gc true, this seems to influence the measures performance significantly
-test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 3 -wi 2 -w 10s -i 3 -r 10s";
+test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 2 -wi 2 -w 10s -i 3 -r 10s";
 
 # longer test run for expiry tests
 test -n "$BENCHMARK_DILIGENT_LONG" || BENCHMARK_DILIGENT_LONG="-f 2 -wi 1 -w 180s -i 2 -r 180s";
@@ -189,6 +190,7 @@ dryEcho() {
 }
 
 JAR="jmh-suite/target/benchmarks.jar";
+test -f $JAR || JAR="benchmarks.jar";
 
 unset SINGLE_THREADED;
 unset NO_EVICTION;

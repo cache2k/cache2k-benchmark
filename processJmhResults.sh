@@ -450,55 +450,43 @@ $plot "$in" $startIndex $endIndex;
 gnuplot "${in}-notitle-print.plot";
 }
 
-
-extractMemoryThreadsHitRateHead() {
+# TODO: fix normed allocation rate
+memoryMetricsHeader() {
 echo -n "product";
-for I in heapUsedHisto heapUsedMx.fin totalUsedMx.fin maxUsed.gcEnd totalCommitted.fin maxCommitted.gcEnd VmRSS.fin VmHWM "allocRate(byte/s)" "allocRate(byte/op)"; do
+for I in maxCommitted.afterGc VmHWM maxUsed.afterGc VmRSS.fin "allocRate(byte/s)" "allocRate(byte/op)"; do
   echo -n " $I error lower upper";
 done
 echo;
 }
 
+# Extract memory metrics for a particular benchmark
+#
+# Usage: extractMemoryMetrics <benchmark> <paramName>
+#
 # example output:
 # 1-20,org.cache2k.benchmark.Cache2kFactory,0.00,65.72,993.08,614.8539540861144
 # 1-20,org.cache2k.benchmark.thirdparty.CaffeineCacheFactory,0.00,71.27,1000.42,852.382233323991
 # 1-20,org.cache2k.benchmark.thirdparty.EhCache2Factory,0.00,58.28,606.75,204.83546236165807
-extractMemoryThreadsHitRate() {
+extractMemoryMetrics() {
 local query=`cat << EOF
 .[] |  select (.benchmark | contains (".$1") ) |
   [ (.threads | tostring) + "-" + .params.entryCount + "-" + .params.$2, .params.cacheFactory,
-    .["secondaryMetrics"]["+forced-gc-mem.usedHeap"].score,
-    .["secondaryMetrics"]["+forced-gc-mem.usedHeap"].scoreError,
-    .["secondaryMetrics"]["+forced-gc-mem.usedHeap"].scoreConfidence[0],
-    .["secondaryMetrics"]["+forced-gc-mem.usedHeap"].scoreConfidence[1],
-    .["secondaryMetrics"]["+forced-gc-mem.heapUsed"].score,
-    .["secondaryMetrics"]["+forced-gc-mem.heapUsed"].scoreError,
-    .["secondaryMetrics"]["+forced-gc-mem.heapUsed"].scoreConfidence[0],
-    .["secondaryMetrics"]["+forced-gc-mem.heapUsed"].scoreConfidence[1],
-    .["secondaryMetrics"]["+forced-gc-mem.totalUsed"].score,
-    .["secondaryMetrics"]["+forced-gc-mem.totalUsed"].scoreError,
-    .["secondaryMetrics"]["+forced-gc-mem.totalUsed"].scoreConfidence[0],
-    .["secondaryMetrics"]["+forced-gc-mem.totalUsed"].scoreConfidence[1],
-    .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].score,
-    .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].scoreError,
-    .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].scoreConfidence[0],
-    .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].scoreConfidence[1],
-    .["secondaryMetrics"]["+forced-gc-mem.totalCommitted"].score,
-    .["secondaryMetrics"]["+forced-gc-mem.totalCommitted"].scoreError,
-    .["secondaryMetrics"]["+forced-gc-mem.totalCommitted"].scoreConfidence[0],
-    .["secondaryMetrics"]["+forced-gc-mem.totalCommitted"].scoreConfidence[1],
     .["secondaryMetrics"]["+c2k.gc.maximumCommittedAfterGc"].score,
     .["secondaryMetrics"]["+c2k.gc.maximumCommittedAfterGc"].scoreError,
     .["secondaryMetrics"]["+c2k.gc.maximumCommittedAfterGc"].scoreConfidence[0],
     .["secondaryMetrics"]["+c2k.gc.maximumCommittedAfterGc"].scoreConfidence[1],
-    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmRSS"].score * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmRSS"].scoreError * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmRSS"].scoreConfidence[0] * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmRSS"].scoreConfidence[1] * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmHWM"].score * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmHWM"].scoreError * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmHWM"].scoreConfidence[0] * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.linuxVm.VmHWM"].scoreConfidence[1] * 1000,
+    .["secondaryMetrics"]["+linux.proc.status.VmHWM"].score * 1000,
+    .["secondaryMetrics"]["+linux.proc.status.VmHWM"].scoreError * 1000,
+    .["secondaryMetrics"]["+linux.proc.status.VmHWM"].scoreConfidence[0] * 1000,
+    .["secondaryMetrics"]["+linux.proc.status.VmHWM"].scoreConfidence[1] * 1000,
+    .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].score,
+    .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].scoreError,
+    .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].scoreConfidence[0],
+    .["secondaryMetrics"]["+c2k.gc.maximumUsedAfterGc"].scoreConfidence[1],
+    .["secondaryMetrics"]["+linux.proc.status.VmRSS"].score * 1000,
+    .["secondaryMetrics"]["+linux.proc.status.VmRSS"].scoreError * 1000,
+    .["secondaryMetrics"]["+linux.proc.status.VmRSS"].scoreConfidence[0] * 1000,
+    .["secondaryMetrics"]["+linux.proc.status.VmRSS"].scoreConfidence[1] * 1000,
     .["secondaryMetrics"]["·gc.alloc.rate"].score * 1000 * 1000,
     .["secondaryMetrics"]["·gc.alloc.rate"].scoreError * 1000 * 1000,
     .["secondaryMetrics"]["·gc.alloc.rate"].scoreConfidence[0] * 1000 * 1000,
@@ -516,29 +504,17 @@ json | \
      # | scaleBytesToMegaBytes4x4MemAlloc
 }
 
-extractStaticPeakMemoryThreadsHitRate() {
-local query=`cat << EOF
-.[] |  select (.benchmark | contains (".$1") ) |
-  [ (.threads | tostring) + "-" + .params.entryCount + "-" + .params.$2, .params.cacheFactory,
-    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].score,
-    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].scoreError,
-    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].scoreConfidence[0],
-    .["secondaryMetrics"]["+forced-gc-mem.used.settled"].scoreConfidence[1],
-    .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].score * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreError * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreConfidence[0] * 1000,
-    .["secondaryMetrics"]["+forced-gc-mem.used.VmHWM"].scoreConfidence[1] * 1000
-  ] | @csv
-EOF
-`
-json | \
-    jq -r "$query" | \
-    sort | tr -d '"'
-     # | scaleBytesToMegaBytes4x4MemAlloc
-}
-
 stripFirstColumn() {
 sed 's/^[^ ]* \(.*\)/\1/'
+}
+
+memoryMetrics() {
+  local benchmark="$1";
+  local param="$2";
+  memoryMetricsHeader;
+  local tmp="$RESULT/tmp-memoryMetrics-$benchmark-$param.data"
+  test -f "$tmp" || extractMemoryMetrics $benchmark $param | tr , " " | shortenParamValues > "$tmp"
+  cat "$tmp"
 }
 
 # everything except alloc rate
@@ -549,10 +525,7 @@ read benchmark;
 while read key description; do
   f=$RESULT/${benchmark}Memory$key.dat
   (
-    extractMemoryThreadsHitRateHead;
-    local tmp="$RESULT/tmp-plotMemoryGraphs-$benchmark-$param.data"
-    test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
-    cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames
+    memoryMetrics "$benchmark" "$param" | grep "^$key" | stripFirstColumn | cacheShortNames
   ) > $f
   plot --withConfidence --withColors memoryColors $f "$title\n$description" "cache" "Bytes"
 done
@@ -585,86 +558,13 @@ local param="$2";
 local key="$3";
   f=$RESULT/${benchmark}Memory$key$variant.dat
   (
-    extractMemoryThreadsHitRateHead;
-    local tmp="$RESULT/tmp-plotMemoryGraphs-$benchmark-$param.data"
-    test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
-    cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames \
+    memoryMetrics "$benchmark" "$param" | grep "^$key" | stripFirstColumn | cacheShortNames \
     | { if test -n "$sort"; then sort -k$(( ( $startIndex - 1) * 4 + 2 )) -g; else cat -; fi } \
     | grep "$filter" || true
   ) > $f
   plot --withConfidence --withColors memoryColors --startIndex "$startIndex" --endIndex "$endIndex" $f "$title\n$description" "cache" "Bytes"
 }
 
-plotStaticPeakMem() {
-local title="";
-local description="";
-local variant="";
-local filter="";
-local startIndex=1;
-local endIndex=100;
-local sort="";
-while true; do
-  case "$1" in
-    --title) title="$2"; shift 1;;
-    --description) description="$2"; shift 1;;
-    --variant) variant="$2"; shift 1;;
-    --filter) filter="$2"; shift 1;;
-    --startIndex) startIndex="$2"; shift 1;;
-    --endIndex) endIndex="$2"; shift 1;;
-    --sort) sort="1";;
-    -*) echo "unknown option: $1"; return 1;;
-    *) break;;
-  esac
-  shift 1;
-done
-local benchmark="$1";
-local param="$2";
-local key="$3";
-  f=$RESULT/${benchmark}StaticPeakMemory$key$variant.dat
-  (
-    echo "product usedMem_settled error lower upper VmHWM error lower upper";
-    local tmp="$RESULT/tmp-plotStaticPeakMemoryGraphs-$benchmark-$param.data"
-    test -f "$tmp" || extractStaticPeakMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
-    cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames \
-    | { if test -n "$sort"; then sort -k$(( ( $startIndex - 1) * 4 + 2 )) -g; else cat -; fi } \
-    | grep "$filter" || true
-  ) > $f
-  plot --withConfidence --withColors memoryColors --startIndex "$startIndex" --endIndex "$endIndex" $f "$title\n$description" "cache" "Bytes"
-}
-
-
-
-plotMemoryGraphsSettled() {
-read param;
-read title;
-read benchmark;
-while read key description; do
-  f=$RESULT/${benchmark}MemorySettled$key.dat
-  (
-    echo "threads usedHeap_settled error lower upper usedMem_settled error lower upper usedMem_fin error lower upper";
-    local tmp="$RESULT/tmp-plotMemoryGraphsSettled-$benchmark-$param.data"
-    test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
-    cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames
-  ) > $f
-  plot --withConfidence --withColors memoryColors $f "$title\n$description" "cache" "Bytes"
-done
-}
-
-plotMemoryGraphsUsed() {
-read param;
-read title;
-read benchmark;
-while read key description; do
-  f=$RESULT/${benchmark}MemoryUsed$key.dat
-  (
-    echo "product usedHeapHisto error lower upper heapUsedMx.fin error lower upper totalUsedMx.fin error lower upper";
-    local tmp="$RESULT/tmp-plotMemoryGraphsUsed-$benchmark-$param.data"
-    test -f "$tmp" || extractMemoryThreadsHitRate $benchmark $param | tr , " " | shortenParamValues > "$tmp"
-    cat "$tmp" | grep "^$key" | stripFirstColumn | cacheShortNames
-  ) > $f
-  plot --withConfidence --withColors memoryColors $f "$title\n$description" "cache" "Bytes"
-done
-}
 
 plotEffectiveHitrate() {
 name="$1";
@@ -734,38 +634,6 @@ test -f "$tmp" || json | \
 plot --withConfidence $f "${name} / scans per eviction" "threads - size - $param" "scan count"
 }
 
-
-plotMemUsed() {
-name="$1";
-param="$2";
-f=$RESULT/${name}MemUsed.dat
-graphName=`basename $f .dat`;
-(
-echo "threads $CACHE_LABEL_LIST";
-json | \
-    jq -r ".[] |  select (.benchmark | contains (\".${name}\") ) | [ (.threads | tostring) + \"-\" + .params.entryCount + \"-\" + .params.$param, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used.after\"][\"score\"] ] | @csv"  | \
-    sort | tr -d '"' | \
-    pivot $CACHE_FACTORY_LIST|  shortenParamValues | sort | \
-    stripEmpty
-) > $f
-plot $f "${name} / Used Heap Memory" "threads - size - $param" "used heap [bytes]"
-}
-
-plotMemUsedSettled() {
-name="$1";
-param="$2";
-f=$RESULT/${name}MemUsedSettled.dat
-graphName=`basename $f .dat`;
-(
-echo "threads $CACHE_LABEL_LIST";
-json | \
-    jq -r ".[] |  select (.benchmark | contains (\".${name}\") ) | [ (.threads | tostring) + \"-\" + .params.entryCount + \"-\" + .params.$param, .params.cacheFactory, .[\"secondaryMetrics\"][\"+forced-gc-mem.used.settled\"][\"score\"] ] | @csv"  | \
-    sort | tr -d '"' | \
-    pivot $CACHE_FACTORY_LIST |  shortenParamValues | sort | \
-    stripEmpty
-) > $f
-plot $f "${name} / Used Heap Memory Settled" "threads - size - $param" "used heap settled [bytes]"
-}
 
 header4() {
 local I;
@@ -879,6 +747,19 @@ fi
 header4 "$prods";
 local tmp="$RESULT/tmp-plotOps-$name-$param$tmpext.data"
 # old query: jq -r ".[] |  select (.benchmark | contains (\".${name}\") ) | [ (.threads | tostring) + \"-\" + .params.entryCount + \"-\" + .params.$param, .params.cacheFactory, .primaryMetric.score, .primaryMetric.scoreError, .primaryMetric.scoreConfidence[0], .primaryMetric.scoreConfidence[1]  ] | @csv" | \
+# old query on primary result
+local queryOld=`cat << EOF
+.[] |  select (.benchmark | contains (".${name}") ) |
+  [ (.threads | tostring) + "-" + .params.entryCount + "-" + .params.$param,
+    .params.cacheFactory,
+    .primaryMetric.score,
+    .primaryMetric.scoreError,
+    .primaryMetric.scoreConfidence[0],
+    .primaryMetric.scoreConfidence[1]
+    ] | @csv
+EOF
+`
+
 local query=`cat << EOF
 .[] |  select (.benchmark | contains (".${name}") ) |
   [ (.threads | tostring) +  "-" + .params.entryCount + "-" + .params.$param,
@@ -905,7 +786,7 @@ fi
 plot --withConfidence $f "${name} / Throughput (higher is better)" "$xLabel" "ops/s"
 }
 
-# plot main score, typically runtime
+# For one shot benchmarks, not used any more, plot main score, typically runtime
 plotRuntime() {
 name="$1";
 param="$2";
@@ -1085,17 +966,53 @@ for I in $benchmarks; do
   }
 done
 
+THREADS="2 4 8 16 32"
+PERCENT="110 500"
+MEMORY="100K 1M 10M"
+
+# no detailed reports
+MEMORY="";
+PERCENT="";
+THREADS="";
+
 # benchmarks with percent parameter
-benchmarks="ZipfianSequenceLoadingBenchmark PrecalculatedZipfianSequenceLoadingBenchmark ZipfianSequenceBulkLoadingBenchmark"
+param=percent;
+txt="Zipfian distribution percentage"
+benchmarks="ZipfianSequenceLoadingBenchmark ZipfianSequenceBulkLoadingBenchmark"
 for I in $benchmarks; do
   noBenchmark $I || {
-      plotOps $I percent;
-      graph "$graphName" "$I, operations per second by Zipfian distribution percentage (complete)";
-#      plotEffectiveHitrate $I factor;
-#      graph "$graphName" "$I, Effective hitrate by Zipfian distribution factor (complete)";
+      plotOps $I $param;
+      graph "$graphName" "$I, operations per second by Zipfian $txt (complete)";
+      plotEffectiveHitrate $I $param;
+      graph "$graphName" "$I, Effective hitrate by $txt (complete)";
 
-      for TC in 2 4 8; do
-        for P in 110 500; do
+     thread=16; size=1M; percent=500;
+     plotMem --startIndex 1 --endIndex 1 --variant "-heapCommittedAfterGc" $name $param "$thread-$size-$percent";
+     graph "$graphName" "$name, $txt, max heap committed after gc";
+
+     plotMem --startIndex 2 --endIndex 2 --sort --variant "-VmHWM-sorted" $name $param "$thread-$size-$percent";
+     graph "$graphName" "$name, $thread threads, $size cache entries, $txt $percent, peak memory usage reported by the operating system (VmHWM), sorted by best performance";
+
+     # plotMem --startIndex 4 --endIndex 4 --variant "-totalHeapAfterGc" $name $param "$focus";
+    # graph "$graphName" "$name, $txt, total heap used after gc";
+
+#     plotMem --startIndex 8 --endIndex 8 --sort --variant "-VmHWM-sorted" $name factor "$thread-$size-$factor";
+#     graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, peak memory usage reported by the operating system (VmHWM), sorted by best performance";
+#     plotMem --startIndex 1 --endIndex 1 --sort --variant "-usedHeap-sorted" $name factor "$thread-$size-$factor";
+#     graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, used heap memory, sorted by best performance";
+#     plotMem --startIndex 9 --endIndex 9 --variant "-allocRate" $name factor "$thread-$size-$factor";
+#     graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, allocation rate in bytes per second";
+#     plotMem --startIndex 10 --endIndex 10 --variant "-allocRatePerOp" $name factor "$thread-$size-$factor";
+#     graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, allocation rate in bytes per operation";
+#     plotStaticPeakMem $name factor "$thread-$size-$factor";
+#     graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, static and peak memory usage";
+
+
+      plotMem $I $param;
+      graph "$graphName" "$I, mem by $txt (complete)";
+
+      for TC in $THREADS; do
+        for P in $PERCENT; do
           plotOps $I percent "bySize-${TC}x$P" "^$TC-.*-$P .*";
           graph "$graphName" "$I, operations per second by cache size at $TC threads and Zipfian percentage $P";
           plotEffectiveHitrate $I percent "bySize-${TC}x$P" "^$TC-.*-$P .*";
@@ -1105,15 +1022,15 @@ for I in $benchmarks; do
         done
       done
 
-      for S in 100K 1M 10M; do
-        for P in 110 500; do
+      for S in $MEMORY; do
+        for P in $PERCENT; do
           plotOps $I percent "byThread-${S}x$P" "^.*-${S}-$P .*";
           graph "$graphName" "$I, operations per second by thread count with cache size ${S} and Zipfian percentage $P";
         done
       done
 
-      for TC in 2 4 8; do
-          for S in 100K 1M 10M; do
+      for TC in $THREADS; do
+          for S in $MEMORY; do
               plotOps $I percent "byPercent-${S}-${TC}" "^$TC-$S-.* .*";
               graph "$graphName" "$I, operations per second by Zipfian percentage with cache size ${S} at $TC threads";
               plotEffectiveHitrate $I percent "byPercent-${S}-${TC}" "^$TC-$S-.* .*";
@@ -1123,11 +1040,10 @@ for I in $benchmarks; do
           done
       done
 
-#      plotMemUsed $I factor;
-#      plotMemUsedSettled $I factor;
   }
 done
 
+# benchmark which have no additional parameter
 benchmarks="PopulateParallelClearBenchmark"
 for I in $benchmarks; do
   noBenchmark $I || {

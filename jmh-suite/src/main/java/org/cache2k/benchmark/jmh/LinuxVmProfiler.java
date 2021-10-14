@@ -50,9 +50,12 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Add Linux VM metrics to the result.
+ * Add Linux VM metrics to the result. Parces {@code /proc/self/status} and adds all
+ * metrics starting with {@code Vm}. In particular interesting is {@code VmRSS} and {@code VmHWM}
+ * to analyze the memory usage.
  *
  * @author Jens Wilke
+ * @see <a href="https://cruftex.net/2017/03/28/The-6-Memory-Metrics-You-Should-Track-in-Your-Java-Benchmarks.html">Blog Article</a>
  */
 public class LinuxVmProfiler implements InternalProfiler {
 
@@ -65,21 +68,21 @@ public class LinuxVmProfiler implements InternalProfiler {
   public static void addLinuxVmStats(String prefix, List<Result> l) {
     try {
       LineNumberReader r = new LineNumberReader(new InputStreamReader(new FileInputStream("/proc/self/status")));
-      String _line;
-      while ((_line = r.readLine()) != null) {
-        if (!_line.startsWith("Vm")) {
+      String line;
+      while ((line = r.readLine()) != null) {
+        if (!line.startsWith("Vm")) {
           continue;
         }
-        String[] sa = _line.split("\\s+");
+        String[] sa = line.split("\\s+");
         if (sa.length != 3) {
           throw new IOException("Format error: 3 elements expected");
         }
         if (!sa[2].equals("kB")) {
           throw new IOException("Format error: unit kB expected, was: " + sa[2]);
         }
-        String _name = sa[0].substring(0, sa[0].length() - 1);
+        String name = sa[0].substring(0, sa[0].length() - 1);
         l.add(
-          new OptionalScalarResult(prefix + "." + _name, (double) Long.parseLong(sa[1]), "kB", AggregationPolicy.AVG)
+          new OptionalScalarResult(prefix + "." + name, (double) Long.parseLong(sa[1]), "kB", AggregationPolicy.AVG)
         );
       }
     } catch (IOException ex) {
@@ -88,14 +91,15 @@ public class LinuxVmProfiler implements InternalProfiler {
   }
 
   @Override
-  public Collection<? extends Result> afterIteration(final BenchmarkParams benchmarkParams, final IterationParams iterationParams, final IterationResult result) {
+  public Collection<? extends Result> afterIteration(BenchmarkParams benchmarkParams,
+                                                     IterationParams iterationParams, IterationResult result) {
     List<Result> l = new ArrayList<>();
     addLinuxVmStats(PREFIX, l);
     return l;
   }
 
   @Override
-  public void beforeIteration(final BenchmarkParams benchmarkParams, final IterationParams iterationParams) {
+  public void beforeIteration(BenchmarkParams benchmarkParams, IterationParams iterationParams) {
 
   }
 

@@ -31,7 +31,7 @@ public class Cache2kWiredFactory extends Cache2kFactory {
 
   {
     setWiredCache(true);
-    setName("cache2k&");
+    setName("cache2kw");
   }
 
 }
