@@ -11,7 +11,14 @@ set -e;
 # switch command echo on for debugging
 # set -x;
 
-test -n "$BENCHMARK_THREADS" || BENCHMARK_THREADS="2 4 8"
+test -n "$BENCHMARK_THREADS" || {
+BENCHMARK_THREADS="2 4 8";
+CPU_COUNT=`cat /proc/cpuinfo | grep "^processor" | wc -l`;
+echo "CPU_COUNT=$CPU_COUNT";
+if [ $CPU_COUNT = 32 ]; then
+  BENCHMARK_THREADS="4 16 32";
+fi
+}
 
 test -n "$BENCHMARK_IMPLS" || BENCHMARK_IMPLS="caffeine ehcache3 cache2k"
 
@@ -437,10 +444,7 @@ done
 #
 # Multi threaded with variable thread counts, with eviction
 #
-# benchmarks="RandomSequenceBenchmark";
-
-# benchmarks="ZipfianSequenceLoadingBenchmark PopulateParallelClearBenchmark";
-benchmarks="ZipfianSequenceBulkLoadingBenchmark";
+benchmarks="ZipfianSequenceLoadingBenchmark PopulateParallelClearBenchmark ZipfianSequenceBulkLoadingBenchmark";
 echo $BENCHMARK_IMPLS;
 for impl in $BENCHMARK_IMPLS; do
   for benchmark in $benchmarks; do
