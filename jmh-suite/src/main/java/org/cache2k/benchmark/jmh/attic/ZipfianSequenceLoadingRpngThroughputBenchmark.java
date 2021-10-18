@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
+package org.cache2k.benchmark.jmh.attic;
 
 /*
  * #%L
@@ -22,6 +22,8 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
 
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
+import org.cache2k.benchmark.jmh.RequestRecorder;
+import org.cache2k.benchmark.jmh.cacheSuite.ZipfianSequenceLoadingBenchmark;
 import org.cache2k.benchmark.util.ZipfianPattern;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -37,12 +39,11 @@ import java.util.Random;
 
 /**
  * Just test the throughput of the RPNG when setup identically to the {@link ZipfianSequenceLoadingBenchmark}
- * together with boxing of an integer object.
  *
  * @author Jens Wilke
  */
 @State(Scope.Benchmark)
-public class ZipfianSequenceLoadingRpngWithBoxingThroughputBenchmark extends BenchmarkBase {
+public class ZipfianSequenceLoadingRpngThroughputBenchmark extends BenchmarkBase {
 
   @Param({"5", "10", "20"})
   public int factor = 0;
@@ -59,7 +60,7 @@ public class ZipfianSequenceLoadingRpngWithBoxingThroughputBenchmark extends Ben
     ZipfianPattern pattern;
 
     @Setup(Level.Iteration)
-    public void setup(ZipfianSequenceLoadingRpngWithBoxingThroughputBenchmark _benchmark) {
+    public void setup(ZipfianSequenceLoadingRpngThroughputBenchmark _benchmark) {
       pattern = new ZipfianPattern(_benchmark.offsetSeed.nextLong(),
         _benchmark.entryCount * _benchmark.factor);
     }
@@ -79,8 +80,7 @@ public class ZipfianSequenceLoadingRpngWithBoxingThroughputBenchmark extends Ben
   @Benchmark @BenchmarkMode(Mode.Throughput)
   public long operation(ThreadState threadState, RequestRecorder rec) {
     rec.requests++;
-    Integer i = threadState.pattern.next();
-    return System.identityHashCode(i);
+    return threadState.pattern.next();
   }
 
 }

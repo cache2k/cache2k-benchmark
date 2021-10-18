@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
+package org.cache2k.benchmark.jmh.attic;
 
 /*
  * #%L
@@ -22,6 +22,9 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
+import org.cache2k.benchmark.jmh.RequestRecorder;
+import org.cache2k.benchmark.util.AccessPattern;
+import org.cache2k.benchmark.util.RandomAccessPattern;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Level;
@@ -32,51 +35,42 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 
-import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Access the cache in a random pattern of 1M length. Each thread has a unique
- * random pattern. The cache has a capacity of 100k entries. The number of unique
- * keys in the random pattern is adjusted to the requested target hit rate, for
- * example for a target hit rate of 50% 200k different keys are used.
+ * Prepopulate cache with 100k entries and access it in a random pattern
+ * with different hot rates.
  *
  * @author Jens Wilke
  */
 @State(Scope.Benchmark)
-public class PrecomputedMultiRandomAccessBenchmark extends BenchmarkBase {
+public class PrecomputedRandomSequenceCacheBenchmark extends BenchmarkBase {
 
   public static final int ENTRY_COUNT = 100_000;
-  public static final int PATTERN_COUNT = 2_000_000;
+  public static final int PATTERN_COUNT = 1_000_000;
 
-  @Param({"30", "50", "80", "90", "95"})
+  @Param({"20", "50", "80"})
   public int hitRate = 0;
 
-  /**
-   * Generate a deterministic sequence of seeds that we use for the
-   * access sequences of each thread.
-   */
-  private final static Random seedGenerator = new Random(1802);
+  private final static AtomicInteger offset = new AtomicInteger(0);
 
   @State(Scope.Thread)
   public static class ThreadState {
-    Integer[] ints;
-    long index = 0;
-
-    /**
-     * Initialize thread state with unique trace.
-     */
-    @Setup(Level.Iteration)
-    public void setup(PrecomputedMultiRandomAccessBenchmark _parent) {
-      Random random = new Random(seedGenerator.nextInt());
-      ints = new Integer[PATTERN_COUNT];
-      int _keySpace = (int) (ENTRY_COUNT * (100D / _parent.hitRate));
-      for (int i = 0; i < PATTERN_COUNT; i++) {
-        ints[i] = random.nextInt(_keySpace);
-      }
-    }
+    long index = offset.getAndAdd(PATTERN_COUNT / 16);
   }
 
   BenchmarkCache<Integer, Integer> cache;
+  Integer[] ints;
+
+  @Setup(Level.Trial)
+  public void setupBenchmark() throws Exception {
+    ints = new Integer[PATTERN_COUNT];
+    AccessPattern _pattern =
+      new RandomAccessPattern((int) (ENTRY_COUNT * (100D / hitRate)));
+    for (int i = 0; i < PATTERN_COUNT; i++) {
+      ints[i] = _pattern.next();
+    }
+  }
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
@@ -93,9 +87,9 @@ public class PrecomputedMultiRandomAccessBenchmark extends BenchmarkBase {
   @Benchmark @BenchmarkMode(Mode.Throughput)
   public long operation(ThreadState threadState, RequestRecorder rec) {
     int idx = (int) (threadState.index++ % PATTERN_COUNT);
-    Integer k = threadState.ints[idx];
-    Integer v = cache.get(k);
+    Integer k = ints[idx];
     rec.requests++;
+    Integer v = cache.get(k);
     if (v == null) {
       cache.put(k, k);
       rec.misses++;

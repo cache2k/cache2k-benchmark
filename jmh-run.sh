@@ -16,7 +16,7 @@ BENCHMARK_THREADS="2 4 8";
 CPU_COUNT=`cat /proc/cpuinfo | grep "^processor" | wc -l`;
 echo "CPU_COUNT=$CPU_COUNT";
 if [ $CPU_COUNT = 32 ]; then
-  BENCHMARK_THREADS="4 16 32";
+  BENCHMARK_THREADS="4 8 16 32";
 fi
 }
 
@@ -501,4 +501,3 @@ done
 # stopTimer;
 
 processCommandLine "$@";
-

@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
+package org.cache2k.benchmark.jmh.attic;
 
 /*
  * #%L
@@ -22,6 +22,8 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
+import org.cache2k.benchmark.jmh.RequestRecorder;
+import org.cache2k.benchmark.jmh.cacheSuite.ZipfianSequenceLoadingBenchmark;
 import org.cache2k.benchmark.util.ZipfianPattern;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;

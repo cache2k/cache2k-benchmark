@@ -1,9 +1,7 @@
 /**
- * Benchmarks towards the JVM and machine we are running on. Actually this is unrelated
- * to caches and may move somewhere else. However, if we do benchmark caching implementations
- * its a good idea to have platform only benchmarks for comparison of the general test environments.
+ * Benchmarks for caches stressing various aspects.
  */
-package org.cache2k.benchmark.jmh.platform;
+package org.cache2k.benchmark.jmh.cacheSuite;
 
 /*
  * #%L

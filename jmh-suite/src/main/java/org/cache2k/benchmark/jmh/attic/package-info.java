@@ -1,7 +1,8 @@
 /**
- * Set of benchmarks that run asymmetrical benchmarks with different threads.
+ * Benchmark experiments that did not yield a satisfying result. Kept for documentation
+ * purposes.
  */
-package org.cache2k.benchmark.jmh.suite.noEviction.asymmetrical;
+package org.cache2k.benchmark.jmh.attic;
 
 /*
  * #%L

@@ -1,7 +1,9 @@
 /**
- * Benchmarks with no eviction needed. We benchmark basically normal map behavior.
+ * Benchmarks towards the JVM and machine we are running on. Actually this is unrelated
+ * to caches and may move somewhere else. However, if we do benchmark caching implementations
+ * its a good idea to have platform only benchmarks for comparison of the general test environments.
  */
-package org.cache2k.benchmark.jmh.suite.noEviction;
+package org.cache2k.benchmark.jmh.platformSuite;
 
 /*
  * #%L

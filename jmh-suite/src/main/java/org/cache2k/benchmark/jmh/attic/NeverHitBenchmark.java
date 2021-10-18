@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
+package org.cache2k.benchmark.jmh.attic;
 
 /*
  * #%L
@@ -22,13 +22,11 @@ package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
-import org.cache2k.benchmark.util.AccessPattern;
-import org.cache2k.benchmark.util.RandomAccessPattern;
+import org.cache2k.benchmark.jmh.RequestRecorder;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
@@ -37,39 +35,24 @@ import org.openjdk.jmh.annotations.TearDown;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Prepopulate cache with 100k entries and access it in a random pattern
- * with different hot rates.
+ * Continuously access a cache of size 1M an ascending sequence, never producing any hit.
+ * Each thread starts at another offset.
  *
  * @author Jens Wilke
  */
 @State(Scope.Benchmark)
-public class PrecomputedRandomSequenceCacheBenchmark extends BenchmarkBase {
+public class NeverHitBenchmark extends BenchmarkBase {
 
-  public static final int ENTRY_COUNT = 100_000;
-  public static final int PATTERN_COUNT = 1_000_000;
-
-  @Param({"20", "50", "80"})
-  public int hitRate = 0;
+  public static final int ENTRY_COUNT = 1000 * 1000;
 
   private final static AtomicInteger offset = new AtomicInteger(0);
 
   @State(Scope.Thread)
   public static class ThreadState {
-    long index = offset.getAndAdd(PATTERN_COUNT / 16);
+    long index =  offset.getAndAdd(Integer.MAX_VALUE / 16);
   }
 
   BenchmarkCache<Integer, Integer> cache;
-  Integer[] ints;
-
-  @Setup(Level.Trial)
-  public void setupBenchmark() throws Exception {
-    ints = new Integer[PATTERN_COUNT];
-    AccessPattern _pattern =
-      new RandomAccessPattern((int) (ENTRY_COUNT * (100D / hitRate)));
-    for (int i = 0; i < PATTERN_COUNT; i++) {
-      ints[i] = _pattern.next();
-    }
-  }
 
   @Setup(Level.Iteration)
   public void setup() throws Exception {
@@ -78,21 +61,21 @@ public class PrecomputedRandomSequenceCacheBenchmark extends BenchmarkBase {
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    RequestRecorder.updateHitRate();
     recordMemoryAndDestroy(cache);
+    RequestRecorder.updateHitRate();
     cache = null;
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
   public long operation(ThreadState threadState, RequestRecorder rec) {
-    int idx = (int) (threadState.index++ % PATTERN_COUNT);
-    Integer k = ints[idx];
-    rec.requests++;
+    int idx = (int) (threadState.index++);
+    Integer k = idx;
     Integer v = cache.get(k);
+    rec.requests++;
     if (v == null) {
-      cache.put(k, k);
       rec.misses++;
     }
+    cache.put(k, k);
     return idx;
   }
 

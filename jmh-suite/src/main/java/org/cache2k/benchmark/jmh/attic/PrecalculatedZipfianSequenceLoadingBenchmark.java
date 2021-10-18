@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
+package org.cache2k.benchmark.jmh.attic;
 
 /*
  * #%L
@@ -24,8 +24,9 @@ import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
+import org.cache2k.benchmark.jmh.Cache2kMetricsRecorder;
 import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
-import org.cache2k.benchmark.jmh.MiscResultRecorderProfiler;
+import org.cache2k.benchmark.jmh.RequestRecorder;
 import org.cache2k.benchmark.util.ZipfianPattern;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -37,30 +38,29 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.infra.ThreadParams;
 
-import java.util.Random;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Penetrate loading cache with a Zipfian pattern with distribution sizes
  * (entry count times factor). The cache loader has a penalty by burning CPU cycles.
  *
- * <p>This implementation uses a separate Zipfian pattern generator in each thread,
- * since the generation is not thread safe.
- *
- * <p>Generating the pattern during the benchmark run has some overhead, but when
- * the pattern is precomputed we cannot run the benchmark with huge cache sizes, since
- * the precomputed pattern needs to be bigger than the cache since to avoid the
- * cache is benefiting from repetition. This benchmark is about 40% slower then
- * {@link ZipfianLoopingPrecomputedSequenceLoadingBenchmark} with 100k entry count.
+ * <p>This implementation uses precalculated zipfian sequence. To avoid adaption of the
+ * cache to the repeating sequence the sequence length is much longer than the cache size.
+ * Each thread increments the sequence index by a unique prime number, so that each sequence
+ * used by each thread is unique as well.
  *
  * @author Jens Wilke
  */
 @State(Scope.Benchmark)
-public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
+public class PrecalculatedZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
-  @Param({"110", "500"})
-  public int percent = 0;
+  public static final int[] PRIMES =
+    {31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89};
+
+  @Param({"5"})
+  public int factor = 0;
 
   @Param({"100000", "1000000"})
   public int entryCount = 100_000;
@@ -70,35 +70,26 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
 
   private final DataLoader source = new DataLoader();
 
-  /** Use thread safe RPNG to give each thread state another seed. */
-  final Random offsetSeed = new Random(1802);
-
   @State(Scope.Thread)
   public static class ThreadState {
 
-    ZipfianPattern pattern;
+    int index = 0;
+    int increment;
 
-    @Setup(Level.Iteration)
-    public void setup(ZipfianSequenceLoadingBenchmark benchmark) {
-      pattern = new ZipfianPattern(benchmark.offsetSeed.nextLong(),
-        calculateRange(benchmark.entryCount, benchmark.percent));
+    @Setup
+    public void setup(ThreadParams parms) {
+      increment = PRIMES[parms.getThreadIndex()];
+      System.out.println(parms + ", increment " + increment);
     }
 
-    @TearDown(Level.Iteration)
-    public void tearDown() {
-      pattern = null;
-    }
   }
 
   BenchmarkCache<Integer, Integer> cache;
-
-  static int calculateRange(int entryCount, int factor) {
-    return (int) (entryCount * (factor / 100.0));
-  }
+  Integer[] sequence;
+  int sequenceLen;
 
   @Setup
   public void setupBenchmark() {
-    int range = calculateRange(entryCount, percent);
     BenchmarkCacheFactory f = getFactory();
     if (expiry) {
       f.withExpiry(true);
@@ -109,14 +100,20 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
        this way the benchmark runs on better steady state and jitter is reduced.
        we don't want to measure insert performance, but read + eviction
      */
-    ZipfianPattern generator = new ZipfianPattern(1802, range);
-    for (int i = 0; i < entryCount * 3; i++) {
-      Integer v = generator.next();
+    int range = entryCount * factor;
+    ZipfianPattern pattern = new ZipfianPattern(1802, range);
+    sequenceLen = entryCount * 10;
+    sequence = new Integer[sequenceLen];
+    for (int i = 0; i < sequenceLen; i++) {
+      sequence[i] = pattern.next();
+    }
+    for (int i = 0; i < entryCount; i++) {
+      Integer v = sequence[i];
       cache.put(v, v);
     }
-    String statString = cache.toString();
-    System.out.println("Cache stats after seeding: " + statString);
-    Cache2kMetricsRecorder.saveStatsAfterSetup(statString);
+    String _statString = cache.toString();
+    System.out.println("Cache stats after seeding: " + _statString);
+    Cache2kMetricsRecorder.saveStatsAfterSetup(_statString);
   }
 
   @Setup(Level.Iteration)
@@ -127,18 +124,18 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @TearDown(Level.Iteration)
   public void tearDown() {
     RequestRecorder.recordMissCount(source.missCount.longValue());
-    MiscResultRecorderProfiler.setValue("cacheSize", cache.getSize(), "entries");
     ForcedGcMemoryProfiler.keepReference(this);
-    String statString = cache.toString();
-    System.out.println(statString);
+    String _statString = cache.toString();
+    System.out.println(_statString);
     System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
-    Cache2kMetricsRecorder.recordStatsAfterIteration(statString);
+    Cache2kMetricsRecorder.recordStatsAfterIteration(_statString);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)
   public long operation(ThreadState threadState, RequestRecorder rec) {
     rec.requests++;
-    Integer v = cache.get(threadState.pattern.next());
+    int idx = threadState.index = (threadState.index + threadState.increment) % sequenceLen;
+    Integer v = cache.get(sequence[idx]);
     return v;
   }
 
@@ -151,9 +148,9 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
      * to have a relevant miss penalty.
      */
     @Override
-    public Integer load(Integer key) {
+    public Integer load(final Integer key) {
       missCount.increment();
-      Blackhole.consumeCPU(200);
+      Blackhole.consumeCPU(1000);
       return key * 2 + 11;
     }
 

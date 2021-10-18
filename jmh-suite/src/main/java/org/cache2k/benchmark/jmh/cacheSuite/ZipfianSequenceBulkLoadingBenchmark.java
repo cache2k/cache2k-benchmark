@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.jmh.suite.eviction.symmetrical;
+package org.cache2k.benchmark.jmh.cacheSuite;
 
 /*
  * #%L
@@ -25,8 +25,10 @@ import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BulkBenchmarkCacheLoader;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
+import org.cache2k.benchmark.jmh.Cache2kMetricsRecorder;
 import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
 import org.cache2k.benchmark.jmh.MiscResultRecorderProfiler;
+import org.cache2k.benchmark.jmh.RequestRecorder;
 import org.cache2k.benchmark.util.ZipfianPattern;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -53,7 +55,7 @@ import java.util.concurrent.atomic.LongAdder;
 @State(Scope.Benchmark)
 public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
 
-  public final static int READTHROUGH_OVERHEAD_TOKES = 56789;
+  public final static int READTHROUGH_OVERHEAD_TOKES = 789;
 
   @Param({"110", "500"})
   public int percent = 0;
@@ -72,7 +74,7 @@ public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
   /**
    * Maximum number of entries requested in one bulk request
    */
-  public static final int BULK_COUNT_MAXIMUM = 30;
+  public static final int BULK_COUNT_MAXIMUM = 300;
   public static final int BULK_RANGE = BULK_COUNT_MAXIMUM - BULK_COUNT_MINIMUM;
 
   @Param({"false"})

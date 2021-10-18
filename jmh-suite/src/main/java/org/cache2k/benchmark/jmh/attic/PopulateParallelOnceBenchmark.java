@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.jmh.suite.noEviction.symmetrical;
+package org.cache2k.benchmark.jmh.attic;
 
 /*
  * #%L

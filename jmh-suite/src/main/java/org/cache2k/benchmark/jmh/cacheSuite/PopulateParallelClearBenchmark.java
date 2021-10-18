@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.jmh.suite.noEviction.symmetrical;
+package org.cache2k.benchmark.jmh.cacheSuite;
 
 /*
  * #%L
@@ -22,7 +22,7 @@ package org.cache2k.benchmark.jmh.suite.noEviction.symmetrical;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
-import org.cache2k.benchmark.jmh.suite.eviction.symmetrical.RequestRecorder;
+import org.cache2k.benchmark.jmh.RequestRecorder;
 import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -34,9 +34,7 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.BenchmarkParams;
-import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.infra.ThreadParams;
-import org.openjdk.jmh.results.IterationResult;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

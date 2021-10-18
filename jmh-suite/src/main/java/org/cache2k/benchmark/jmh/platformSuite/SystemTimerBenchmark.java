@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.jmh.platform;
+package org.cache2k.benchmark.jmh.platformSuite;
 
 /*
  * #%L
