@@ -22,6 +22,7 @@ package org.cache2k.benchmark.jmh.attic;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
+import org.cache2k.benchmark.jmh.HeapProfiler;
 import org.cache2k.benchmark.util.AccessPattern;
 import org.cache2k.benchmark.util.ScrambledZipfianPattern;
 import org.openjdk.jmh.annotations.*;
@@ -66,7 +67,7 @@ public class CombinedReadWriteBenchmark extends BenchmarkBase {
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    recordMemoryAndDestroy(cache);
+    HeapProfiler.recordAndClose(cache);
   }
 
   @Benchmark @Group("readOnly") @GroupThreads(4) @BenchmarkMode(Mode.Throughput)

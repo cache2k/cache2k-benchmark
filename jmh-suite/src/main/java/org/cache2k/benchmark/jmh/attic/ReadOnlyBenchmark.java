@@ -25,6 +25,7 @@ import org.apache.commons.math3.random.RandomGenerator;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.Cache2kMetricsRecorder;
+import org.cache2k.benchmark.jmh.HeapProfiler;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Level;
@@ -117,7 +118,7 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
   @TearDown(Level.Trial)
   public void tearDown() {
     Cache2kMetricsRecorder.recordStatsAfterIteration(cache.toString());
-    closeIfNeeded(cache);
+    HeapProfiler.recordAndClose(cache);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

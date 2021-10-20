@@ -22,6 +22,7 @@ package org.cache2k.benchmark.jmh.attic;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
+import org.cache2k.benchmark.jmh.HeapProfiler;
 import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -56,7 +57,7 @@ public class PopulateParallelOnceBenchmark extends BenchmarkBase {
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    recordMemoryAndDestroy(cache);
+    HeapProfiler.recordAndClose(cache);
   }
 
   @AuxCounters @State(Scope.Thread)

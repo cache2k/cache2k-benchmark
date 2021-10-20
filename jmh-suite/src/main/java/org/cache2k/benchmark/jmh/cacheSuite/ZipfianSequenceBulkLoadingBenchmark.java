@@ -26,7 +26,7 @@ import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BulkBenchmarkCacheLoader;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.Cache2kMetricsRecorder;
-import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
+import org.cache2k.benchmark.jmh.HeapProfiler;
 import org.cache2k.benchmark.jmh.MiscResultRecorderProfiler;
 import org.cache2k.benchmark.jmh.RequestRecorder;
 import org.cache2k.benchmark.util.ZipfianPattern;
@@ -140,8 +140,8 @@ public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
     MiscResultRecorderProfiler.addCounter("bulkLoaderCalls", source.bulkCallCount.longValue());
     MiscResultRecorderProfiler.setValue("cacheSize", cache.getSize(), "entries");
     RequestRecorder.recordMissCount(source.bulkMissCount.longValue() + source.singleCallCount.longValue());
-    ForcedGcMemoryProfiler.keepReference(this);
     Cache2kMetricsRecorder.recordStatsAfterIteration(cache.toString());
+    HeapProfiler.recordAndClose(cache);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

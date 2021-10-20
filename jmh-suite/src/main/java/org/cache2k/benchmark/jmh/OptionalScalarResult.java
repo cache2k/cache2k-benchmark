@@ -25,7 +25,10 @@ import org.openjdk.jmh.results.Aggregator;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.ResultRole;
 import org.openjdk.jmh.results.ScalarResult;
+import org.openjdk.jmh.util.ListStatistics;
 import org.openjdk.jmh.util.Statistics;
+
+import java.util.Collection;
 
 /**
  * Same as {@link ScalarResult} but don't fill missing values with 0.
@@ -42,12 +45,12 @@ public class OptionalScalarResult extends Result<OptionalScalarResult> {
 
 	@Override
 	protected Aggregator<OptionalScalarResult> getThreadAggregator() {
-		return new ForcedGcMemoryProfiler.MyScalarResultAggregator();
+		return new MyScalarResultAggregator();
 	}
 
 	@Override
 	protected Aggregator<OptionalScalarResult> getIterationAggregator() {
-		return new ForcedGcMemoryProfiler.MyScalarResultAggregator();
+		return new MyScalarResultAggregator();
 	}
 
 	@Override
@@ -56,5 +59,23 @@ public class OptionalScalarResult extends Result<OptionalScalarResult> {
 	}
 
 	AggregationPolicy getPolicy() { return policy; }
+
+	static class MyScalarResultAggregator implements Aggregator<OptionalScalarResult> {
+
+		@Override
+		public OptionalScalarResult aggregate(Collection<OptionalScalarResult> results) {
+			ListStatistics stats = new ListStatistics();
+			for (OptionalScalarResult r : results) {
+				stats.addValue(r.getScore());
+			}
+			OptionalScalarResult first = results.iterator().next();
+			return new OptionalScalarResult(
+				first.getLabel(),
+				stats,
+				first.getScoreUnit(),
+				first.getPolicy()
+			);
+		}
+	}
 
 }

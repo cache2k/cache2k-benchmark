@@ -75,22 +75,4 @@ public class BenchmarkBase {
     }
   }
 
-  public void recordMemoryAndDestroy(Closeable _closeable) {
-    ForcedGcMemoryProfiler.recordUsedMemory();
-    closeIfNeeded(_closeable);
-  }
-
-  public void closeIfNeeded(final Closeable closeable) {
-    if (closeable != null) {
-      System.out.println();
-      String startString = closeable.toString();
-      System.out.println(startString);
-      System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
-      try {
-        closeable.close();
-      } catch (IOException _ignore) {
-      }
-    }
-  }
-
 }

@@ -29,7 +29,7 @@ import java.util.Map;
  *
  * @author Jens Wilke
  */
-public abstract class BenchmarkCache<K, V> implements Closeable {
+public abstract class BenchmarkCache<K, V> implements AutoCloseable {
 
   /**
    * Return the element that is present in the cache.

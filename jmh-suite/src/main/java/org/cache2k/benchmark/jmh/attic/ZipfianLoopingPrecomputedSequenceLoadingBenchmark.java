@@ -22,6 +22,7 @@ package org.cache2k.benchmark.jmh.attic;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
+import org.cache2k.benchmark.jmh.HeapProfiler;
 import org.cache2k.benchmark.jmh.RequestRecorder;
 import org.cache2k.benchmark.jmh.cacheSuite.ZipfianSequenceLoadingBenchmark;
 import org.cache2k.benchmark.util.ZipfianPattern;
@@ -89,8 +90,7 @@ public class ZipfianLoopingPrecomputedSequenceLoadingBenchmark extends Benchmark
   @TearDown(Level.Iteration)
   public void tearDown() {
     RequestRecorder.recordMissCount(source.missCount.longValue());
-    recordMemoryAndDestroy(cache);
-    cache = null;
+    HeapProfiler.recordAndClose(cache);
   }
 
   @Benchmark

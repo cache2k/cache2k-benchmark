@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Record the used heap memory of a benchmark iteration by forcing a full garbage collection.
+ * Experimental, not recommended for usage. Use {@link HeapProfiler} instead
  *
  * @author Jens Wilke
  */
@@ -286,24 +287,6 @@ public class ForcedGcMemoryProfiler implements InternalProfiler {
   @Override
   public String getDescription() {
     return "Adds used memory to the result, if recorded via recordUsedMemory()";
-  }
-
-  static class MyScalarResultAggregator implements Aggregator<OptionalScalarResult> {
-
-    @Override
-    public OptionalScalarResult aggregate(Collection<OptionalScalarResult> results) {
-      ListStatistics stats = new ListStatistics();
-      for (OptionalScalarResult r : results) {
-        stats.addValue(r.getScore());
-      }
-      OptionalScalarResult first = results.iterator().next();
-      return new OptionalScalarResult(
-        first.getLabel(),
-        stats,
-        first.getScoreUnit(),
-        first.getPolicy()
-      );
-    }
   }
 
   static class UsageTuple {

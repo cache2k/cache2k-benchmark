@@ -22,6 +22,7 @@ package org.cache2k.benchmark.jmh.attic;
 
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
+import org.cache2k.benchmark.jmh.HeapProfiler;
 import org.cache2k.benchmark.jmh.RequestRecorder;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -87,8 +88,7 @@ public class PrecomputedMultiRandomAccessBenchmark extends BenchmarkBase {
   @TearDown(Level.Iteration)
   public void tearDown() {
     RequestRecorder.updateHitRate();
-    recordMemoryAndDestroy(cache);
-    cache = null;
+    HeapProfiler.recordAndClose(cache);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

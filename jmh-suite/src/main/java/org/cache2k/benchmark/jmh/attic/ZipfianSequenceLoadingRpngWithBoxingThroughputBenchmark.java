@@ -21,7 +21,7 @@ package org.cache2k.benchmark.jmh.attic;
  */
 
 import org.cache2k.benchmark.jmh.BenchmarkBase;
-import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
+import org.cache2k.benchmark.jmh.HeapProfiler;
 import org.cache2k.benchmark.jmh.RequestRecorder;
 import org.cache2k.benchmark.jmh.cacheSuite.ZipfianSequenceLoadingBenchmark;
 import org.cache2k.benchmark.util.ZipfianPattern;
@@ -70,12 +70,6 @@ public class ZipfianSequenceLoadingRpngWithBoxingThroughputBenchmark extends Ben
     public void tearDown() {
       pattern = null;
     }
-  }
-
-  @TearDown(Level.Iteration)
-  public void tearDown() {
-    ForcedGcMemoryProfiler.keepReference(this);
-    System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

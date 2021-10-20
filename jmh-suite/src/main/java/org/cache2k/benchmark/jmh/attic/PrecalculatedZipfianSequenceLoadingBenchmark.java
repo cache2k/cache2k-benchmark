@@ -25,7 +25,7 @@ import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
 import org.cache2k.benchmark.jmh.Cache2kMetricsRecorder;
-import org.cache2k.benchmark.jmh.ForcedGcMemoryProfiler;
+import org.cache2k.benchmark.jmh.HeapProfiler;
 import org.cache2k.benchmark.jmh.RequestRecorder;
 import org.cache2k.benchmark.util.ZipfianPattern;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -124,11 +124,11 @@ public class PrecalculatedZipfianSequenceLoadingBenchmark extends BenchmarkBase 
   @TearDown(Level.Iteration)
   public void tearDown() {
     RequestRecorder.recordMissCount(source.missCount.longValue());
-    ForcedGcMemoryProfiler.keepReference(this);
     String _statString = cache.toString();
     System.out.println(_statString);
     System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
     Cache2kMetricsRecorder.recordStatsAfterIteration(_statString);
+    HeapProfiler.recordAndClose(cache);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

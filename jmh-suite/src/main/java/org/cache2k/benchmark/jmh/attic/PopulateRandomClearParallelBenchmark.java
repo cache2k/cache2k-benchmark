@@ -23,6 +23,7 @@ package org.cache2k.benchmark.jmh.attic;
 import it.unimi.dsi.util.XoShiRo256StarStarRandom;
 import org.cache2k.benchmark.BenchmarkCache;
 import org.cache2k.benchmark.jmh.BenchmarkBase;
+import org.cache2k.benchmark.jmh.HeapProfiler;
 import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -42,7 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Insert into the cache and clear at random intervals at average
  * every {@link #AVERAGE_CLEAR_INTERVAL} per thread.
  *
- * @see PopulateParallelBenchmark
+ * @see org.cache2k.benchmark.jmh.cacheSuite.PopulateParallelClearBenchmark
  */
 @State(Scope.Benchmark)
 public class PopulateRandomClearParallelBenchmark extends BenchmarkBase {
@@ -61,7 +62,7 @@ public class PopulateRandomClearParallelBenchmark extends BenchmarkBase {
 
   @TearDown(Level.Iteration)
   public void tearDown() {
-    recordMemoryAndDestroy(cache);
+    HeapProfiler.recordAndClose(cache);
   }
 
   @State(Scope.Thread) @AuxCounters
