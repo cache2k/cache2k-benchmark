@@ -25,20 +25,19 @@ import com.github.benmanes.caffeine.cache.CacheLoader;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.cache2k.benchmark.BenchmarkCache;
-import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
 import org.cache2k.benchmark.BulkBenchmarkCacheLoader;
 import org.cache2k.benchmark.ProductCacheFactory;
-import org.cache2k.io.BulkCacheLoader;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Factory for Caffeine
+ * Factory for Caffeine cache
  *
  * @author Jens Wilke
  */
@@ -47,6 +46,10 @@ public class CaffeineCacheFactory extends ProductCacheFactory {
   private boolean sameThreadEviction = false;
   private boolean fullEvictionCapacity = false;
 
+  /**
+   * Runs eviction tasks within the calling thread. Otherwise eviction tasks are delayed
+   * leading to false results when benchmarking eviction efficiency on access traces.
+   */
   public CaffeineCacheFactory sameThreadEviction(boolean f) {
     sameThreadEviction = f;
     return this;
@@ -71,7 +74,7 @@ public class CaffeineCacheFactory extends ProductCacheFactory {
     if (loader instanceof BulkBenchmarkCacheLoader) {
       l = new CacheLoader<K, V>() {
         @Override
-        public @Nullable V load(@NonNull K key) throws Exception {
+        public @Nullable V load(@NonNull K key) {
           return loader.load(key);
         }
         @Override
@@ -136,6 +139,10 @@ public class CaffeineCacheFactory extends ProductCacheFactory {
     @Override
     public void clear() { cache.asMap().clear(); }
 
+    @Override
+    public Iterator<K> keys() {
+      return cache.asMap().keySet().iterator();
+    }
   }
 
   static class MyLoadingBenchmarkCache<K, V> extends BenchmarkCache<K, V> {
@@ -173,6 +180,10 @@ public class CaffeineCacheFactory extends ProductCacheFactory {
     @Override
     public void clear() { cache.asMap().clear(); }
 
+    @Override
+    public Iterator<K> keys() {
+      return cache.asMap().keySet().iterator();
+    }
   }
 
 }

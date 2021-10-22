@@ -20,6 +20,7 @@ package org.cache2k.benchmark;
  * #L%
  */
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -75,6 +76,10 @@ public class ConcurrentHashMapFactory extends BenchmarkCacheFactory<EvictionTuni
     @Override
     public void clear() { map.clear(); }
 
+    @Override
+    public Iterator<K> keys() {
+      return map.keySet().iterator();
+    }
   }
 
 }

@@ -32,6 +32,7 @@ import org.cache2k.event.CacheEntryEvictedListener;
 import org.cache2k.event.CacheEntryUpdatedListener;
 import org.cache2k.io.BulkCacheLoader;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -82,6 +83,12 @@ public class Cache2kFactory extends ProductCacheFactory {
       public String toString() {
         return cache.toString();
       }
+
+      @Override
+      public Iterator<K> keys() {
+        return cache.keys().iterator();
+      }
+
     };
   }
 

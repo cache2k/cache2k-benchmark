@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @State(Scope.Benchmark)
 public class PopulateParallelOnceBenchmark extends BenchmarkBase {
 
-  @Param({ "2000000", "4000000", "8000000"})
+  @Param({"4000000"})
   public int entryCount = 1000 * 1000;
   protected final AtomicInteger offset = new AtomicInteger(0);
 
@@ -52,7 +52,16 @@ public class PopulateParallelOnceBenchmark extends BenchmarkBase {
 
   @Setup(Level.Iteration)
   public void setup() {
+    offset.set(0);
+    if (cache != null) {
+      cache.close();
+    }
     cache = getFactory().create(Integer.class, Integer.class, entryCount);
+  }
+
+  @TearDown()
+  public void tearDown() {
+    HeapProfiler.keepReference(cache);
   }
 
   @AuxCounters @State(Scope.Thread)

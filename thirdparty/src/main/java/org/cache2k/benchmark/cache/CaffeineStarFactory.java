@@ -21,6 +21,8 @@ package org.cache2k.benchmark.cache;
  */
 
 /**
+ * Caffeine tuned for optimum eviction.
+ *
  * @author Jens Wilke
  */
 public class CaffeineStarFactory extends CaffeineCacheFactory {

@@ -77,4 +77,8 @@ public abstract class BenchmarkCache<K, V> implements AutoCloseable {
 
   public void clear() { throw new UnsupportedOperationException(); }
 
+  public Iterator<K> keys() {
+    throw new UnsupportedOperationException();
+  }
+
 }

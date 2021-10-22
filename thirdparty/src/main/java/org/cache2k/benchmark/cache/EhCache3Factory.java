@@ -21,18 +21,18 @@ package org.cache2k.benchmark.cache;
  */
 
 import org.cache2k.benchmark.BenchmarkCache;
-import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
 import org.cache2k.benchmark.BulkBenchmarkCacheLoader;
 import org.cache2k.benchmark.ProductCacheFactory;
+import org.ehcache.Cache;
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.spi.loaderwriter.BulkCacheLoadingException;
 import org.ehcache.spi.loaderwriter.CacheLoaderWriter;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -146,6 +146,21 @@ public class EhCache3Factory extends ProductCacheFactory {
     @Override
     public void clear() { cache.clear(); }
 
+    @Override
+    public Iterator<K> keys() {
+      Iterator<Cache.Entry<K, V>> entryIterator = cache.iterator();
+      return new Iterator<K>() {
+        @Override
+        public boolean hasNext() {
+          return entryIterator.hasNext();
+        }
+
+        @Override
+        public K next() {
+          return entryIterator.next().getKey();
+        }
+      };
+    }
   }
 
 }
