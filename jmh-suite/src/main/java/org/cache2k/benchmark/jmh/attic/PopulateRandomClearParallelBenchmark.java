@@ -60,10 +60,12 @@ public class PopulateRandomClearParallelBenchmark extends BenchmarkBase {
     cache = getFactory().create(Integer.class, Integer.class, ENTRY_COUNT);
   }
 
-  @TearDown(Level.Iteration)
-  public void tearDown() {
-    HeapProfiler.recordAndClose(cache);
-  }
+  /**
+   * Mind that the memory metric does not make sense for this benchmark, since the benchmark
+   * iteration might stop arbitrary in between the insert phase.
+   */
+  @TearDown
+  public void tearDown() { HeapProfiler.keepReference(cache); }
 
   @State(Scope.Thread) @AuxCounters
   public static class ThreadState {

@@ -141,7 +141,11 @@ public class ZipfianSequenceBulkLoadingBenchmark extends BenchmarkBase {
     MiscResultRecorderProfiler.setValue("cacheSize", cache.getSize(), "entries");
     RequestRecorder.recordMissCount(source.bulkMissCount.longValue() + source.singleCallCount.longValue());
     Cache2kMetricsRecorder.recordStatsAfterIteration(cache.toString());
-    HeapProfiler.recordAndClose(cache);
+  }
+
+  @TearDown()
+  public void tearDownBenchmark() {
+    HeapProfiler.keepReference(cache);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

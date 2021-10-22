@@ -124,11 +124,9 @@ public class PrecalculatedZipfianSequenceLoadingBenchmark extends BenchmarkBase 
   @TearDown(Level.Iteration)
   public void tearDown() {
     RequestRecorder.recordMissCount(source.missCount.longValue());
-    String _statString = cache.toString();
-    System.out.println(_statString);
-    System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
-    Cache2kMetricsRecorder.recordStatsAfterIteration(_statString);
-    HeapProfiler.recordAndClose(cache);
+    String statString = cache.toString();
+    System.out.println(statString);
+    Cache2kMetricsRecorder.recordStatsAfterIteration(statString);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

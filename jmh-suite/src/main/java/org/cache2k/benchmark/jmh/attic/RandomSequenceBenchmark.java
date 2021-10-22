@@ -91,7 +91,6 @@ public class RandomSequenceBenchmark extends BenchmarkBase {
     System.out.println(_statString);
     System.out.println("availableProcessors: " + Runtime.getRuntime().availableProcessors());
     Cache2kMetricsRecorder.recordStatsAfterIteration(_statString);
-    HeapProfiler.recordAndClose(cache);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

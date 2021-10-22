@@ -59,16 +59,21 @@ public class PopulateParallelClearBenchmark extends BenchmarkBase {
   BenchmarkCache<Integer, Integer> cache;
   AtomicInteger clearArbiter = new AtomicInteger();
 
-  @SuppressWarnings("unchecked")
-  @Setup(Level.Iteration)
-  public void setup() {
-    clearArbiter.set(0);
+  @Setup
+  public void setupBenchmark() {
     cache = getFactory().create(Integer.class, Integer.class, entryCount);
   }
 
-  @TearDown(Level.Iteration)
-  public void tearDown() {
-    HeapProfiler.recordAndClose(cache);
+  @SuppressWarnings("unchecked")
+  @Setup(Level.Iteration)
+  public void setup() {
+    cache.clear();
+    clearArbiter.set(0);
+  }
+
+  @TearDown
+  public void tearDownBenchmark() {
+    HeapProfiler.keepReference(cache);
   }
 
   @State(Scope.Thread) @AuxCounters

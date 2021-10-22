@@ -88,7 +88,6 @@ public class PrecomputedMultiRandomAccessBenchmark extends BenchmarkBase {
   @TearDown(Level.Iteration)
   public void tearDown() {
     RequestRecorder.updateHitRate();
-    HeapProfiler.recordAndClose(cache);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

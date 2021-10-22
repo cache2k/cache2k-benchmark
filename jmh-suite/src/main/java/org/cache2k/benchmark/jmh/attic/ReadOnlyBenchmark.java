@@ -118,7 +118,6 @@ public class ReadOnlyBenchmark extends BenchmarkBase {
   @TearDown(Level.Trial)
   public void tearDown() {
     Cache2kMetricsRecorder.recordStatsAfterIteration(cache.toString());
-    HeapProfiler.recordAndClose(cache);
   }
 
   @Benchmark @BenchmarkMode(Mode.Throughput)

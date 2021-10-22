@@ -55,11 +55,6 @@ public class PopulateParallelOnceBenchmark extends BenchmarkBase {
     cache = getFactory().create(Integer.class, Integer.class, entryCount);
   }
 
-  @TearDown(Level.Iteration)
-  public void tearDown() {
-    HeapProfiler.recordAndClose(cache);
-  }
-
   @AuxCounters @State(Scope.Thread)
   public static class ThreadState {
     public long operations;

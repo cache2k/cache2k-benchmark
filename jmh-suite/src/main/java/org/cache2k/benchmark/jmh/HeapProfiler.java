@@ -20,6 +20,7 @@ package org.cache2k.benchmark.jmh;
  * #L%
  */
 
+import org.cache2k.benchmark.BenchmarkCache;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.IterationParams;
 import org.openjdk.jmh.profile.InternalProfiler;
@@ -47,35 +48,9 @@ import java.util.List;
  * will result in a garbage collection in the VM running the benchmark, this is never
  * done in between iterations.
  *
- * Recording is only possible if the benchmark is calling the method
- * {@link #recordAndClose(AutoCloseable)}
- *
  * @author Jens Wilke
  */
 public class HeapProfiler implements InternalProfiler {
-
-  private static volatile AutoCloseable reference;
-  private static volatile boolean enabled = false;
-
-  /**
-   * If profiler is enabled, keeps the reference and profiles the heap usage after
-   * the final iteration. If profiler is not enabled, just close.
-   */
-  public static void recordAndClose(AutoCloseable referenceToKeep) {
-    reference = referenceToKeep;
-    if (!enabled) {
-      closeTarget();
-    }
-  }
-
-  private static void closeTarget() {
-    try {
-      reference.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    reference = null;
-  }
 
   private static String getJmapExcutable() {
       String javaHome = System.getProperty("java.home");
@@ -136,6 +111,15 @@ public class HeapProfiler implements InternalProfiler {
     return totalBytes;
   }
 
+  private static Object reference;
+
+  /**
+   * Prevent object from being garbage collected at the last iteration.
+   */
+  public static void keepReference(Object target) {
+    reference = target;
+  }
+
   int iterationNumber = 0;
 
   @Override
@@ -146,23 +130,15 @@ public class HeapProfiler implements InternalProfiler {
       || iterationParams.getCount() != ++iterationNumber) {
       return Collections.emptyList();
     }
-    if (reference == null) {
-      throw new IllegalArgumentException(
-        "Benchmark is not calling recordAndClose() profiler method to" +
-        " keep object reference of measure target.");
-    }
     long bytes = printHeapHistogram(System.out, 30);
     List<Result> l = Arrays.asList(
-      new OptionalScalarResult("+activeObjectsBytes", (double) bytes, "bytes", AggregationPolicy.AVG)
+      new OptionalScalarResult("+liveObjects", (double) bytes, "bytes", AggregationPolicy.AVG)
     );
-    closeTarget();
     return l;
   }
 
   @Override
-  public void beforeIteration(BenchmarkParams benchmarkParams, IterationParams iterationParams) {
-    enabled = true;
-  }
+  public void beforeIteration(BenchmarkParams benchmarkParams, IterationParams iterationParams) { }
 
   @Override
   public String getDescription() {

@@ -65,11 +65,6 @@ public class CombinedReadWriteBenchmark extends BenchmarkBase {
     }
   }
 
-  @TearDown(Level.Iteration)
-  public void tearDown() {
-    HeapProfiler.recordAndClose(cache);
-  }
-
   @Benchmark @Group("readOnly") @GroupThreads(4) @BenchmarkMode(Mode.Throughput)
   public Integer readOnly(ThreadState threadState) {
     return cache.get(ints[threadState.index++ & MASK]);

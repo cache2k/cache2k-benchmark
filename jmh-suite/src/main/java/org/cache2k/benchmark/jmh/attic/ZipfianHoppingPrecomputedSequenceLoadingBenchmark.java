@@ -95,7 +95,6 @@ public class ZipfianHoppingPrecomputedSequenceLoadingBenchmark extends Benchmark
   @TearDown(Level.Iteration)
   public void tearDown() {
     RequestRecorder.recordMissCount(source.missCount.longValue());
-    HeapProfiler.recordAndClose(cache);
   }
 
   @Benchmark
