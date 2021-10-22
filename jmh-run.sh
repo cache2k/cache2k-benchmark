@@ -15,7 +15,7 @@ test -n "$BENCHMARK_THREADS" || {
 BENCHMARK_THREADS="2 4 8";
 CPU_COUNT=`cat /proc/cpuinfo | grep "^processor" | wc -l`;
 echo "CPU_COUNT=$CPU_COUNT";
-if [ $CPU_COUNT = 32 ]; then
+if [ $CPU_COUNT -gt 31 ]; then
   BENCHMARK_THREADS="4 8 16 32";
 fi
 }
@@ -43,13 +43,13 @@ test -n "$BENCHMARK_JVM_ARGS" || BENCHMARK_JVM_ARGS="-server -XX:BiasedLockingSt
 test -n "$BENCHMARK_QUICK" || BENCHMARK_QUICK="-f 1 -wi 1 -w 1s -i 1 -r 1s -foe true";
 
 # have fast but at least three iterations to detect outliers
-# test -n "$BENCHMARK_NORMAL" || BENCHMARK_NORMAL="-f 2 -wi 2 -w 10s -i 3 -r 10s";
 test -n "$BENCHMARK_NORMAL" || BENCHMARK_NORMAL="-f 1 -wi 2 -w 5s -i 3 -r 5s";
+# test -n "$BENCHMARK_NORMAL" || BENCHMARK_NORMAL="-f 1 -wi 2 -w 2s -i 3 -r 2s";
 
 # -f 2 / -i 2 has not enough confidence, there is sometimes one outlier
 # 2 full warmups otherwise there is big jitter with G1
 # -gc true: careful with -gc true, this seems to influence the measures performance significantly
-test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 2 -wi 2 -w 10s -i 3 -r 10s";
+test -n "$BENCHMARK_DILIGENT" || BENCHMARK_DILIGENT="-f 3 -wi 2 -w 10s -i 3 -r 10s";
 
 # longer test run for expiry tests
 test -n "$BENCHMARK_DILIGENT_LONG" || BENCHMARK_DILIGENT_LONG="-f 2 -wi 1 -w 180s -i 2 -r 180s";
@@ -96,6 +96,7 @@ STANDARD_PROFILER="-prof comp -prof gc";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.LinuxVmProfiler";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.MiscResultRecorderProfiler";
 STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.GcProfiler";
+STANDARD_PROFILER="$STANDARD_PROFILER -prof org.cache2k.benchmark.jmh.HeapProfiler";
 
 EXTRA_PROFILER="";
 
@@ -414,6 +415,29 @@ for impl in $COMPLETE; do
 done
 }
 
+
+benchmark() {
+local impl="$1";
+local benchmark="$2";
+local threads="$3";
+factory="`echo "$implementations" | awk "/^$impl / { print substr(\\$0, length(\\$1) + 2); }"`"
+runid="$impl-$benchmark-$threads";
+fn="$TARGET/result-$runid";
+echo;
+echo "## $runid";
+sync
+limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER  $EXTRA_PROFILER \
+     $EXTRA_PARAMETERS -t $threads -p shortName=$impl $factory \
+     -rf json -rff "$fn.json" \
+     2>&1 | tee $fn.out | filterProgress
+if test -n "$dry"; then
+  cat $fn.out;
+else
+  echo "=> $fn.out";
+fi
+}
+
+
 complete() {
 #
 # Expiry: Multi threaded with variable thread counts, with eviction and expiry
@@ -446,29 +470,27 @@ done
 #
 # Multi threaded with variable thread counts, with eviction
 #
-benchmarks="ZipfianSequenceLoadingBenchmark PopulateParallelClearBenchmark ZipfianSequenceBulkLoadingBenchmark";
+# benchmarks we still monitor, but do not run through all thread variations
+reducedBenchmarks="ZipfianSequenceBulkLoadingBenchmark"
+# current benchmarks with detailed output
+benchmarks="ZipfianSequenceLoadingBenchmark PopulateParallelClearBenchmark";
 echo $BENCHMARK_IMPLS;
 for impl in $BENCHMARK_IMPLS; do
   for benchmark in $benchmarks; do
     for threads in $BENCHMARK_THREADS; do
-      factory="`echo "$implementations" | awk "/^$impl / { print substr(\\$0, length(\\$1) + 2); }"`"
-      runid="$impl-$benchmark-$threads";
-      fn="$TARGET/result-$runid";
-      echo;
-      echo "## $runid";
-      sync
-      limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER  $EXTRA_PROFILER \
-           $EXTRA_PARAMETERS -t $threads -p shortName=$impl $factory \
-           -rf json -rff "$fn.json" \
-           2>&1 | tee $fn.out | filterProgress
-      if test -n "$dry"; then
-        cat $fn.out;
-      else
-        echo "=> $fn.out";
-      fi
+      benchmark $impl $benchmark $threads;
     done
   done
 done
+# run this set of benchmarks with less threads
+for impl in $BENCHMARK_IMPLS; do
+  for benchmark in $reducedBenchmarks; do
+    for threads in 8; do
+      benchmark $impl $benchmark $threads;
+    done
+  done
+done
+
 
 #
 # Multi threaded asymmetrical/fixed thread counts, no eviction needed, use always 4 cores
