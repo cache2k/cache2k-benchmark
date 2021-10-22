@@ -30,25 +30,25 @@ import org.cache2k.benchmark.prototype.LinkedEntry;
  */
 public class LruEviction<K,V> extends EvictionPolicy<K, V, LruEviction.Entry> {
 
-	private Entry head = new Entry(null,null).shortCircuit();
+	private final Entry head = new Entry(null,null).shortCircuit();
 
 	/**
 	 * Created via reflection.
 	 */
 	@SuppressWarnings("unused")
-	public LruEviction(final int capacity) {
+	public LruEviction(int capacity) {
 		super(capacity);
 	}
 
 	@Override
-	public Entry newEntry(final K key, final V value) {
+	public Entry newEntry(K key, V value) {
 		Entry e = new Entry(key, value);
 		head.insertInList(e);
 		return e;
 	}
 
 	@Override
-	public void recordHit(final Entry e) {
+	public void recordHit(Entry e) {
 		head.moveToFront(e);
 	}
 
@@ -58,18 +58,18 @@ public class LruEviction<K,V> extends EvictionPolicy<K, V, LruEviction.Entry> {
 	}
 
 	@Override
-	public void close(final long expectedSize) {
+	public void close(long expectedSize) {
 		assert expectedSize == head.listSize();
 	}
 
 	@Override
-	public void remove(final Entry e) {
+	public void remove(Entry e) {
 		e.removedFromList();
 	}
 
 	static class Entry extends LinkedEntry<Entry, Object, Object> {
 
-		public Entry(final Object _key, final Object _value) {
+		public Entry(Object _key, Object _value) {
 			super(_key, _value);
 		}
 
