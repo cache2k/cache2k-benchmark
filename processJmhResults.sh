@@ -453,7 +453,7 @@ gnuplot "${in}-notitle-print.plot";
 # TODO: fix normed allocation rate
 memoryMetricsHeader() {
 echo -n "product";
-for I in maxCommitted.afterGc VmHWM maxUsed.afterGc VmRSS.fin "allocRate(byte/s)" "allocRate(byte/op)"; do
+for I in maxCommitted.afterGc VmHWM maxUsed.afterGc VmRSS.fin liveObjects "allocRate(byte/s)" "allocRate(byte/op)"; do
   echo -n " $I error lower upper";
 done
 echo;
@@ -487,6 +487,10 @@ local query=`cat << EOF
     .["secondaryMetrics"]["+linux.proc.status.VmRSS"].scoreError * 1000,
     .["secondaryMetrics"]["+linux.proc.status.VmRSS"].scoreConfidence[0] * 1000,
     .["secondaryMetrics"]["+linux.proc.status.VmRSS"].scoreConfidence[1] * 1000,
+    .["secondaryMetrics"]["+liveObjects"].score,
+    .["secondaryMetrics"]["+liveObjects"].scoreError,
+    .["secondaryMetrics"]["+liveObjects"].scoreConfidence[0],
+    .["secondaryMetrics"]["+liveObjects"].scoreConfidence[1],
     .["secondaryMetrics"]["·gc.alloc.rate"].score * 1000 * 1000,
     .["secondaryMetrics"]["·gc.alloc.rate"].scoreError * 1000 * 1000,
     .["secondaryMetrics"]["·gc.alloc.rate"].scoreConfidence[0] * 1000 * 1000,
@@ -511,7 +515,6 @@ sed 's/^[^ ]* \(.*\)/\1/'
 memoryMetrics() {
   local benchmark="$1";
   local param="$2";
-  memoryMetricsHeader;
   local tmp="$RESULT/tmp-memoryMetrics-$benchmark-$param.data"
   test -f "$tmp" || extractMemoryMetrics $benchmark $param | tr , " " | shortenParamValues > "$tmp"
   cat "$tmp"
@@ -558,6 +561,7 @@ local param="$2";
 local key="$3";
   f=$RESULT/${benchmark}Memory$key$variant.dat
   (
+    memoryMetricsHeader
     memoryMetrics "$benchmark" "$param" | grep "^$key" | stripFirstColumn | cacheShortNames \
     | { if test -n "$sort"; then sort -k$(( ( $startIndex - 1) * 4 + 2 )) -g; else cat -; fi } \
     | grep "$filter" || true
@@ -764,6 +768,18 @@ local query=`cat << EOF
 .[] |  select (.benchmark | contains (".${name}") ) |
   [ (.threads | tostring) +  "-" + .params.entryCount + "-" + .params.$param,
      .params.cacheFactory,
+     .["secondaryMetrics"]["+misc.requests.throughput"].score,
+     .["secondaryMetrics"]["+misc.requests.throughput"].scoreError,
+     .["secondaryMetrics"]["+misc.requests.throughput"].scoreConfidence[0],
+     .["secondaryMetrics"]["+misc.requests.throughput"].scoreConfidence[1]
+  ] | @csv
+EOF
+`
+# request throughput based on AuxCounters
+local queryAuxCounters=`cat << EOF
+.[] |  select (.benchmark | contains (".${name}") ) |
+  [ (.threads | tostring) +  "-" + .params.entryCount + "-" + .params.$param,
+     .params.cacheFactory,
      .["secondaryMetrics"]["requests"].score,
      .["secondaryMetrics"]["requests"].scoreError,
      .["secondaryMetrics"]["requests"].scoreConfidence[0],
@@ -771,6 +787,7 @@ local query=`cat << EOF
   ] | @csv
 EOF
 `
+
 
 test -f "$tmp" || json | \
     jq -r "$query" | \
@@ -828,12 +845,39 @@ result=$RESULT/data.json
 cat $RESULT/result-*.json | awk '/^]/ { f=1; g=0; next; } f && /^\[/ { g=1; f=0; next; } g { print "  ,"; g=0; } { print; } END { print "]"; }' > $result
 }
 
+websiteResult="`cat - << "EOF"
+PopulateParallelOnceBenchmark-byThreads-4M
+PopulateParallelTwiceBenchmark-byThreads-4M
+ZipfianSequenceLoadingBenchmark-byThread-1Mx110
+ZipfianSequenceLoadingBenchmark-byThread-1Mx500
+ZipfianSequenceLoadingBenchmarkEffectiveHitrate-byThread-1Mx110
+ZipfianSequenceLoadingBenchmarkEffectiveHitrate-byThread-1Mx500
+ZipfianSequenceLoadingBenchmarkMemory4-1M-500-liveObjects-sorted
+ZipfianSequenceLoadingBenchmarkMemory4-1M-500-VmHWM-sorted
+PopulateParallelClearBenchmark
+EOF
+`"
+
+websiteResultGrep=`echo "$websiteResult" | awk '{print $0"|"; }'`;
+
 typesetPlainMarkDown() {
 (
-echo "![]($1-notitle.svg)"
-echo "*$2 ([Alternative image]($1-notitle-print.svg), [Data file]($1.dat))*"
+echo "![](benchmark-result/$1-notitle.svg)"
+echo
+echo "*$2 ([Alternative image](benchmark-result/$1-notitle-print.svg), [Data file](benchmark-result/$1.dat))*"
 echo;
 ) >> $RESULT/typeset-plain.md
+# find substring, see: https://stackoverflow.com/questions/229551/how-to-check-if-a-string-contains-a-substring-in-bash
+if [[ "$websiteResultGrep" == *"$1|"* ]]; then
+  (
+  echo "![](benchmark-result/$1-notitle.svg)"
+  echo
+  echo "*$2 ([Alternative image](benchmark-result/$1-notitle-print.svg), [Data file](benchmark-result/$1.dat))*"
+  echo;
+  ) >> $RESULT/website.md
+  mkdir -p $RESULT/benchmark-result;
+  cp -a $RESULT/$1-notitle.svg $RESULT/$1.dat $RESULT/$1-notitle-print.svg $RESULT/benchmark-result/
+fi
 }
 
 typesetAsciiDoc() {
@@ -852,8 +896,11 @@ echo;
 cleanTypesetting() {
 echo -n > $RESULT/typeset-plain.md
 echo -n > $RESULT/typeset.adoc
+echo -n > $RESULT/website.md
+rm -rf $RESULT/benchmark-result
 }
 
+# add graph to result report
 graph() {
 test -f $RESULT/$1-notitle.svg || return 0;
 typesetPlainMarkDown "$1" "$2";
@@ -861,12 +908,12 @@ typesetAsciiDoc "$1" "$2";
 }
 
 processGraphs() {
-noBenchmark PopulateParallelOnceBenchmark || {
-    I=PopulateParallelOnceBenchmark;
+for I in PopulateParallelOnceBenchmark PopulateParallelTwiceBenchmark; do
+noBenchmark $I || {
     plotRuntime I runtime;
     graph "$graphName" "I";
 
-    for T in 1 2 4; do
+    for T in 4; do
       plotRuntime $I hitRate "bySize-${T}" "^$T-.*";
       graph "$graphName" "$I, runtime by size for ${T} threads";
     done
@@ -875,8 +922,8 @@ noBenchmark PopulateParallelOnceBenchmark || {
       plotRuntime $I hitRate "byThreads-${S}" "^.*-${S}";
       graph "$graphName" "$I, runtime by thread count for ${S} cache size";
     done
-
 }
+done
 
 benchmarks="ReadOnlyBenchmark"
 for I in $benchmarks; do
@@ -970,11 +1017,6 @@ THREADS="2 4 8 16 32"
 PERCENT="110 500"
 MEMORY="100K 1M 10M"
 
-# no detailed reports
-MEMORY="";
-PERCENT="";
-THREADS="";
-
 # benchmarks with percent parameter
 param=percent;
 txt="Zipfian distribution percentage"
@@ -986,12 +1028,16 @@ for I in $benchmarks; do
       plotEffectiveHitrate $I $param;
       graph "$graphName" "$I, Effective hitrate by $txt (complete)";
 
-     thread=16; size=1M; percent=500;
+     thread=4; size=1M; percent=500;
      plotMem --startIndex 1 --endIndex 1 --variant "-heapCommittedAfterGc" $name $param "$thread-$size-$percent";
-     graph "$graphName" "$name, $txt, max heap committed after gc";
+     graph "$graphName" "$name, $txt, $thread threads, $size cache entries, $txt $percent, maximum heap committed after regular gc";
 
      plotMem --startIndex 2 --endIndex 2 --sort --variant "-VmHWM-sorted" $name $param "$thread-$size-$percent";
      graph "$graphName" "$name, $thread threads, $size cache entries, $txt $percent, peak memory usage reported by the operating system (VmHWM), sorted by best performance";
+
+     plotMem --startIndex 5 --endIndex 5 --sort --variant "-liveObjects-sorted" $name $param "$thread-$size-$percent";
+     graph "$graphName" "$name, $thread threads, $size cache entries, $txt $percent, total bytes of live objects as reported by jmap";
+
 
      # plotMem --startIndex 4 --endIndex 4 --variant "-totalHeapAfterGc" $name $param "$focus";
     # graph "$graphName" "$name, $txt, total heap used after gc";
@@ -1007,9 +1053,34 @@ for I in $benchmarks; do
 #     plotStaticPeakMem $name factor "$thread-$size-$factor";
 #     graph "$graphName" "$name, $thread threads, $size cache entries, Zipfian factor $factor, static and peak memory usage";
 
+# needs fixing
+#      plotMem $I $param;
+#      graph "$graphName" "$I, mem by $txt (complete)";
 
-      plotMem $I $param;
-      graph "$graphName" "$I, mem by $txt (complete)";
+      THREAD_MATCH=".*";
+      THREAD_NAME="any";
+      for P in $PERCENT; do
+        plotOps $I percent "bySize-${THREAD_NAME}x$P" "^$THREAD_MATCH-.*-$P .*";
+        graph "$graphName" "$I, operations per second by cache size at $THREAD_NAME threads and Zipfian percentage $P";
+        plotEffectiveHitrate $I percent "bySize-${THREAD_NAME}x$P" "^$THREAD_MATCH-.*-$P .*";
+        graph "$graphName" "$I, effective hit rate by cache size at $THREAD_NAME threads and Zipfian percentage $P";
+        plotScanCount $I percent "bySize-${THREAD_NAME}x$P" "^$THREAD_MATCH-.*-$P .*";
+        graph "$graphName" "$I, scan count by cache size at $THREAD_NAME threads and Zipfian percentage $P";
+      done
+
+      for S in $MEMORY; do
+        for P in $PERCENT; do
+          plotOps $I percent "byThread-${S}x$P" "^.*-${S}-$P .*";
+          graph "$graphName" "$I, operations per second by thread count with cache size ${S} and Zipfian percentage $P";
+          plotEffectiveHitrate $I percent "byThread-${S}x$P" "^.*-${S}-$P .*";
+          graph "$graphName" "$I, effective hit rate by thread count with cache size $S  and Zipfian percentage $P";
+        done
+      done
+
+# no detailed reports
+MEMORY="";
+PERCENT="";
+THREADS="";
 
       for TC in $THREADS; do
         for P in $PERCENT; do
@@ -1019,13 +1090,6 @@ for I in $benchmarks; do
           graph "$graphName" "$I, effective hit rate by cache size at $TC threads and Zipfian percentage $P";
           plotScanCount $I percent "bySize-${TC}x$P" "^$TC-.*-$P .*";
           graph "$graphName" "$I, scan count by cache size at $TC threads and Zipfian percentage $P";
-        done
-      done
-
-      for S in $MEMORY; do
-        for P in $PERCENT; do
-          plotOps $I percent "byThread-${S}x$P" "^.*-${S}-$P .*";
-          graph "$graphName" "$I, operations per second by thread count with cache size ${S} and Zipfian percentage $P";
         done
       done
 
@@ -1044,51 +1108,32 @@ for I in $benchmarks; do
 done
 
 # benchmark which have no additional parameter
-benchmarks="PopulateParallelClearBenchmark"
+benchmarks="PopulateParallelClearBenchmark IterationBenchmark"
 for I in $benchmarks; do
   noBenchmark $I || {
       plotOps $I none;
-      graph "$graphName" "$I, operations per second by Zipfian distribution percentage (complete)";
-#      plotEffectiveHitrate $I factor;
-#      graph "$graphName" "$I, Effective hitrate by Zipfian distribution factor (complete)";
+      graph "$graphName" "$I, operations per second (complete)";
 
-       asdf
+     param=none;
+     thread=16; size=100K;
+     plotMem --startIndex 1 --endIndex 1 --variant "-heapCommittedAfterGc" $name $param "$thread-$size";
+     graph "$graphName" "$name, $txt, $thread threads, $size cache entries,maximum heap committed after regular gc";
 
-      for TC in 2 4 8; do
-        for P in 110 500; do
-          plotOps $I none "bySize-${TC}x$P" "^$TC-.*-$P .*";
-          graph "$graphName" "$I, operations per second by cache size at $TC threads and Zipfian percentage $P";
-          plotEffectiveHitrate $I none "bySize-${TC}x$P" "^$TC-.*-$P .*";
-          graph "$graphName" "$I, effective hit rate by cache size at $TC threads and Zipfian percentage $P";
-          plotScanCount $I none "bySize-${TC}x$P" "^$TC-.*-$P .*";
-          graph "$graphName" "$I, scan count by cache size at $TC threads and Zipfian percentage $P";
-        done
-      done
+     plotMem --startIndex 2 --endIndex 2 --sort --variant "-VmHWM-sorted" $name $param "$thread-$size";
+     graph "$graphName" "$name, $thread threads, $size cache entries, peak memory usage reported by the operating system (VmHWM), sorted by best performance";
 
-      for S in 100K 1M 10M; do
-        for P in 110 500; do
-          plotOps $I percent "byThread-${S}x$P" "^.*-${S}-$P .*";
-          graph "$graphName" "$I, operations per second by thread count with cache size ${S} and Zipfian percentage $P";
-        done
-      done
-
-      for TC in 2 4 8; do
-          for S in 100K 1M 10M; do
-              plotOps $I percent "byPercent-${S}-${TC}" "^$TC-$S-.* .*";
-              graph "$graphName" "$I, operations per second by Zipfian percentage with cache size ${S} at $TC threads";
-              plotEffectiveHitrate $I percent "byPercent-${S}-${TC}" "^$TC-$S-.* .*";
-              graph "$graphName" "$I, effective hit rate by Zipfian percentage with cache size ${S} at $TC threads";
-              plotScanCount $I percent "byPercent-${S}-${TC}" "^$TC-$S-.* .*";
-              graph "$graphName" "$I, scan count by Zipfian percentage with cache size ${S} at $TC threads";
-          done
-      done
+      # not relevant
+      # plotEffectiveHitrate $I none;
+      # graph "$graphName" "$I, Effective hitrate (complete)";
 
 #      plotMemUsed $I factor;
 #      plotMemUsedSettled $I factor;
   }
 done
 
-asdf
+}
+
+unusedGraphs() {
 
 name=RandomSequenceBenchmark
 noBenchmark $name || {
@@ -1221,6 +1266,8 @@ processGraphs;
 cd $RESULT;
 pandoc -o typeset-plain-markdown.html typeset-plain.md
 echo $RESULT/typeset-plain-markdown.html
+pandoc -o website-markdown.html website.md
+echo $RESULT/website-markdown.html
 asciidoctor -o typeset-adoc.html typeset.adoc
 echo $RESULT/typeset-adoc.html
 )

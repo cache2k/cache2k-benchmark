@@ -113,6 +113,9 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
        fill the cache completely, so memory is already expanded at maximum
        this way the benchmark runs on better steady state and jitter is reduced.
        we don't want to measure insert performance, but read + eviction
+
+       TODO: Better remove that pre population, because it introduces a phase change.
+        The cache sees single thread usage first
      */
     ZipfianPattern generator = new ZipfianPattern(1802, range);
     for (int i = 0; i < entryCount * 3; i++) {

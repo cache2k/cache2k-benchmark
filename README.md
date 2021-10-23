@@ -1,78 +1,33 @@
-# Benchmarks for cache2k
+# Benchmarks for Java In Memory Caches.
 
-This is a benchmark package for cache2k, but also contains general useful utilities for
-general benchmarking and experimenting with caches.
+This project benchmarks Java caches via JMH and also eviction efficiency by
+playing back access traces.
 
-Please see the [cache2k homepage](http://cache2k.org) for a discussion of the benchmark
-results.
-
-## Checkout the benchmark suite
-
-To run the benchmarks for the latest release:
-
-```
-version=v0.21;
-git clone -b $version https://github.com/headissue/cache2k-benchmark.git
-```
-
-Please replace the version, if needed.
-
-You can also checkout and run the benchmarks against the latest cache2k version.
-Please checkout and install the snapshot version of cache2k first:
-
-```
-git clone https://github.com/headissue/cache2k.git
-cd cache2k
-mvn install
-```
+Please see the [cache2k homepage - Benchmarks](http://cache2k.org/benchmarks.html) 
+for a discussion of the benchmark results.
 
 ## Running the eviction benchmarks
 
-The benchmarks are run via JUnit and the Maven surefire plugin.
+The benchmarks are can be run via JUnit and the Maven surefire plugin.
 
 ```
-cd cache2k-benchmark
-mvn -Pbenchmark test
+mvn -DskipTests clean install; mvn -Dtest=EvictionComparisonBenchmark -pl thirdparty test
 ```
-
-There is a shell script provided to draw nice graphics via Gnuplot:
-
-```
-bash processBenchmarkResults.sh copyData
-bash processBenchmarkResults.sh process
-```
-
-The graphics will be put in `target/benchmark-reults`.
 
 ## Running the JMH benchmarks
 
 To run the JHM benchmark suite:
 
 ```
-# compiles the benchmark and produces: jmh-suite/target/benchmarks.jar
-mvn -DskipTests package
-# runs the benchmarks, results are writen to: /var/run/shm/jmh-result
-bash jmh-run.sh
-# generate the graphs
-bash processJmhResults.sh --dir /var/run/shm/jmh-result process
+# compile
+mvn -DskipTests clean package
+# run full suite with maximum detail
+bash jmh-run.sh --diligent complete
+# Alternatively the generated commands can be printed to start JMH manually:
+bash jmh-run.sh --diligent --dry complete
 ```
 
-This requires Linux and gnuplot. Single benchmarks can alternatively be run
-via: `java -jar jmh-suite/target/benchmarks.jar [ jmh-parameters ]`
-
-## The maven modules
-
-### util
-
-Java utility classes for cache benchmarking. Useful in general to produce, merge, read and write access
-traces or endless randomized access patterns. Also has a fast calculation implementation
-of Beladys OPT hitrate.
-
-### thirdparty
-
-Adaption of other cache products (at the moment Infinispan, Google Guava and EHCache) to the benchmark suite.
-
-### traces
+## Traces
 
 Traces which are used within the benchmarks to measure cache efficiency on real world access patterns.
 
@@ -99,5 +54,3 @@ The OLTP trace was used within the ARC paper:
 
 The traces Web07,  Web12, OrmAccessBusy and OrmAccessNight are application traces 
 provided by headissue GmbH under the CC BY 4.0 license.
-
-
