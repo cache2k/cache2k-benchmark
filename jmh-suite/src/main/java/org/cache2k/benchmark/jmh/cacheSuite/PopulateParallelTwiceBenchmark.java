@@ -1,4 +1,4 @@
-package org.cache2k.benchmark.jmh.attic;
+package org.cache2k.benchmark.jmh.cacheSuite;
 
 /*
  * #%L
