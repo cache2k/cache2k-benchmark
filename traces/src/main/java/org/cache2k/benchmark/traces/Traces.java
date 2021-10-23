@@ -44,7 +44,7 @@ public interface Traces {
 
 	TraceSupplier WIKIPEDIA1 =
 		fromLongStream(() -> new WikipediaTraceReader(
-			TraceDirectory.resolveFile("wikipedia/wiki.1190153705.gz")).events())
+			TraceDirectory.resolveFile("wikipedia/wiki.1190153705.gz")).keys())
 			.name("wikipedia1")
 			.sizes(512, 1024, 2048, 4096);
 
@@ -54,7 +54,8 @@ public interface Traces {
 	 * @see CordaTraceReader
 	 */
 	TraceSupplier CORDA_SMALL =
-		fromLongStream(() -> new CordaTraceReader("trace_vaultservice.gz").events())
+		fromLongStream(() -> new CordaTraceReader("trace_vaultservice.gz")
+			.events().mapToLong(x -> x.key()))
 		.name("corda-small")
 		.sizes(512, 1024);
 
@@ -66,7 +67,8 @@ public interface Traces {
 	 */
 	TraceSupplier CORDA_SMALL_10X =
 		of(() ->
-			Patterns.explode(AccessPattern.of(new CordaTraceReader("trace_vaultservice.gz").events().mapToInt(new LongToIntMapper())), 10))
+			Patterns.explode(AccessPattern.of(new CordaTraceReader("trace_vaultservice.gz")
+				.events().mapToLong(x -> x.key()).mapToInt(new LongToIntMapper())), 10))
 			.name("corda-small-10x")
 			.sizes(512 * 10, 1024 * 10);
 
@@ -76,7 +78,7 @@ public interface Traces {
 	 * implementation to ensure correctness.
 	 */
 	TraceSupplier LOOP =
-		fromLongStream(() -> new LirsTraceReader("loop.trace.gz").events())
+		fromLongStream(() -> new LirsTraceReader("loop.trace.gz").keys())
 			.name("loop")
 			.sizes(256, 512);
 
