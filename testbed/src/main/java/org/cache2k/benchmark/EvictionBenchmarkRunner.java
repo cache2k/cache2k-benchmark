@@ -76,6 +76,13 @@ public class EvictionBenchmarkRunner {
       others.addAll(ranking.getAllResults().stream()
         .filter(r -> !r.getImplementationName().equals(realCandidate)));
       out.println();
+      out.println("== Summary - Top 2 ===");
+      out.println("Trace Name | Cache Size | Reference | Hitrate | Best | Hitrate | Diff | " +
+        "2nd-best | Hitrate | Diff");
+      out.println("---------- | ---------: | --------- | ------: | ---- | ------: | ---: | " +
+        "-------- | ------: | ---------:");
+      others.writeTopSummary(out, current, 2);
+      out.println();
       out.println("== Summary - Top 3 ===");
       out.println("trace size reference hitrate best hitrate diff " +
         "2nd-best hitrate diff 3rd-best hitrate diff");
@@ -113,6 +120,7 @@ public class EvictionBenchmarkRunner {
           missCount++;
         }
       }
+      cache.close();
       logHitRate(
         factory, capacity, cache.toString(),
         cache.getEvictionStatistics(), trace, missCount);
