@@ -28,21 +28,21 @@ import java.util.Random;
  * Random generated access pattern. A pseudo random number generator is used,
  * so after initializing always the same number sequence is generated.
  *
- * @author Jens Wilke; created: 2013-11-14
+ * @author Jens Wilke
  */
 public class RandomAccessPattern extends AbstractEternalAccessPattern {
 
-  protected Random rng = new XoShiRo256StarStarRandom();
+  protected Random rng = new XoShiRo256StarStarRandom(1802);
 
   protected int upper;
 
   /**
    * New random number pattern.
    *
-   * @param _upper generates numbers between zero and this minus one.
+   * @param upperBound generates numbers between zero and this minus one.
    */
-  public RandomAccessPattern(int _upper) {
-    upper = _upper;
+  public RandomAccessPattern(int upperBound) {
+    upper = upperBound;
   }
 
   @Override
