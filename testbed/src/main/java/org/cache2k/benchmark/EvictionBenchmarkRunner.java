@@ -120,10 +120,10 @@ public class EvictionBenchmarkRunner {
           missCount++;
         }
       }
-      cache.close();
       logHitRate(
         factory, capacity, cache.toString(),
         cache.getEvictionStatistics(), trace, missCount);
+      cache.close();
     } else {
       SimulatorPolicy policy = ((SimulatorPolicyFactory) factory).create(capacity);
       Integer[] objTrace = trace.getObjectArray();
