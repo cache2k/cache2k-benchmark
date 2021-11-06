@@ -27,7 +27,7 @@ import org.cache2k.benchmark.traces.Traces;
  */
 public class TraceCollections {
 
-	public final static EvictionTestVariation.Builder ALL_TRACES =
+	public static final EvictionTestVariation.Builder ALL_TRACES =
 		new EvictionTestVariation.Builder()
 			.add(Traces.SPRITE)
 			.add(Traces.CPP)
@@ -60,5 +60,39 @@ public class TraceCollections {
 			// .add(Traces.RANDOM_1000_100K)
 			// .add(Traces.RANDOM_1000_10K)
 			;
+
+	public static final EvictionTestVariation.Builder REGRESSION_TRACES =
+		new EvictionTestVariation.Builder()
+			.add(Traces.SPRITE)
+			.add(Traces.CPP)
+			.add(Traces.MULTI2)
+			.add(Traces.GLIMPSE)
+			.add(Traces.OLTP)
+			.add(Traces.ORM_BUSY)
+			.add(Traces.ORM_NIGHT)
+			.add(Traces.WEB07)
+			.add(Traces.WEB12)
+			.add(Traces.FINANCIAL1_1M)
+			.add(Traces.FINANCIAL2_1M)
+			.add(Traces.WEBSEARCH1_1M)
+			/* we don't use these traces, too big
+			.add(Traces.WEBSEARCH2)
+			.add(Traces.WEBSEARCH3)
+			 */
+			.add(Traces.SCARAB_PRODS)
+			.add(Traces.SCARAB_RECS)
+			.add(Traces.CORDA_SMALL)
+			.add(Traces.CORDA_SMALL_10X)
+			.add(Traces.CORDA_LOOP_CORDA)
+			.add(Traces.LOOP)
+			.add(Traces.WIKIPEDIA1)
+			.add(Traces.ZIPFIAN_900_3M)
+			// .add(Traces.ZIPFIAN_900_1M)
+			.add(Traces.ZIPFIAN_10K_10M)
+			// .add(Traces.ZIPFIAN_10K_3M)
+			.add(Traces.RANDOM_1000_1M)
+		// .add(Traces.RANDOM_1000_100K)
+		// .add(Traces.RANDOM_1000_10K)
+		;
 
 }
