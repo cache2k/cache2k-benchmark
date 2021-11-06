@@ -62,10 +62,10 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
   private Entry handHot;
 
   private Cache2kV14Eviction.Ghost[] ghosts;
-  private Cache2kV14Eviction.Ghost ghostHead = new Ghost().shortCircuit();
+  private final Cache2kV14Eviction.Ghost ghostHead = new Ghost().shortCircuit();
   private int ghostSize = 0;
   private static final int GHOST_LOAD_PERCENT = 63;
-  private Cache2kV1Tuning tuning;
+  private final Cache2kV1Tuning tuning;
   private boolean firstEvictSeen = false;
 
   public Cache2kV14Eviction(int capacity, Cache2kV1Tuning tuning) {
@@ -90,7 +90,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
   }
 
   @Override
-  public void recordHit(final Entry e) {
+  public void recordHit(Entry e) {
     e.hitCnt++;
   }
 
@@ -106,7 +106,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
   }
 
   @Override
-  public void remove(final Entry e) {
+  public void remove(Entry e) {
     removeFromReplacementList(e);
   }
 
@@ -132,7 +132,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
   /**
    * Track the entry on the ghost list and call the usual remove procedure.
    */
-  public void removeFromReplacementListOnEvict(final Entry e) {
+  public void removeFromReplacementListOnEvict(Entry e) {
     insertCopyIntoGhosts(e);
     removeFromReplacementList(e);
   }
@@ -400,20 +400,20 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
       return next = prev = this;
     }
 
-    static void removeFromList(final Ghost e) {
+    static void removeFromList(Ghost e) {
       e.prev.next = e.next;
       e.next.prev = e.prev;
       e.next = e.prev = null;
     }
 
-    static void insertInList(final Ghost head, final Ghost e) {
+    static void insertInList(Ghost head, Ghost e) {
       e.prev = head;
       e.next = head.next;
       e.next.prev = e;
       head.next = e;
     }
 
-    static void moveToFront(final Ghost head, final Ghost e) {
+    static void moveToFront(Ghost head, Ghost e) {
       removeFromList(e);
       insertInList(head, e);
     }
@@ -425,7 +425,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
     private long hitCnt;
 		private boolean hot;
 
-    private Entry(final Object key, final Object value) {
+    private Entry(Object key, Object value) {
       super(key, value);
     }
 
@@ -434,7 +434,7 @@ public class Cache2kV14Eviction<K, V> extends EvictionPolicy<K, V, Cache2kV14Evi
       return hc ^ hc >>> 16;
     }
 
-    public void setHot(final boolean v) {
+    public void setHot(boolean v) {
       hot = v;
     }
 

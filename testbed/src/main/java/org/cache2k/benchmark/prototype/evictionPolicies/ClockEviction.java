@@ -41,19 +41,19 @@ public class ClockEviction<K,V> extends EvictionPolicy<K, V, ClockEviction.Entry
 	 * Created via reflection
 	 */
 	@SuppressWarnings("unused")
-	public ClockEviction(final int capacity) {
+	public ClockEviction(int capacity) {
 		super(capacity);
 	}
 
 	@Override
-	public Entry newEntry(final K key, final V value) {
+	public Entry newEntry(K key, V value) {
 		Entry e = new Entry(key, value);
 		insertIntoReplacementList(e);
 		return e;
 	}
 
 	@Override
-	public void recordHit(final Entry e) {
+	public void recordHit(Entry e) {
 		e.hitCnt++;
 	}
 
@@ -65,14 +65,15 @@ public class ClockEviction<K,V> extends EvictionPolicy<K, V, ClockEviction.Entry
 	}
 
 	@Override
-	public void close(final long expectedSize) {
+	public void close(long expectedSize) {
 		assert expectedSize == size;
 		assert expectedSize == hand.listSize();
 	}
 
 	@Override
-	public void remove(final Entry e) {
-		e.removedFromList();
+	public void remove(Entry e) {
+		hand = LinkedEntry.removeFromCyclicList(hand, e);
+		size--;
 	}
 
 	private void insertIntoReplacementList(Entry e) {
@@ -83,13 +84,13 @@ public class ClockEviction<K,V> extends EvictionPolicy<K, V, ClockEviction.Entry
 
 	private Entry findEvictionCandidate() {
 		assert hand != null;
-		assert  size > 0;
+		assert size > 0;
 		int scanCnt = 0;
 		while (hand.hitCnt > 0) {
 			scanCnt++;
 			hits += hand.hitCnt;
 			hand.hitCnt = 0;
-			hand = (Entry) hand.next;
+			hand = hand.next;
 		}
 		if (scanCnt > size) {
 			scan24hCnt++;
@@ -127,7 +128,7 @@ public class ClockEviction<K,V> extends EvictionPolicy<K, V, ClockEviction.Entry
 
 	static class Entry extends LinkedEntry<Entry, Object, Object> {
 
-		public Entry(final Object _key, final Object _value) {
+		public Entry(Object _key, Object _value) {
 			super(_key, _value);
 		}
 

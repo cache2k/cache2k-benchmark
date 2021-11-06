@@ -31,8 +31,8 @@ public class LinkedEntry<E extends LinkedEntry,K,V> extends Entry<K,V> {
 	public E next;
 	public E prev;
 
-	public LinkedEntry(final K _key, final V _value) {
-		super(_key, _value);
+	public LinkedEntry(K key, V value) {
+		super(key, value);
 	}
 
 	/*
@@ -67,21 +67,21 @@ public class LinkedEntry<E extends LinkedEntry,K,V> extends Entry<K,V> {
 		return (E) this;
 	}
 
-	public final void insertInList(final E e) {
+	public final void insertInList(E e) {
 		e.prev = this;
 		e.next = next;
 		e.next.prev = e;
 		next = e;
 	}
 
-	public final void moveToFront(final E e) {
+	public final void moveToFront(E e) {
 		e.removeFromList();
 		insertInList(e);
 	}
 
 	@SuppressWarnings("unchecked")
 	public final long listSize() {
-		return entryCountFromCyclicList((E) this) - 1;
+		return entryCountFromCyclicList((E) this);
 	}
 
 	/*
@@ -89,22 +89,22 @@ public class LinkedEntry<E extends LinkedEntry,K,V> extends Entry<K,V> {
 	 */
 
 	@SuppressWarnings({"Duplicates", "unchecked"})
-	public static <E extends LinkedEntry> E insertIntoTailCyclicList(final E _head, final E e) {
-		if (_head == null) {
+	public static <E extends LinkedEntry> E insertIntoTailCyclicList(E head, E e) {
+		if (head == null) {
 			return (E) e.shortCircuit();
 		}
-		e.next = _head;
-		e.prev = _head.prev;
-		_head.prev = e;
+		e.next = head;
+		e.prev = head.prev;
+		head.prev = e;
 		e.prev.next = e;
-		return _head;
+		return head;
 	}
 
 	@SuppressWarnings({"Duplicates", "unchecked"})
-	public static <E extends LinkedEntry> E removeFromCyclicList(final E _head, E e) {
+	public static <E extends LinkedEntry> E removeFromCyclicList(E head, E e) {
 		assert (!(e == e.prev) || (e == e.next));
 		assert (!(e == e.next) || (e == e.prev));
-		assert (!(e.prev == e) || (e == _head));
+		assert (!(e.prev == e) || (e == head));
 		// assert(!(e.next == e) || (e == _head)); always true checked above ;jw
 		if (e.next == e) {
 			e.removedFromList();
@@ -114,11 +114,11 @@ public class LinkedEntry<E extends LinkedEntry,K,V> extends Entry<K,V> {
 		e.prev.next = _eNext;
 		e.next.prev = e.prev;
 		e.removedFromList();
-		return e == _head ? _eNext : _head;
+		return e == head ? _eNext : head;
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <E extends LinkedEntry> E removeFromCyclicList(final E e) {
+	public static <E extends LinkedEntry> E removeFromCyclicList(E e) {
 		assert (!(e == e.prev) || (e == e.next));
 		assert (!(e == e.next) || (e == e.prev));
 		E _eNext = (E) e.next;
@@ -128,14 +128,14 @@ public class LinkedEntry<E extends LinkedEntry,K,V> extends Entry<K,V> {
 		return _eNext == e ? null : _eNext;
 	}
 
-	public static <E extends LinkedEntry<E,?,?>> int entryCountFromCyclicList(final E _head) {
-		if (_head == null) { return 0; }
-		E e = _head;
+	public static <E extends LinkedEntry<E,?,?>> int entryCountFromCyclicList(E head) {
+		if (head == null) { return 0; }
+		E e = head;
 		int cnt = 0;
 		do {
 			cnt++;
 			e = e.next;
-		} while (e != _head);
+		} while (e != head);
 		return cnt;
 	}
 

@@ -50,7 +50,7 @@ public final class PrototypeCacheFactory<T extends EvictionTuning> extends Bench
 		return this;
 	}
 
-	protected EvictionPolicy createPolicy(final int capacity) {
+	protected EvictionPolicy createPolicy(int capacity) {
 		Constructor constructor = evictionClass.getConstructors()[0];
 		try {
 			if (constructor.getParameterTypes().length == 1) {

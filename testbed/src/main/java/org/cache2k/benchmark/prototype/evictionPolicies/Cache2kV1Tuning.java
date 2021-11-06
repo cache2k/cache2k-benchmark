@@ -35,7 +35,7 @@ public class Cache2kV1Tuning implements EvictionTuning {
 	@SuppressWarnings("unused")
 	public Cache2kV1Tuning() { }
 
-	public Cache2kV1Tuning(final int hotMaxPercentage) {
+	public Cache2kV1Tuning(int hotMaxPercentage) {
 		this.hotMaxPercentage = hotMaxPercentage;
 	}
 

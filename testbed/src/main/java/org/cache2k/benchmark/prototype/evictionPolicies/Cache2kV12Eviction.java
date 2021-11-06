@@ -45,6 +45,8 @@ import org.cache2k.benchmark.prototype.LinkedEntry;
  * from the hot clock the counter is taken into account and entries with fewer references
  * are evicted first.
  *
+ * <p>This is the eviction used in cache2k V1.2 for regression testing.
+ *
  * @author Jens Wilke
  */
 @SuppressWarnings({"Duplicates", "WeakerAccess"})

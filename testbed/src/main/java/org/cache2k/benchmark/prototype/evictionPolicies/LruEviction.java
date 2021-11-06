@@ -59,7 +59,7 @@ public class LruEviction<K,V> extends EvictionPolicy<K, V, LruEviction.Entry> {
 
 	@Override
 	public void close(long expectedSize) {
-		assert expectedSize == head.listSize();
+		assert expectedSize == head.listSize() - 1;
 	}
 
 	@Override
@@ -69,8 +69,8 @@ public class LruEviction<K,V> extends EvictionPolicy<K, V, LruEviction.Entry> {
 
 	static class Entry extends LinkedEntry<Entry, Object, Object> {
 
-		public Entry(Object _key, Object _value) {
-			super(_key, _value);
+		public Entry(Object key, Object value) {
+			super(key, value);
 		}
 
 	}

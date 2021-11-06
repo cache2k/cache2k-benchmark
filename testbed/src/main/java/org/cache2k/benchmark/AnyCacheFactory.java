@@ -42,13 +42,18 @@ public class AnyCacheFactory<T extends EvictionTuning> {
 			return name;
 		}
 		if (namePrefix != null) {
-			return namePrefix + getNameSuffixFromTuning();
+			return namePrefix + generateNameSuffixFromTuning();
 		}
+		String s = generateNameFromClassName();
+		return s;
+	}
+
+	private String generateNameFromClassName() {
 		String s = this.getClass().getSimpleName();
-		String[] _stripSuffixes = new String[]{"CacheFactory", "Factory"};
-		for (String _suffix : _stripSuffixes) {
-			if (s.endsWith(_suffix)) {
-				s = s.substring(0, s.length() - _suffix.length());
+		String[] stripSuffixes = new String[]{"CacheFactory", "Factory"};
+		for (String suffix : stripSuffixes) {
+			if (s.endsWith(suffix)) {
+				s = s.substring(0, s.length() - suffix.length());
 			}
 		}
 		s = s.toLowerCase();
@@ -59,7 +64,7 @@ public class AnyCacheFactory<T extends EvictionTuning> {
 		return namePrefix;
 	}
 
-	public AnyCacheFactory<T> setNamePrefix(final String v) {
+	public AnyCacheFactory<T> setNamePrefix(String v) {
 		namePrefix = v;
 		return this;
 	}
@@ -72,7 +77,7 @@ public class AnyCacheFactory<T extends EvictionTuning> {
 		return tuning;
 	}
 
-	public AnyCacheFactory<T> setTuning(final T v) {
+	public AnyCacheFactory<T> setTuning(T v) {
 		tuning = v;
 		return this;
 	}
@@ -86,7 +91,7 @@ public class AnyCacheFactory<T extends EvictionTuning> {
 	 * Can be overridden by subclasses. Defaults to the output from the tuning object.
 	 * If its identical with the default, return an empty string.
 	 */
-	protected String getNameSuffixFromTuning() {
+	protected String generateNameSuffixFromTuning() {
 		if (getTuning() != null) {
 			String value = getTuning().getNameSuffix();
 			T defaultTuning = getDefaultTuning();
