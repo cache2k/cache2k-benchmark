@@ -24,10 +24,8 @@ import org.cache2k.benchmark.EvictionBenchmarkRunnerRule;
 import org.cache2k.benchmark.EvictionTestVariation;
 import org.cache2k.benchmark.PrototypeCacheFactory;
 import org.cache2k.benchmark.TraceCollections;
-import org.cache2k.benchmark.cache.Cache2kStarFactory;
-import org.cache2k.benchmark.cache.CaffeineStarFactory;
-import org.cache2k.benchmark.prototype.evictionPolicies.Cache2kV12Eviction;
-import org.cache2k.benchmark.prototype.evictionPolicies.Cache2kV14Eviction;
+import org.cache2k.benchmark.prototype.evictionPolicies.C2k2xTuning;
+import org.cache2k.benchmark.prototype.evictionPolicies.C2k2xEviction;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,11 +40,11 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class EvictionRegressionBenchmark {
 
-	public final static EvictionTestVariation.Builder CACHES = new EvictionTestVariation.Builder()
-		.add(PrototypeCacheFactory.of(Cache2kV14Eviction.class))
-		.add(PrototypeCacheFactory.of(Cache2kV12Eviction.class))
-		.add(new CaffeineStarFactory())
-		.add(new Cache2kStarFactory())
+	public static final EvictionTestVariation.Builder CACHES = new EvictionTestVariation.Builder()
+		.add(PrototypeCacheFactory.of(C2k2xEviction.class).setTuning(new C2k2xTuning.V24Tuning()))
+		.add(PrototypeCacheFactory.of(C2k2xEviction.class).setTuning(new C2k2xTuning.V26Tuning()))
+		// .add(new CaffeineStarFactory())
+		// .add(new Cache2kStarFactory())
 		;
 
 	@ClassRule
@@ -57,12 +55,12 @@ public class EvictionRegressionBenchmark {
 	@Parameterized.Parameters(name="{0}")
 	public static Iterable<? extends Object> data() {
 		return new EvictionTestVariation.Builder()
-			.merge(CACHES).merge(TraceCollections.ALL_TRACES).build();
+			.merge(CACHES).merge(TraceCollections.REGRESSION_TRACES).build();
 	}
 
 	private EvictionTestVariation variation;
 
-	public EvictionRegressionBenchmark(final EvictionTestVariation variation) {
+	public EvictionRegressionBenchmark(EvictionTestVariation variation) {
 		this.variation = variation;
 	}
 

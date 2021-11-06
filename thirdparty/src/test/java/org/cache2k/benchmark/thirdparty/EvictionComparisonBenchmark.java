@@ -25,7 +25,8 @@ import org.cache2k.benchmark.EvictionTestVariation;
 import org.cache2k.benchmark.PrototypeCacheFactory;
 import org.cache2k.benchmark.cache.Cache2kStarFactory;
 import org.cache2k.benchmark.cache.CaffeineStarFactory;
-import org.cache2k.benchmark.cache.EhCache3Factory;
+import org.cache2k.benchmark.prototype.evictionPolicies.C2k2xEviction;
+import org.cache2k.benchmark.prototype.evictionPolicies.C2k2xTuning;
 import org.cache2k.benchmark.prototype.evictionPolicies.LruEviction;
 import org.cache2k.benchmark.traces.Traces;
 import org.junit.ClassRule;
@@ -34,8 +35,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 /**
- * Compare the current cache2k eviction algorithm against the previous
- * one and Caffeine.
+ * Compare different cache implementation algorithms with LRU as reference.
  *
  * @author Jens Wilke
  */
@@ -43,11 +43,10 @@ import org.junit.runners.Parameterized;
 public class EvictionComparisonBenchmark {
 
 	public static final EvictionTestVariation.Builder CACHES = new EvictionTestVariation.Builder()
-		// .add(PrototypeCacheFactory.of(Cache2kV14Eviction.class))
-		// .add(PrototypeCacheFactory.of(Cache2kV12Eviction.class))
-		.add(PrototypeCacheFactory.of(LruEviction.class))
-		.add(new CaffeineStarFactory())
+		// .add(PrototypeCacheFactory.of(LruEviction.class))
+		// .add(new CaffeineStarFactory())
 		.add(new Cache2kStarFactory())
+		.add(PrototypeCacheFactory.of(C2k2xEviction.class).setTuning(new C2k2xTuning.V26Tuning()))
 		// TODO: EhCache3 is extremely slow, construct JMH benchmark
 		// .add(new EhCache3Factory())
 		;
@@ -59,16 +58,24 @@ public class EvictionComparisonBenchmark {
 
 	public static final EvictionTestVariation.Builder TRACES =
 		new EvictionTestVariation.Builder()
-			// .add(Traces.GLIMPSE)
 			// .add(Traces.CORDA_LOOP_CORDA)
-			// .add(Traces.GLIMPSE) // too small for meaningful comparisons
 			// .add(Traces.CORDA_SMALL, 124) // very bad for cache2k, investigate
+			// .add(Traces.WEB12, 75) // c2k is lower than LRU, investigate
+			// .add(Traces.GLIMPSE)
 			.add(Traces.WEB12)
 			.add(Traces.FINANCIAL1_1M)
-			.add(Traces.OLTP, 128, 256, 512)
+			.add(Traces.OLTP, 2500, 5000, 10000)
 			.add(Traces.SCARAB_RECS)
 			.add(Traces.LOOP)
 		  .add(Traces.ZIPFIAN_10K_1M)
+			.add(Traces.WEB12, 200, 400, 800)
+			// .add(Traces.CORDA_LARGE, 256, 512, 1024)
+			// .add(Traces.OLTP, 200, 400, 800)
+			// .add(Traces.WEB12, 100, 200)
+			// .add(Traces.CORDA_LARGE, 128, 256, 512, 1024, 2048)
+			// .add(Traces.CORDA_LARGE, 256, 512, 1024)
+			// .add(Traces.SCARAB_RECS, 75_000)
+			// .add(Traces.CORDA_LARGE, 256, 512, 1024)
 	;
 
 	@Parameterized.Parameters(name="{0}")
