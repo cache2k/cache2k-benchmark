@@ -21,10 +21,9 @@ package org.cache2k.benchmark.cache;
  */
 
 import com.github.benmanes.caffeine.cache.simulator.policy.Policy;
-import com.github.benmanes.caffeine.cache.simulator.policy.adaptive.CarPolicy;
+import com.github.benmanes.caffeine.cache.simulator.policy.irr.ClockProPlusPolicy;
 import com.github.benmanes.caffeine.cache.simulator.policy.irr.ClockProPolicy;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.cache2k.benchmark.EvictionTuning;
 
 /**
@@ -33,16 +32,16 @@ import org.cache2k.benchmark.EvictionTuning;
  * @author Jens Wilke
  * @see ClockProPolicy
  */
-public class CaffeineSimulatorClockProPolicyFactory
+public class CaffeineSimulatorClockProPlusPolicyFactory
 	extends CaffeineSimulatorPolicyFactory<EvictionTuning.None> {
 
 	{
-		setName("clockpro-cs");
+		setName("clockpro+-cs");
 	}
 
 	@Override
 	protected Policy createCaffeinePolicy(Config configWithSize) {
-		return new ClockProPolicy(configWithSize);
+		return new ClockProPlusPolicy(configWithSize);
 	}
 
 }

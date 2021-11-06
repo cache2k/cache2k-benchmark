@@ -38,7 +38,7 @@ public class CaffeineSimulatorArcPolicyFactory extends CaffeineSimulatorPolicyFa
 	}
 
 	@Override
-	protected Policy createCaffeinePolicy(final Config configWithSize) {
+	protected Policy createCaffeinePolicy(Config configWithSize) {
 		return new ArcPolicy(configWithSize);
 	}
 

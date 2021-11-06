@@ -39,8 +39,29 @@ public abstract class CaffeineSimulatorPolicyFactory<T extends EvictionTuning> e
   protected abstract Policy createCaffeinePolicy(Config configWithSize);
 
   @Override
-  public SimulatorPolicy create(final int capacity) {
-    String config = "maximum-size = " + capacity + "\n";
+  public SimulatorPolicy create(int capacity) {
+    String config = "maximum-size = " + capacity + "\n" +
+      "  clockpro {\n" +
+      "    # The percentage for the minimum resident cold entries\n" +
+      "    percent-min-resident-cold = 0.01\n" +
+      "    # The percentage for the maximum resident cold entries\n" +
+      "    percent-max-resident-cold = 0.99\n" +
+      "    # The lower bound for the number of resident cold entries\n" +
+      "    lower-bound-resident-cold = 2\n" +
+      "    # The multiple of the maximum size dedicated to non-resident entries\n" +
+      "    non-resident-multiplier = 2.0\n" +
+      "  }\n" +
+      "\n" +
+      "  clockproplus {\n" +
+      "    # The percentage for the minimum resident cold entries\n" +
+      "    percent-min-resident-cold = 0.01\n" +
+      "    # The percentage for the maximum resident cold entries\n" +
+      "    percent-max-resident-cold = 0.5\n" +
+      "    # The lower bound for the number of resident cold entries\n" +
+      "    lower-bound-resident-cold = 2\n" +
+      "    # The multiple of the maximum size dedicated to non-resident entries\n" +
+      "    non-resident-multiplier = 1.0\n" +
+      "  }";
     Config f = ConfigFactory.parseString(config);
     return new Adapter(createCaffeinePolicy(f));
   }
@@ -50,7 +71,7 @@ public abstract class CaffeineSimulatorPolicyFactory<T extends EvictionTuning> e
     private boolean finishCalled;
     private Policy policy;
 
-    private Adapter(final Policy policy) {
+    private Adapter(Policy policy) {
       this.policy = policy;
     }
 
