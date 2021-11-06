@@ -1250,7 +1250,15 @@ fi
 
 }
 
-
+# just result images to cache2k on my workspace
+copyToWebsite() {
+TARGET=`echo ~/ideaWork/cache2k*/cache2k/src/site/resources/benchmark-result/`
+if ! test -d "$TARGET"; then
+  echo "Target dir not available, result: $TARGET" ;
+  exit 1;
+fi
+cp -av $RESULT/benchmark-result/* $TARGET/
+}
 
 
 process() {
