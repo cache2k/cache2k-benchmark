@@ -60,6 +60,17 @@ public interface Traces {
 		.sizes(512, 1024);
 
 	/**
+	 * Corda trace from the Caffeine simulator.
+	 *
+	 * @see CordaTraceReader
+	 */
+	TraceSupplier CORDA_LARGE =
+		fromLongStream(() -> new CordaTraceReader("trace_vaultservice_large.gz")
+			.events().mapToLong(x -> x.key()))
+			.name("corda-large")
+			.sizes(512, 1024);
+
+	/**
 	 * Corda trace from the Caffeine simulator. Every request is repeated ten times and
 	 * transposed into a separate number space.
 	 *
@@ -171,7 +182,7 @@ public interface Traces {
 	 */
 	TraceSupplier WEB12 =
 		of("trace-mt-20121220.trc.bin.gz").name("web12")
-		.sizes(75, 300, 1200, 3000);
+		.sizes(300, 1200, 3000);
 
 	/**
 	 * Access trace (HTTP requests) on a product detail page in july.
@@ -180,7 +191,7 @@ public interface Traces {
 	 */
 	TraceSupplier WEB07 =
 		of("trace-mt-20130703.trc.bin.gz").name("web07")
-		.sizes(75, 300, 1200, 3000);
+		.sizes(300, 1200, 3000);
 
 	/**
 	 * UMass Financial1 trace. Truncated to one million requests.
