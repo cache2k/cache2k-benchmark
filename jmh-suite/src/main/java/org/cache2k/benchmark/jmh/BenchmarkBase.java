@@ -54,22 +54,34 @@ public class BenchmarkBase {
   @Param("")
   public String shortName;
 
+  @Param("")
+  public String expiry;
+
+  @Param("")
+  public String tti;
+
   public BenchmarkCacheFactory getFactory() {
     try {
       if ("DEFAULT".equals(cacheFactory)) {
         cacheFactory = Cache2kFactory.class.getCanonicalName();
       }
-      BenchmarkCacheFactory factoryInstance =
+      BenchmarkCacheFactory f =
         (BenchmarkCacheFactory) Class.forName(cacheFactory).newInstance();
-      if (factoryInstance instanceof JCacheCacheFactory) {
-      	JCacheCacheFactory jCacheCacheFactory = (JCacheCacheFactory) factoryInstance;
+      if (f instanceof JCacheCacheFactory) {
+      	JCacheCacheFactory jCacheCacheFactory = (JCacheCacheFactory) f;
       	jCacheCacheFactory.setCacheName(cacheName);
       	jCacheCacheFactory.setProvider(cacheProvider);
 			}
       if (!"".equals(enableStatistics)) {
-        factoryInstance.withStatistics(true);
+        f.withStatistics(true);
       }
-      return factoryInstance;
+      if (!"".equals(expiry)) {
+        f.withExpiry(true);
+      }
+      if (!"".equals(tti)) {
+        f.withTimeToIdle(true);
+      }
+      return f;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

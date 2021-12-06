@@ -21,6 +21,8 @@ package org.cache2k.benchmark;
  */
 
 /**
+ * Base class for every cache factory backed by a real cache product.
+ *
  * @author Jens Wilke
  */
 public abstract class ProductCacheFactory extends BenchmarkCacheFactory<EvictionTuning.None> {

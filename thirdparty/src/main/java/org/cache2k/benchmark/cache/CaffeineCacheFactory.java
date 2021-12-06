@@ -101,6 +101,9 @@ public class CaffeineCacheFactory extends ProductCacheFactory {
     if (withExpiry) {
       b.expireAfterWrite(2 * 60, TimeUnit.SECONDS);
     }
+    if (withTimeToIdle) {
+      b.expireAfterAccess(5 * 60, TimeUnit.SECONDS);
+    }
     return b;
   }
 

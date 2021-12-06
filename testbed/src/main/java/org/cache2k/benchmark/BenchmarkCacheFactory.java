@@ -25,12 +25,15 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Factory creates cache backed by a real cache implementation and wraps it into a BenchmarkCache.
+ *
  * @author Jens Wilke
  */
 public abstract class BenchmarkCacheFactory<T extends EvictionTuning> extends AnyCacheFactory<T> {
 
-  private List<EvictionListener<?>> evictionListeners = new ArrayList<>();
+  private final List<EvictionListener<?>> evictionListeners = new ArrayList<>();
   protected boolean withExpiry;
+  protected boolean withTimeToIdle;
   protected boolean withStatistics;
 
   @SuppressWarnings("unchecked")
@@ -47,13 +50,18 @@ public abstract class BenchmarkCacheFactory<T extends EvictionTuning> extends An
     throw new UnsupportedOperationException();
   }
 
-  public BenchmarkCacheFactory withStatistics(boolean v) {
+  public BenchmarkCacheFactory<T> withStatistics(boolean v) {
     withStatistics = v;
     return this;
   }
 
-  public BenchmarkCacheFactory withExpiry(boolean v) {
+  public BenchmarkCacheFactory<T> withExpiry(boolean v) {
     withExpiry = v;
+    return this;
+  }
+
+  public BenchmarkCacheFactory<T> withTimeToIdle(boolean v) {
+    withTimeToIdle = v;
     return this;
   }
 

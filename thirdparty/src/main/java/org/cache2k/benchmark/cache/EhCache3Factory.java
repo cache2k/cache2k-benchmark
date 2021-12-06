@@ -29,12 +29,15 @@ import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.expiry.ExpiryPolicy;
 import org.ehcache.spi.loaderwriter.CacheLoaderWriter;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * @author Jens Wilke
@@ -51,8 +54,46 @@ public class EhCache3Factory extends ProductCacheFactory {
 
   protected <K,V> CacheConfiguration<K,V> createCacheConfiguration(
     Class<K> keyType, Class<V> valueType, int capacity) {
-    return CacheConfigurationBuilder.newCacheConfigurationBuilder(keyType, valueType,
-      ResourcePoolsBuilder.heap(capacity)).build();
+    return builder(keyType, valueType, capacity).build();
+  }
+
+  private <K, V> CacheConfigurationBuilder<K, V> builder(Class<K> keyType, Class<V> valueType, int capacity) {
+    CacheConfigurationBuilder<K, V> b = CacheConfigurationBuilder.newCacheConfigurationBuilder(keyType, valueType,
+      ResourcePoolsBuilder.heap(capacity));
+    Duration d = Duration.ofMinutes(5);
+    if (withExpiry) {
+      b.withExpiry(new ExpiryPolicy<K, V>() {
+        @Override
+        public Duration getExpiryForCreation(K key, V value) {
+          return d;
+        }
+        @Override
+        public Duration getExpiryForAccess(K key, Supplier<? extends V> value) {
+          return null;
+        }
+        @Override
+        public Duration getExpiryForUpdate(K key, Supplier<? extends V> oldValue, V newValue) {
+          return d;
+        }
+      });
+    }
+    if (withTimeToIdle) {
+      b.withExpiry(new ExpiryPolicy<K, V>() {
+        @Override
+        public Duration getExpiryForCreation(K key, V value) {
+          return d;
+        }
+        @Override
+        public Duration getExpiryForAccess(K key, Supplier<? extends V> value) {
+          return d;
+        }
+        @Override
+        public Duration getExpiryForUpdate(K key, Supplier<? extends V> oldValue, V newValue) {
+          return d;
+        }
+      });
+    }
+    return b;
   }
 
   @Override
@@ -91,8 +132,7 @@ public class EhCache3Factory extends ProductCacheFactory {
       };
     }
     CacheConfiguration<K,V> cfg =
-      CacheConfigurationBuilder.newCacheConfigurationBuilder(keyType, valueType,
-        ResourcePoolsBuilder.heap(capacity))
+      builder(keyType, valueType, capacity)
         .withLoaderWriter(lw)
         .build();
     return new MyBenchmarkCache<K,V>(cfg);

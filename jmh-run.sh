@@ -234,6 +234,7 @@ benchmark() {
 local impl="$1";
 local benchmark="$2";
 local threads="$3";
+local param="$4";
 factory="`echo "$implementations" | awk "/^$impl / { print substr(\\$0, length(\\$1) + 2); }"`"
 runid="$impl-$benchmark-$threads";
 fn="$TARGET/result-$runid";
@@ -241,7 +242,7 @@ echo;
 echo "## $runid";
 sync
 limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER  $EXTRA_PROFILER \
-     $EXTRA_PARAMETERS -t $threads -p shortName=$impl $factory \
+     $EXTRA_PARAMETERS -t $threads -p shortName=$impl $param $factory \
      -rf json -rff "$fn.json" \
      2>&1 | tee $fn.out | filterProgress
 if test -n "$dry"; then
@@ -278,7 +279,9 @@ for impl in $BENCHMARK_IMPLS; do
     done
   done
 done
-
+for impl in $BENCHMARK_IMPLS; do
+  benchmark $impl ZipfianSequenceLoadingBenchmark 4 "-p tti=true -p percent=110"
+done
 stopTimer;
 }
 

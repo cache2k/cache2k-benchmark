@@ -156,6 +156,9 @@ public class Cache2kFactory extends ProductCacheFactory {
     } else {
       b.eternal(true);
     }
+    if (withTimeToIdle) {
+      b.idleScanTime(5 * 60, TimeUnit.SECONDS);
+    }
     if (maximumPerformance) {
       b.disableStatistics(true)
         .strictEviction(false)

@@ -68,10 +68,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @Param({"100000", "1000000"})
   public int entryCount = 100_000;
 
-  @Param({"false"})
-  public boolean expiry = false;
-
-  public final static int READTHROUGH_OVERHEAD_TOKES = 789;
+  public static final int READTHROUGH_OVERHEAD_TOKES = 789;
 
   private final DataLoader source = new DataLoader();
 
@@ -104,10 +101,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
   @Setup
   public void setupBenchmark() {
     int range = calculateRange(entryCount, percent);
-    BenchmarkCacheFactory f = getFactory();
-    if (expiry) {
-      f.withExpiry(true);
-    }
+    BenchmarkCacheFactory<?> f = getFactory();
     cache = f.createLoadingCache(Integer.class, Integer.class, entryCount, source);
     /*
        fill the cache completely, so memory is already expanded at maximum
@@ -157,7 +151,7 @@ public class ZipfianSequenceLoadingBenchmark extends BenchmarkBase {
     public final LongAdder missCount = new LongAdder();
 
     /**
-     * The loader increments the miss counter and  burns CPU via JMH's blackhole
+     * The loader increments the miss counter and  burns CPU via JMH's black hole
      * to have a relevant miss penalty.
      */
     @Override
