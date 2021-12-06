@@ -27,9 +27,9 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cache2k-version>2.4.1.Final</cache2k-version>
+    <cache2k-version>2.5.1.Alpha</cache2k-version>
     <ehcache3-version>3.9.6</ehcache3-version>
-    <caffeine-version>3.0.4</caffeine-version>
+    <caffeine-version>3.0.5</caffeine-version>
     <dsiutils-version>2.6.0</dsiutils-version>
   </properties>
 
