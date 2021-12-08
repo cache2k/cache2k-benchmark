@@ -234,15 +234,20 @@ benchmark() {
 local impl="$1";
 local benchmark="$2";
 local threads="$3";
-local param="$4";
+local variant="$4";
+local param="$5";
 factory="`echo "$implementations" | awk "/^$impl / { print substr(\\$0, length(\\$1) + 2); }"`"
-runid="$impl-$benchmark-$threads";
+if test -n "$variant"; then
+  runid="$impl-$benchmark-$threads-$variant";
+else
+  runid="$impl-$benchmark-$threads";
+fi
 fn="$TARGET/result-$runid";
 echo;
 echo "## $runid";
 sync
 limitCores $threads $java -jar $JAR \\.$benchmark -jvmArgs "$BENCHMARK_JVM_ARGS" $OPTIONS $STANDARD_PROFILER  $EXTRA_PROFILER \
-     $EXTRA_PARAMETERS -t $threads -p shortName=$impl $param $factory \
+     $EXTRA_PARAMETERS -t $threads -p shortName=$impl -p variant=$variant $param $factory \
      -rf json -rff "$fn.json" \
      2>&1 | tee $fn.out | filterProgress
 if test -n "$dry"; then
@@ -255,7 +260,7 @@ fi
 
 complete() {
 
-# benchmarks we still monitor, but do not run through all thread variations
+# benchmarks we keep an eye on, but do not run through all thread variations
 reducedBenchmarks="ZipfianSequenceBulkLoadingBenchmark IterationBenchmark"
 
 # current benchmarks with detailed output
@@ -263,24 +268,27 @@ benchmarks="ZipfianSequenceLoadingBenchmark PopulateParallelClearBenchmark Popul
 
 # reducedBenchmarks=""
 # benchmarks="IterationBenchmark"
-echo $BENCHMARK_IMPLS;
 for impl in $BENCHMARK_IMPLS; do
   for benchmark in $benchmarks; do
-    for threads in $BENCHMARK_THREADS; do
-      benchmark $impl $benchmark $threads;
+  echo $BENCHMARK_THREADS
+    for thread in $BENCHMARK_THREADS; do
+      benchmark $impl $benchmark $thread;
     done
   done
 done
 # run this set of benchmarks with less threads
 for impl in $BENCHMARK_IMPLS; do
   for benchmark in $reducedBenchmarks; do
-    for threads in 8; do
-      benchmark $impl $benchmark $threads;
+    for thread in 8; do
+      benchmark $impl $benchmark $thread;
     done
   done
 done
+benchmark=ZipfianSequenceLoadingBenchmark;
 for impl in $BENCHMARK_IMPLS; do
-  benchmark $impl ZipfianSequenceLoadingBenchmark 4 "-p tti=true -p percent=110"
+  for thread in $BENCHMARK_THREADS; do
+    benchmark $impl $benchmark $thread tti "-p tti=true -p percent=110"
+  done
 done
 stopTimer;
 }
