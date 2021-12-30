@@ -60,6 +60,9 @@ public class BenchmarkBase {
   @Param("")
   public String tti;
 
+  @Param("")
+  public String variant;
+
   public BenchmarkCacheFactory getFactory() {
     try {
       if ("DEFAULT".equals(cacheFactory)) {

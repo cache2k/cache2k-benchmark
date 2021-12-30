@@ -21,7 +21,9 @@ package org.cache2k.benchmark.thirdparty;
  */
 
 import org.cache2k.benchmark.BenchmarkCache;
+import org.cache2k.benchmark.BenchmarkCacheFactory;
 import org.cache2k.benchmark.BenchmarkCacheLoader;
+import org.cache2k.benchmark.cache.CaffeineCacheFactory;
 import org.cache2k.benchmark.cache.JCacheCacheFactory;
 import org.junit.Test;
 
@@ -31,6 +33,15 @@ import static org.junit.Assert.assertEquals;
  * @author Jens Wilke
  */
 public class CaffeineTest {
+
+	@Test
+	public void testTtiNonLoading() {
+		BenchmarkCacheFactory f = new CaffeineCacheFactory();
+		f.withTimeToIdle(true);
+		BenchmarkCache c = f.create(1000);
+		c.put(1, 1);
+		Object o = c.get(1);
+	}
 
 	@Test
 	public void testJCacheDefault10000Configuration() {
