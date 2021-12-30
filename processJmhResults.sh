@@ -12,7 +12,10 @@
 #
 # process   paint nice diagrams
 
+# stop on error
 set -e
+
+# print commands
 # set -x
 
 RESULT="target/jmh-result";
@@ -459,6 +462,31 @@ done
 echo;
 }
 
+#
+# Input is a benchmark name like Xy or Xy-variant
+# Prints jq select statement
+#
+benchmarkSelector() {
+if [[ "$1" = *"-"* ]]; then
+  local variant="${1#*-}";
+  local benchmark="${1%-*}";
+  echo "select ((.benchmark | contains (\"$benchmark\")) and (.params.variant == \"${variant}\"))";
+else
+  echo "select ((.benchmark | contains (\"$1\")) and (.params.variant | . == null or . == \"\"))";
+fi
+}
+
+#
+# Extract benchmark name from Xy-variant
+#
+benchmarkName() {
+if [[ "$1" = *"-"* ]]; then
+  echo "${1%-*}";
+else
+  echo "$1"
+fi
+}
+
 # Extract memory metrics for a particular benchmark
 #
 # Usage: extractMemoryMetrics <benchmark> <paramName>
@@ -468,8 +496,10 @@ echo;
 # 1-20,org.cache2k.benchmark.thirdparty.CaffeineCacheFactory,0.00,71.27,1000.42,852.382233323991
 # 1-20,org.cache2k.benchmark.thirdparty.EhCache2Factory,0.00,58.28,606.75,204.83546236165807
 extractMemoryMetrics() {
+local selector="`benchmarkSelector "$1"`";
+# .[] |  select (.benchmark | contains (".$1") ) |
 local query=`cat << EOF
-.[] |  select (.benchmark | contains (".$1") ) |
+.[] | $selector |
   [ (.threads | tostring) + "-" + .params.entryCount + "-" + .params.$2, .params.cacheFactory,
     .["secondaryMetrics"]["+c2k.gc.maximumCommittedAfterGc"].score,
     .["secondaryMetrics"]["+c2k.gc.maximumCommittedAfterGc"].scoreError,
@@ -559,7 +589,7 @@ done
 local benchmark="$1";
 local param="$2";
 local key="$3";
-  f=$RESULT/${benchmark}Memory$key$variant.dat
+  f=$RESULT/${benchmark}-Memory-$key$variant.dat
   (
     memoryMetricsHeader
     memoryMetrics "$benchmark" "$param" | grep "^$key" | stripFirstColumn | cacheShortNames \
@@ -577,9 +607,9 @@ suffix="$3";
 filter="$4";
 local prods="$CACHE_FACTORY_LIST";
 if test -n "$suffix"; then
-f=$RESULT/${name}EffectiveHitrate-${suffix}.dat
+f=$RESULT/${name}-EffectiveHitrate-${suffix}.dat
 else
-f=$RESULT/${name}EffectiveHitrate.dat
+f=$RESULT/${name}-EffectiveHitrate.dat
 fi
 (
 header4 "$prods";
@@ -587,8 +617,10 @@ header4 "$prods";
 # TODO: we cannot calculate with confidences
 # previous version:  100 - .["secondaryMetrics"]["+misc.missCount"].score * 100 / .["secondaryMetrics"]["+misc.opCount"]["score"],
 # new:      .["secondaryMetrics"]["+misc.hitrate"].score,
+local selector="`benchmarkSelector "$name"`";
+# .[] |  select (.benchmark | contains (".${name}") ) |
 local query=`cat << EOF
-.[] |  select (.benchmark | contains (".${name}") ) |
+.[] | $selector |
   [ (.threads | tostring) +  "-" + .params.entryCount + "-" + .params.$param,
      .params.cacheFactory,
      .["secondaryMetrics"]["+misc.hitrate"].score,
@@ -613,14 +645,15 @@ suffix="$3";
 filter="$4";
 local prods="org.cache2k.benchmark.cache.Cache2kFactory";
 if test -n "$suffix"; then
-f=$RESULT/${name}ScanCount-${suffix}.dat
+f=$RESULT/${name}-ScanCount-${suffix}.dat
 else
-f=$RESULT/${name}ScanCount.dat
+f=$RESULT/${name}-ScanCount.dat
 fi
+local selector="`benchmarkSelector "$name"`";
 (
 header4 "$prods";
 local query=`cat << EOF
-.[] |  select (.benchmark | contains (".${name}") ) |
+.[] | $selector |
   [ (.threads | tostring) +  "-" + .params.entryCount + "-" + .params.$param,
      .params.cacheFactory,
      .["secondaryMetrics"]["+c2k.stat.scanPerEviction"].score,
@@ -747,13 +780,14 @@ f=$RESULT/${name}-${suffix}.dat
 else
 f=$RESULT/${name}.dat
 fi
+local selector="`benchmarkSelector "$name"`";
 (
 header4 "$prods";
 local tmp="$RESULT/tmp-plotOps-$name-$param$tmpext.data"
 # old query: jq -r ".[] |  select (.benchmark | contains (\".${name}\") ) | [ (.threads | tostring) + \"-\" + .params.entryCount + \"-\" + .params.$param, .params.cacheFactory, .primaryMetric.score, .primaryMetric.scoreError, .primaryMetric.scoreConfidence[0], .primaryMetric.scoreConfidence[1]  ] | @csv" | \
 # old query on primary result
 local queryOld=`cat << EOF
-.[] |  select (.benchmark | contains (".${name}") ) |
+.[] | $selector |
   [ (.threads | tostring) + "-" + .params.entryCount + "-" + .params.$param,
     .params.cacheFactory,
     .primaryMetric.score,
@@ -765,7 +799,7 @@ EOF
 `
 
 local query=`cat << EOF
-.[] |  select (.benchmark | contains (".${name}") ) |
+.[] | $selector |
   [ (.threads | tostring) +  "-" + .params.entryCount + "-" + .params.$param,
      .params.cacheFactory,
      .["secondaryMetrics"]["+misc.requests.throughput"].score,
@@ -815,11 +849,12 @@ f=$RESULT/${name}-${suffix}.dat
 else
 f=$RESULT/${name}.dat
 fi
+local selector="`benchmarkSelector "$name"`";
 (
 header4 "$prods";
 local tmp="$RESULT/tmp-plotOps-$name-$param.data"
 test -f "$tmp" || json | \
-    jq -r ".[] |  select (.benchmark | contains (\".${name}\") ) | [ (.threads | tostring) + \"-\" + .params.entryCount, .params.cacheFactory, .primaryMetric.score, .primaryMetric.scoreError, .primaryMetric.scoreConfidence[0], .primaryMetric.scoreConfidence[1]  ] | @csv" | \
+    jq -r ".[] |  $selector | [ (.threads | tostring) + \"-\" + .params.entryCount, .params.cacheFactory, .primaryMetric.score, .primaryMetric.scoreError, .primaryMetric.scoreConfidence[0], .primaryMetric.scoreConfidence[1]  ] | @csv" | \
     sort | tr -d '"' | \
     pivot4 $prods | sort -n -t- -k1,1 -k2,2 -k3,3 | shortenParamValues > "$tmp"
     cat "$tmp" | grep "$filter" | stripEmpty
@@ -829,15 +864,28 @@ plot --withConfidence $f "${name} / Runtime (lower is better)" "threads-size" "r
 
 noBenchmark() {
 local I;
-for I in $RESULT/result-*"$1"*.json; do
-  if test -f $I; then
-    return 1;
-  fi
-done
-return 0;
+if [[ "$1" = *"-"* ]]; then
+  local variant="${1#*-}";
+  local benchmark="${1%-*}";
+  for I in $RESULT/result-*"$benchmark"*"$variant".json; do
+    if test -f $I; then
+     return 1;
+    fi
+  done
+  return 0;
+else
+  for I in $RESULT/result-*"$1"*.json; do
+    if test -f $I; then
+     return 1;
+    fi
+  done
+  return 0;
+fi
 }
 
-# merge all results into single json file
+#
+# Merge all results into single JSON file
+#
 bigJson() {
 result=$RESULT/data.json
 # A sequence of the lines "]", "[", "]" will be ignored, there may be an empty json file, if a run fails
@@ -850,10 +898,10 @@ PopulateParallelOnceBenchmark-byThreads-4M
 PopulateParallelTwiceBenchmark-byThreads-4M
 ZipfianSequenceLoadingBenchmark-byThread-1Mx110
 ZipfianSequenceLoadingBenchmark-byThread-1Mx500
-ZipfianSequenceLoadingBenchmarkEffectiveHitrate-byThread-1Mx110
-ZipfianSequenceLoadingBenchmarkEffectiveHitrate-byThread-1Mx500
-ZipfianSequenceLoadingBenchmarkMemory4-1M-500-liveObjects-sorted
-ZipfianSequenceLoadingBenchmarkMemory4-1M-500-VmHWM-sorted
+ZipfianSequenceLoadingBenchmark-EffectiveHitrate-byThread-1Mx110
+ZipfianSequenceLoadingBenchmark-EffectiveHitrate-byThread-1Mx500
+ZipfianSequenceLoadingBenchmark-Memory-4-1M-500-liveObjects-sorted
+ZipfianSequenceLoadingBenchmark-Memory-4-1M-500-VmHWM-sorted
 PopulateParallelClearBenchmark
 EOF
 `"
@@ -1020,8 +1068,10 @@ MEMORY="100K 1M 10M"
 # benchmarks with percent parameter
 param=percent;
 txt="Zipfian distribution percentage"
-benchmarks="ZipfianSequenceLoadingBenchmark ZipfianSequenceBulkLoadingBenchmark"
+benchmarks="ZipfianSequenceLoadingBenchmark ZipfianSequenceBulkLoadingBenchmark ZipfianSequenceLoadingBenchmark-tti"
+# benchmarks="ZipfianSequenceLoadingBenchmark-tti"
 for I in $benchmarks; do
+  echo $I
   noBenchmark $I || {
       plotOps $I $param;
       graph "$graphName" "$I, operations per second by Zipfian $txt (complete)";
@@ -1029,15 +1079,14 @@ for I in $benchmarks; do
       graph "$graphName" "$I, Effective hitrate by $txt (complete)";
 
      thread=4; size=1M; percent=500;
-     plotMem --startIndex 1 --endIndex 1 --variant "-heapCommittedAfterGc" $name $param "$thread-$size-$percent";
-     graph "$graphName" "$name, $txt, $thread threads, $size cache entries, $txt $percent, maximum heap committed after regular gc";
+     plotMem --startIndex 1 --endIndex 1 --variant "-heapCommittedAfterGc" $I $param "$thread-$size-$percent";
+     graph "$graphName" "$I, $txt, $thread threads, $size cache entries, $txt $percent, maximum heap committed after regular gc";
 
-     plotMem --startIndex 2 --endIndex 2 --sort --variant "-VmHWM-sorted" $name $param "$thread-$size-$percent";
-     graph "$graphName" "$name, $thread threads, $size cache entries, $txt $percent, peak memory usage reported by the operating system (VmHWM), sorted by best performance";
+     plotMem --startIndex 2 --endIndex 2 --sort --variant "-VmHWM-sorted" $I $param "$thread-$size-$percent";
+     graph "$graphName" "$I, $thread threads, $size cache entries, $txt $percent, peak memory usage reported by the operating system (VmHWM), sorted by best performance";
 
-     plotMem --startIndex 5 --endIndex 5 --sort --variant "-liveObjects-sorted" $name $param "$thread-$size-$percent";
-     graph "$graphName" "$name, $thread threads, $size cache entries, $txt $percent, total bytes of live objects as reported by jmap";
-
+     plotMem --startIndex 5 --endIndex 5 --sort --variant "-liveObjects-sorted" $I $param "$thread-$size-$percent";
+     graph "$graphName" "$I, $thread threads, $size cache entries, $txt $percent, total bytes of live objects as reported by jmap";
 
      # plotMem --startIndex 4 --endIndex 4 --variant "-totalHeapAfterGc" $name $param "$focus";
     # graph "$graphName" "$name, $txt, total heap used after gc";
@@ -1078,10 +1127,7 @@ for I in $benchmarks; do
       done
 
 # no detailed reports
-MEMORY="";
-PERCENT="";
-THREADS="";
-
+true || {
       for TC in $THREADS; do
         for P in $PERCENT; do
           plotOps $I percent "bySize-${TC}x$P" "^$TC-.*-$P .*";
@@ -1103,7 +1149,7 @@ THREADS="";
               graph "$graphName" "$I, scan count by Zipfian percentage with cache size ${S} at $TC threads";
           done
       done
-
+}
   }
 done
 
@@ -1250,7 +1296,7 @@ fi
 
 }
 
-# just result images to cache2k on my workspace
+# copy result images to cache2k on my workspace
 copyToWebsite() {
 TARGET=`echo ~/ideaWork/cache2k*/cache2k/src/site/resources/benchmark-result/`
 if ! test -d "$TARGET"; then
@@ -1259,7 +1305,6 @@ if ! test -d "$TARGET"; then
 fi
 cp -av $RESULT/benchmark-result/* $TARGET/
 }
-
 
 process() {
 
